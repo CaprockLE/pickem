@@ -575,33 +575,48 @@ $("parseBtn").onclick = () => {
   if (!text) { $("readMsg").innerHTML = '<span class="err">Nothing pasted.</span>'; return; }
   const gs = games();
   if (!gs.length) { $("readMsg").innerHTML = '<span class="err">Load a week with games first.</span>'; return; }
-  const codeMap = new Map();          // team code -> game id
-  gs.forEach(g => { codeMap.set(g.away.toUpperCase(), g.id); codeMap.set(g.home.toUpperCase(), g.id); });
-  const alias = {JAC:"JAX", WSH:"WAS", LA:"LAR", LAR:"LAR", NOR:"NO", TAM:"TB", KAN:"KC", SFO:"SF", GNB:"GB", NWE:"NE"};
-  const out = [], bad = [];
+
+  // every spelling a team might appear under, in either direction
+  const VARIANTS = {
+    WAS:["WSH","WFT"], WSH:["WAS","WFT"], LAR:["LA","RAMS"], LA:["LAR","RAMS"],
+    JAX:["JAC"], JAC:["JAX"], NO:["NOR","NOS"], NOR:["NO"], TB:["TAM","TBB"], TAM:["TB"],
+    KC:["KAN","KCC"], KAN:["KC"], SF:["SFO"], SFO:["SF"], GB:["GNB"], GNB:["GB"],
+    NE:["NWE"], NWE:["NE"], ARI:["ARZ"], ARZ:["ARI"], LAC:["SD","SDG"], CLE:["CLV"], CLV:["CLE"],
+    BAL:["BLT"], BLT:["BAL"], HOU:["HST"], HST:["HOU"], NYG:["NYG"], NYJ:["NYJ"]
+  };
+  const lookup = new Map();                     // any spelling -> {gameId, team}
+  for (const g of gs) {
+    for (const side of [g.away, g.home]) {
+      const canon = String(side).toUpperCase();
+      const keys = new Set([canon, ...(VARIANTS[canon] || [])]);
+      for (const k of keys) lookup.set(k, { gameId: g.id, team: side });
+    }
+  }
+
+  const out = [], unmatched = new Set();
   for (const line of text.split(/\r?\n/)) {
     const raw = line.trim(); if (!raw) continue;
-    const parts = raw.split(/[\t,;]+|\s{1,}/).map(x => x.trim()).filter(Boolean);
+    const parts = raw.split(/[\t,;]+|\s+/).map(x => x.trim()).filter(Boolean);
     if (parts.length < 2) continue;
     let tiebreaker = null;
     if (/^\d+$/.test(parts[parts.length - 1])) tiebreaker = Number(parts.pop());
-    const picks = {};
-    const nameBits = [];
+    const picks = {}, nameBits = [];
     for (const tok of parts) {
-      const up = tok.toUpperCase().replace(/[^A-Z]/g, "");
-      const code = alias[up] || up;
-      if (codeMap.has(code)) picks[codeMap.get(code)] = gs.find(g => g.id === codeMap.get(code))
-        .away.toUpperCase() === code ? gs.find(g => g.id === codeMap.get(code)).away
-        : gs.find(g => g.id === codeMap.get(code)).home;
-      else nameBits.push(tok);
+      const code = tok.toUpperCase().replace(/[^A-Z0-9]/g, "");
+      const hit = lookup.get(code);
+      if (hit) picks[hit.gameId] = hit.team;
+      else { nameBits.push(tok); if (code.length <= 4 && nameBits.length > 1) unmatched.add(code); }
     }
-    const name = nameBits.join(" ").trim();
-    if (!name) { bad.push(raw.slice(0, 24)); continue; }
+    const name = nameBits.join(" ").replace(/[-_]+/g, " ").trim();
+    if (!name) continue;
     out.push({ name, picks, tiebreaker, paid: false });
   }
   if (!out.length) { $("readMsg").innerHTML = '<span class="err">Couldn\'t read any rows.</span>'; return; }
   pending = out;
-  $("readMsg").textContent = `Parsed ${out.length} rows` + (bad.length ? ` · skipped ${bad.length}` : "") + " — confirm below.";
+  const gaps = out.filter(p => Object.keys(p.picks).length < gs.length).length;
+  $("readMsg").innerHTML = `Parsed ${out.length} rows` +
+    (gaps ? ` · <b>${gaps} with gaps</b>` : " · all complete") +
+    (unmatched.size ? ` · unrecognised: ${[...unmatched].join(", ")}` : "");
   renderReview();
 };
 
