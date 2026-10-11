@@ -1,6 +1,6 @@
-# Pick'em Pool
+# League Console
 
-Live NFL pick'em tracker. Scores update themselves from ESPN's public feed; the league
+NFL pick'em league management. Scores update themselves from ESPN's public feed; the league
 manager drops in photos of the paper pick sheets and the site reads them.
 
 ## Deploy (about 20 minutes)
@@ -28,6 +28,12 @@ Project -> Settings -> Environment Variables:
 ### 3. Ship it
 Drop this folder into a Git repo and import it on Vercel, or run `vercel` from here.
 No build step: static `index.html` plus three functions in `/api`.
+
+## Sections
+- **Season standings** — cumulative totals, weeks won, week-by-week grid.
+- **Week results** — live scoreboard, standings, every pick, auto winner with tiebreaker.
+- **Import sheets** — drop photos, confirm what was read, publish.
+- **Payments** — paid toggles, pot and outstanding totals, season owed.
 
 ## Using it
 - `/?week=5` — any week, or use the dropdown.

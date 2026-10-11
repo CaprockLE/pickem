@@ -3,344 +3,396 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Pick'em Pool</title>
+<title>League Console</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#EEF1F5; --surface:#FFFFFF; --surface2:#F7F9FC; --line:#E0E6EE; --line2:#CFD8E3;
-    --ink:#0D1724; --muted:#64748B; --accent:#0F6F56; --accent-soft:#E2F2EC;
-    --live:#C2410C; --live-soft:#FDEDE3; --gold:#B88A2E; --me:#12456B; --me-soft:#E4EEF6;
-    --sh:0 1px 2px rgba(13,23,36,.05),0 2px 8px rgba(13,23,36,.04);
-    --radius:14px;
-    box-sizing:border-box;
-    padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
-  }
-  @media (prefers-color-scheme:dark){:root:not([data-theme=light]){
-    --bg:#0A111B; --surface:#121C2A; --surface2:#17222F; --line:#243040; --line2:#2E3B4D;
-    --ink:#E8EDF4; --muted:#8E9EB2; --accent:#3FB68F; --accent-soft:#11332A;
-    --live:#F08A4B; --live-soft:#36210F; --gold:#D9AE55; --me:#8CC0E4; --me-soft:#14283A;
-    --sh:none;}}
-  *,*::before,*::after{box-sizing:inherit}
-  html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 64px)}
-  body{margin:0;background:var(--bg);color:var(--ink);
-    font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
-    font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
-  .mono{font-variant-numeric:tabular-nums}
+:root{
+  --bg:#EDEFF3; --panel:#FFFFFF; --panel2:#F6F8FB; --rule:#E3E7EE; --rule2:#CBD3DF;
+  --ink:#0C1420; --ink2:#36414F; --muted:#6B7889;
+  --brand:#0B6B57; --brand2:#E3F1EC; --hot:#B5460F; --hot2:#FBEBE1;
+  --gold:#9A7318; --nav:#0C1420; --navink:#AEB9C7; --navink2:#FFFFFF;
+  --r:12px; --sh:0 1px 2px rgba(12,20,32,.06), 0 4px 14px rgba(12,20,32,.05);
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+  --bg:#080C12; --panel:#101823; --panel2:#15202D; --rule:#1F2A38; 
+  --rule2:#2B3A4B; --ink:#E9EEF5; --ink2:#C2CCD9; --muted:#8696A8;
+  --brand:#39B28E; --brand2:#0E2A22; --hot:#E88A4D; --hot2:#2E1C0F;
+  --gold:#D4AC54; --nav:#0A1019; --navink:#8696A8; --navink2:#FFFFFF; --sh:none;}}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;font-size:14.5px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.mono{font-variant-numeric:tabular-nums}
+.num{font-family:Oswald,Inter,sans-serif;font-weight:600;font-variant-numeric:tabular-nums}
 
-  /* ---------- top bar ---------- */
-  .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;background:var(--surface);
-    border-bottom:1px solid var(--line)}
-  .top .inner{max-width:1200px;margin:0 auto;padding:10px 18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
-  .brand{display:flex;align-items:baseline;gap:9px;margin-right:auto}
-  .brand b{font-family:"Barlow Condensed",Inter,sans-serif;font-weight:700;font-size:26px;
-    letter-spacing:.055em;text-transform:uppercase;line-height:1}
-  .brand span{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
-  .ctl{display:flex;gap:8px;align-items:center}
-  select,input{font:inherit;color:inherit;background:var(--surface2);border:1px solid var(--line2);
-    border-radius:9px;padding:7px 10px}
-  input[type=number]{width:92px;text-align:center}
-  button{font:inherit;font-weight:500;cursor:pointer;background:var(--surface2);color:var(--ink);
-    border:1px solid var(--line2);border-radius:9px;padding:7px 13px;transition:.12s}
-  button:hover{border-color:var(--accent);color:var(--accent)}
-  button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-  button.primary:hover{filter:brightness(1.07);color:#fff}
-  button.on{background:var(--accent);border-color:var(--accent);color:#fff}
-  :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* shell */
+.app{display:grid;grid-template-columns:232px 1fr;min-height:100vh}
+nav{background:var(--nav);color:var(--navink);padding:18px 14px;position:sticky;top:0;height:100vh;overflow:auto}
+nav .logo{display:flex;align-items:center;gap:9px;padding:0 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+nav .logo .mark{width:30px;height:30px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-family:Oswald;font-size:17px;font-weight:700}
+nav .logo b{color:#fff;font-family:Oswald,Inter;font-weight:600;font-size:17px;letter-spacing:.04em;text-transform:uppercase;line-height:1.1}
+nav .logo small{display:block;color:var(--navink);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase}
+nav button.tab{display:flex;width:100%;align-items:center;gap:10px;background:none;border:0;color:var(--navink);
+  padding:9px 10px;border-radius:9px;font-size:14px;font-weight:500;cursor:pointer;text-align:left;margin-bottom:2px}
+nav button.tab:hover{background:rgba(255,255,255,.06);color:#fff}
+nav button.tab.on{background:var(--brand);color:#fff;font-weight:600}
+nav .sec{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:#5E6E80;margin:16px 10px 6px;font-weight:700}
+nav .foot{margin-top:18px;padding:10px;border-top:1px solid rgba(255,255,255,.08);font-size:11.5px;color:#5E6E80}
+main{min-width:0;padding:22px 26px 80px;max-width:1320px}
+@media (max-width:900px){
+  .app{grid-template-columns:1fr}
+  nav{position:sticky;top:0;height:auto;display:flex;gap:6px;overflow-x:auto;padding:10px;align-items:center;z-index:30}
+  nav .logo{border:0;margin:0 10px 0 4px;padding:0;flex:none}
+  nav .logo small,nav .sec,nav .foot{display:none}
+  nav button.tab{width:auto;white-space:nowrap;padding:7px 12px}
+  main{padding:16px 14px 70px}
+}
 
-  /* ---------- layout ---------- */
-  .wrap{max-width:1200px;margin:0 auto;padding:20px 18px 90px}
-  section{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
-    padding:18px;margin-bottom:16px;box-shadow:var(--sh)}
-  .eyebrow{font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;
-    color:var(--muted);margin:0 0 12px}
-  .note{color:var(--muted);font-size:13px}
-  .err{color:var(--live);font-size:13px}
+/* headers */
+.head{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+h1{font-family:Oswald,Inter;font-weight:600;font-size:27px;letter-spacing:.02em;margin:0;line-height:1.15;text-transform:uppercase}
+.head .sub{color:var(--muted);font-size:13px;margin:2px 0 0}
+.head .right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+select,input{font:inherit;color:inherit;background:var(--panel);border:1px solid var(--rule2);border-radius:9px;padding:7px 10px}
+button{font:inherit;font-weight:500;cursor:pointer;background:var(--panel);color:var(--ink);border:1px solid var(--rule2);border-radius:9px;padding:7px 13px}
+button:hover{border-color:var(--brand);color:var(--brand)}
+button.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+button.primary:hover{filter:brightness(1.08);color:#fff}
+button.on{background:var(--brand);border-color:var(--brand);color:#fff}
+button.sm{padding:4px 9px;font-size:12.5px;border-radius:7px}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
 
-  /* ---------- summary strip ---------- */
-  .strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:1px;
-    background:var(--line);border:1px solid var(--line);border-radius:var(--radius);
-    overflow:hidden;margin-bottom:16px}
-  .stat{background:var(--surface);padding:14px 16px}
-  .stat .k{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
-  .stat .v{font-family:"Barlow Condensed",Inter,sans-serif;font-size:30px;font-weight:700;line-height:1.1;margin-top:2px}
-  .stat .v small{font-size:14px;color:var(--muted);font-weight:600}
+/* cards */
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--sh);margin-bottom:16px;overflow:hidden}
+.card > .hd{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--rule)}
+.card > .hd h2{font-family:Oswald,Inter;font-weight:600;font-size:14px;letter-spacing:.09em;text-transform:uppercase;margin:0}
+.card > .hd .r{margin-left:auto;display:flex;gap:8px;align-items:center}
+.card > .bd{padding:16px}
+.card > .bd.flush{padding:0}
+.note{color:var(--muted);font-size:12.5px}
+.err{color:var(--hot);font-size:13px}
 
-  /* ---------- scoreboard ---------- */
-  .board{display:grid;grid-template-columns:repeat(auto-fill,minmax(212px,1fr));gap:10px}
-  .gm{border:1px solid var(--line);border-radius:11px;padding:11px 12px;background:var(--surface2);position:relative}
-  .gm.livegame{border-color:var(--live)}
-  .tm{display:flex;align-items:center;gap:8px;padding:3px 0}
-  .tm img{width:22px;height:22px;object-fit:contain;flex:none}
-  .tm .ab{font-weight:600;font-size:14px}
-  .tm .rec{font-size:11px;color:var(--muted)}
-  .tm .pts{margin-left:auto;font-weight:700;font-size:17px}
-  .tm.lost{opacity:.5}
-  .gm .foot{display:flex;justify-content:space-between;align-items:center;margin-top:7px;
-    padding-top:7px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted)}
-  .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--live);
-    margin-right:5px;animation:p 1.6s infinite}
-  @keyframes p{0%,100%{opacity:1}50%{opacity:.25}}
-  .foot .live{color:var(--live);font-weight:700}
+/* kpis */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--rule);
+  border:1px solid var(--rule);border-radius:var(--r);overflow:hidden;margin-bottom:16px;box-shadow:var(--sh)}
+.kpi{background:var(--panel);padding:13px 16px}
+.kpi .k{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.kpi .v{font-family:Oswald,Inter;font-weight:600;font-size:29px;line-height:1.15;margin-top:1px}
+.kpi .v small{font-size:13px;color:var(--muted)}
+.kpi .v.hot{color:var(--hot)}
 
-  /* ---------- tables ---------- */
-  .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px;padding:0 4px}
-  table{border-collapse:separate;border-spacing:0;width:100%;font-size:14px}
-  th{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
-    font-weight:700;text-align:left;padding:0 10px 8px;white-space:nowrap}
-  td{padding:9px 10px;border-top:1px solid var(--line);white-space:nowrap}
-  td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
-  tbody tr:hover td{background:var(--surface2)}
-  tr.me td{background:var(--me-soft)!important;font-weight:600}
-  .rank{font-family:"Barlow Condensed",Inter,sans-serif;font-size:19px;font-weight:700;color:var(--muted);width:34px}
-  tr:nth-child(1) .rank{color:var(--gold)}
-  .big{font-family:"Barlow Condensed",Inter,sans-serif;font-size:21px;font-weight:700}
-  .chip{display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:999px;
-    background:var(--surface2);border:1px solid var(--line2);color:var(--muted)}
-  .chip.ok{background:var(--accent-soft);border-color:transparent;color:var(--accent)}
-  .chip.no{background:var(--live-soft);border-color:transparent;color:var(--live)}
+/* tables */
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px}
+th{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;
+  text-align:left;padding:10px;background:var(--panel2);border-bottom:1px solid var(--rule);white-space:nowrap;position:sticky;top:0;z-index:3}
+td{padding:9px 10px;border-bottom:1px solid var(--rule);white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--panel2)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr.me td{background:var(--brand2)!important}
+.pos{font-family:Oswald;font-size:16px;font-weight:600;color:var(--muted);width:30px}
+tbody tr:first-child .pos{color:var(--gold)}
+.pill{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;padding:2px 8px;border-radius:5px;
+  background:var(--panel2);border:1px solid var(--rule2);color:var(--muted);text-transform:uppercase}
+.pill.ok{background:var(--brand2);border-color:transparent;color:var(--brand)}
+.pill.no{background:var(--hot2);border-color:transparent;color:var(--hot)}
+.pill.gold{background:transparent;border-color:var(--gold);color:var(--gold)}
 
-  /* ---------- pick grid ---------- */
-  .grid th.col{text-align:center;padding:0 2px 8px}
-  .grid th.col img{width:17px;height:17px;object-fit:contain;display:block;margin:0 auto}
-  .grid th.col .v{font-size:9px;color:var(--muted);line-height:1.4}
-  .grid td{text-align:center;font-size:11.5px;padding:5px 4px;font-weight:600}
-  .grid td.hit{background:var(--accent-soft);color:var(--accent)}
-  .grid td.miss{background:var(--live-soft);color:var(--live);font-weight:400}
-  .grid td.who{text-align:left;position:sticky;left:0;background:var(--surface);z-index:2;font-weight:600;font-size:13px}
-  .grid tr.me td.who{background:var(--me-soft)}
-  .grid tr:hover td.who{background:var(--surface2)}
+/* scoreboard */
+.board{display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:1px;background:var(--rule)}
+.gm{background:var(--panel);padding:10px 12px}
+.gm.live{background:linear-gradient(180deg,var(--hot2),var(--panel) 44%)}
+.tm{display:flex;align-items:center;gap:7px;padding:2px 0}
+.tm img{width:20px;height:20px;object-fit:contain;flex:none}
+.tm .ab{font-weight:600;font-size:13.5px}
+.tm .pts{margin-left:auto;font-family:Oswald;font-weight:600;font-size:16px}
+.tm.dim{opacity:.45}
+.gm .st{margin-top:6px;font-size:11px;color:var(--muted);display:flex;justify-content:space-between}
+.gm .st .l{color:var(--hot);font-weight:700}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--hot);margin-right:4px;animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
-  /* ---------- winner ---------- */
-  .champ{display:flex;align-items:center;gap:14px}
-  .champ .cup{font-size:34px;line-height:1}
-  .champ .nm{font-family:"Barlow Condensed",Inter,sans-serif;font-size:32px;font-weight:700;line-height:1.1}
+/* picks grid */
+.pg th.c{text-align:center;padding:7px 3px}
+.pg th.c img{width:16px;height:16px;object-fit:contain;display:block;margin:0 auto}
+.pg th.c .vs{font-size:8.5px;color:var(--muted);line-height:1.3}
+.pg td{text-align:center;font-size:11.5px;font-weight:600;padding:5px 4px}
+.pg td.hit{background:var(--brand2);color:var(--brand)}
+.pg td.miss{background:var(--hot2);color:var(--hot);font-weight:400}
+.pg td.who,.pg th.who{text-align:left;position:sticky;left:0;background:var(--panel);z-index:2;font-size:13px;font-weight:600}
+.pg th.who{z-index:4;background:var(--panel2)}
+.pg tr:hover td.who{background:var(--panel2)}
+.pg tr.me td.who{background:var(--brand2)}
 
-  /* ---------- manager ---------- */
-  #drop{border:1.5px dashed var(--line2);border-radius:12px;padding:30px 20px;text-align:center;
-    color:var(--muted);cursor:pointer;transition:.15s;font-size:14px}
-  #drop:hover{border-color:var(--accent);color:var(--accent)}
-  #drop.over{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
-  .ovrow{display:flex;gap:7px;align-items:center;flex-wrap:wrap;padding:7px 0;border-top:1px solid var(--line)}
-  .ovrow .lbl{min-width:168px;font-size:13px;color:var(--muted)}
-  .ovrow button{padding:4px 10px;font-size:12.5px}
-  .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
-  ul.path{margin:8px 0 0;padding-left:18px;font-size:13.5px}
-  ul.path li{margin-bottom:4px}
-  ul.path b{color:var(--ink)}
-  @media (max-width:640px){
-    .wrap{padding:16px 12px 80px}
-    section{padding:14px}
-    .brand b{font-size:22px}
-  }
+/* import */
+#drop{border:1.5px dashed var(--rule2);border-radius:var(--r);padding:34px 20px;text-align:center;cursor:pointer;color:var(--muted)}
+#drop:hover,#drop.over{border-color:var(--brand);background:var(--brand2);color:var(--brand)}
+#drop b{display:block;font-size:15px;color:var(--ink);margin-bottom:3px}
+#drop.over b{color:var(--brand)}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:16px}
+.step{background:var(--panel2);border:1px solid var(--rule);border-radius:10px;padding:11px 13px}
+.step .n{font-family:Oswald;font-size:12px;color:var(--brand);font-weight:700;letter-spacing:.08em}
+.step p{margin:3px 0 0;font-size:12.5px;color:var(--muted)}
+.rowline{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--rule)}
+.rowline .lb{min-width:180px;font-size:13px;color:var(--muted)}
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:13px 16px;border-top:1px solid var(--rule);background:var(--panel2)}
+.empty{text-align:center;padding:36px 20px;color:var(--muted)}
+.empty b{display:block;color:var(--ink);font-size:15px;margin-bottom:4px}
+.champ{display:flex;align-items:center;gap:13px}
+.champ .cup{font-size:30px}
+.champ .nm{font-family:Oswald;font-size:26px;font-weight:600;line-height:1.1}
+ul.why{margin:6px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}
+ul.why b{color:var(--ink)}
 </style>
 </head>
 <body>
+<div class="app">
 
-<header class="top"><div class="inner">
-  <div class="brand"><b>Pick'em Pool</b><span id="seasonTag">2026</span></div>
-  <div class="ctl">
-    <select id="weekSel" aria-label="Week"></select>
-    <select id="who" aria-label="Your name"><option value="">Scoring as…</option></select>
-    <button id="mgrBtn">Manager</button>
+<nav>
+  <div class="logo"><div class="mark">P</div><div><b>League Console</b><small id="seasonTag">NFL 2026</small></div></div>
+  <div class="sec">Overview</div>
+  <button class="tab on" data-v="season">Season standings</button>
+  <button class="tab" data-v="week">Week results</button>
+  <div class="sec">Manage</div>
+  <button class="tab" data-v="import">Import sheets</button>
+  <button class="tab" data-v="money">Payments</button>
+  <div class="foot" id="navFoot">—</div>
+</nav>
+
+<main>
+  <!-- SEASON -->
+  <div id="v-season">
+    <div class="head"><div><h1>Season standings</h1><p class="sub" id="seasonSub">Loading…</p></div>
+      <div class="right"><select id="hlSel" title="Highlight a row"><option value="">Highlight…</option></select></div></div>
+    <div class="kpis" id="seasonKpis"></div>
+    <div class="card"><div class="hd"><h2>Cumulative</h2><div class="r note" id="seasonNote"></div></div>
+      <div class="bd flush scroll"><table id="seasonTbl"></table></div></div>
+    <div class="card"><div class="hd"><h2>Week by week</h2></div>
+      <div class="bd flush scroll"><table id="weeksTbl"></table></div></div>
   </div>
-</div></header>
 
-<div class="wrap">
-  <div class="strip" id="strip"></div>
+  <!-- WEEK -->
+  <div id="v-week" hidden>
+    <div class="head"><div><h1 id="weekTitle">Week</h1><p class="sub" id="weekSub">Loading…</p></div>
+      <div class="right"><select id="weekSel"></select><button id="refreshBtn">Refresh</button></div></div>
+    <div class="kpis" id="weekKpis"></div>
+    <div class="card"><div class="hd"><h2>Scoreboard</h2><div class="r note" id="updTag"></div></div>
+      <div class="bd flush"><div class="board" id="board"></div></div></div>
+    <div class="card" id="winCard" hidden><div class="hd"><h2>Week winner</h2></div><div class="bd" id="winner"></div></div>
+    <div class="card"><div class="hd"><h2>Standings</h2><div class="r note" id="stSub"></div></div>
+      <div class="bd flush scroll"><table id="stTbl"></table></div></div>
+    <div class="card"><div class="hd"><h2>All picks</h2><div class="r note">Green hit · red missed</div></div>
+      <div class="bd flush scroll"><table class="pg" id="pgTbl"></table></div></div>
+  </div>
 
-  <section>
-    <p class="eyebrow">Scoreboard <span id="refreshTag" class="note" style="text-transform:none;letter-spacing:0;font-weight:400"></span></p>
-    <div class="board" id="board"></div>
-  </section>
-
-  <section id="winCard" hidden>
-    <p class="eyebrow">Result</p>
-    <div id="winner"></div>
-  </section>
-
-  <section>
-    <p class="eyebrow">Standings</p>
-    <div class="scroll"><table id="standings"></table></div>
-  </section>
-
-  <section id="pathCard">
-    <p class="eyebrow">Who can still catch you</p>
-    <div id="path" class="note">Pick your name in the top bar.</div>
-  </section>
-
-  <section id="mgr" hidden>
-    <p class="eyebrow">League manager</p>
-    <div class="ctl" style="margin-bottom:12px">
-      <input type="password" id="pass" placeholder="Manager passcode" autocomplete="off">
-      <span class="note">Saved on this device only.</span>
+  <!-- IMPORT -->
+  <div id="v-import" hidden>
+    <div class="head"><div><h1>Import sheets</h1><p class="sub">Photograph the pool sheet, drop it in, confirm what it read.</p></div>
+      <div class="right"><select id="impWeek"></select></div></div>
+    <div class="steps">
+      <div class="step"><div class="n">STEP 1</div><b>Unlock</b><p>Enter the manager passcode once per device.</p></div>
+      <div class="step"><div class="n">STEP 2</div><b>Drop photos</b><p>One or several images, whole sheet in frame.</p></div>
+      <div class="step"><div class="n">STEP 3</div><b>Confirm</b><p>Fix any misread name, then publish to the league.</p></div>
     </div>
-    <div id="drop">Drag pick-sheet photos here &nbsp;·&nbsp; or click to choose
-      <input type="file" id="file" accept="image/*" multiple hidden></div>
-    <p class="note" id="readMsg" style="margin:9px 0 0"></p>
+    <div class="card"><div class="hd"><h2>Manager access</h2><div class="r"><span class="pill" id="lockPill">locked</span></div></div>
+      <div class="bd"><div class="right" style="display:flex;gap:8px;align-items:center">
+        <input type="password" id="pass" placeholder="Manager passcode" autocomplete="off">
+        <span class="note">Stored on this device only.</span></div></div></div>
+    <div class="card"><div class="hd"><h2>Upload</h2></div><div class="bd">
+      <div id="drop"><b>Drop pick-sheet photos here</b>or click to browse · up to 6 at once
+        <input type="file" id="file" accept="image/*" multiple hidden></div>
+      <p class="note" id="readMsg" style="margin:10px 0 0"></p></div></div>
     <div id="review"></div>
-    <div class="bar">
-      <label class="note"><input type="checkbox" id="reqPaid" style="vertical-align:-2px"> Unpaid entries can't win</label>
-      <button id="save" class="primary">Save changes</button>
-      <span class="note" id="saveMsg"></span>
-    </div>
-    <p class="note" style="margin:14px 0 0">Results come from the live feed. Override a game only if the feed is wrong.</p>
-    <div id="overrides"></div>
-  </section>
+    <div class="card"><div class="hd"><h2>Entries on file</h2><div class="r note" id="entCount"></div></div>
+      <div class="bd flush scroll"><table id="entTbl"></table></div>
+      <div class="bar"><button id="addRow">Add entry manually</button>
+        <button id="saveImport" class="primary">Publish to league</button><span class="note" id="saveMsg"></span></div></div>
+    <div class="card"><div class="hd"><h2>Result overrides</h2><div class="r note">Only if the live feed is wrong</div></div>
+      <div class="bd" id="overrides"></div></div>
+  </div>
 
-  <section>
-    <p class="eyebrow">Every pick</p>
-    <div class="scroll"><table class="grid" id="grid"></table></div>
-  </section>
+  <!-- MONEY -->
+  <div id="v-money" hidden>
+    <div class="head"><div><h1>Payments</h1><p class="sub" id="moneySub">Who has paid, by week.</p></div>
+      <div class="right"><select id="moneyWeek"></select>
+        <label class="note" style="display:flex;gap:6px;align-items:center"><input type="number" id="buyin" value="10" style="width:72px"> buy-in</label></div></div>
+    <div class="kpis" id="moneyKpis"></div>
+    <div class="card"><div class="hd"><h2>This week</h2><div class="r note">Click a row to toggle paid</div></div>
+      <div class="bd flush scroll"><table id="moneyTbl"></table></div>
+      <div class="bar"><button id="allPaid">Mark all paid</button><button id="savePay" class="primary">Save</button><span class="note" id="payMsg"></span></div></div>
+    <div class="card"><div class="hd"><h2>Season totals</h2></div><div class="bd flush scroll"><table id="oweTbl"></table></div></div>
+  </div>
+</main>
 </div>
 
 <script>
-const $ = id => document.getElementById(id);
+const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
 const slug = n => String(n).toLowerCase().trim().replace(/[^a-z0-9]+/g,"-");
 
-let week = Number(new URLSearchParams(location.search).get("week") || 5);
-let scores = {games:[]}, pool = null, pending = null;
-let me = localStorage.getItem("pickem.me") || "";
-let pass = localStorage.getItem("pickem.pass") || "";
+const qs = new URLSearchParams(location.search);
+let view = qs.get("v") || "season";
+let week = Number(qs.get("week") || 5);
+let scores = {games:[]}, pool = null, season = null, pending = null;
+let hl = localStorage.getItem("pc.hl") || "";
+let pass = localStorage.getItem("pc.pass") || "";
+let buyin = Number(localStorage.getItem("pc.buyin") || 10);
 
-for (let w = 1; w <= 18; w++) {
-  const o = document.createElement("option");
-  o.value = w; o.textContent = "Week " + w;
-  $("weekSel").appendChild(o);
+["weekSel","impWeek","moneyWeek"].forEach(id => {
+  for (let w = 1; w <= 18; w++) {
+    const o = document.createElement("option"); o.value = w; o.textContent = "Week " + w; $(id).appendChild(o);
+  }
+  $(id).value = week;
+});
+$("buyin").value = buyin;
+$("pass").value = pass;
+
+document.querySelectorAll("nav button.tab").forEach(b => b.onclick = () => setView(b.dataset.v));
+function setView(v) {
+  view = v;
+  document.querySelectorAll("nav button.tab").forEach(b => b.classList.toggle("on", b.dataset.v === v));
+  ["season","week","import","money"].forEach(k => $("v-" + k).hidden = k !== v);
+  history.replaceState(null, "", `?v=${v}&week=${week}`);
+  if (v === "season") loadSeason(); else render();
+  window.scrollTo({top:0});
 }
-$("weekSel").value = week;
 
-async function load() {
+const games = () => scores.games || [];
+const winnerOf = g => (pool?.manualResults?.[g.id]) || g.winner;
+const entries = () => pool?.entries || [];
+function scoreOf(e) {
+  let c = 0, rem = 0;
+  for (const g of games()) {
+    const w = winnerOf(g), p = e.picks?.[g.id];
+    if (!w) { if (p) rem++; } else if (w !== "TIE" && p === w) c++;
+  }
+  return { correct: c, remaining: rem, max: c + rem };
+}
+const ranked = () => entries().map(e => ({ e, s: scoreOf(e) }))
+  .sort((a, b) => b.s.correct - a.s.correct || a.e.name.localeCompare(b.e.name));
+
+async function loadWeek() {
   try {
     const [s, p] = await Promise.all([
       fetch(`/api/scores?week=${week}`).then(r => r.json()),
       fetch(`/api/pool?week=${week}`).then(r => r.json())
     ]);
-    if (!s.error) scores = s;
-    if (p.error) { $("board").innerHTML = `<p class="err">${esc(p.error)}</p>`; return; }
+    if (!s.error) { scores = s; if (s.season) $("seasonTag").textContent = "NFL " + s.season; }
+    if (p.error) { $("weekSub").innerHTML = `<span class="err">${esc(p.error)}</span>`; return; }
     pool = p;
-    if (s.season) $("seasonTag").textContent = s.season;
+    $("updTag").textContent = "updated " + new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});
     render();
-    $("refreshTag").textContent = "· updated " + new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit"});
-  } catch (e) {
-    $("board").innerHTML = '<p class="err">Couldn\'t reach the server. Retrying…</p>';
-  }
+  } catch (e) { $("weekSub").innerHTML = '<span class="err">Connection problem — retrying.</span>'; }
+}
+async function loadSeason() {
+  try {
+    const s = await fetch("/api/season").then(r => r.json());
+    season = s.error ? null : s;
+    renderSeason();
+  } catch (e) { $("seasonSub").innerHTML = '<span class="err">Could not load season data.</span>'; }
 }
 
-const games = () => scores.games || [];
-const winnerOf = g => (pool?.manualResults?.[g.id]) || g.winner;
-
-function scoreOf(entry) {
-  let c = 0, rem = 0;
-  for (const g of games()) {
-    const w = winnerOf(g), p = entry.picks?.[g.id];
-    if (!w) { if (p) rem++; }
-    else if (w !== "TIE" && p === w) c++;
+/* ---------- SEASON ---------- */
+function renderSeason() {
+  if (!season || !season.players?.length) {
+    $("seasonSub").textContent = "No weeks published yet.";
+    $("seasonKpis").innerHTML = "";
+    $("seasonTbl").innerHTML = `<tbody><tr><td><div class="empty"><b>Nothing here yet</b>Import a week's sheets to start the season record.</div></td></tr></tbody>`;
+    $("weeksTbl").innerHTML = "";
+    return;
   }
-  return { correct: c, remaining: rem, max: c + rem };
+  const done = season.weeks.filter(w => w.complete).length;
+  const names = season.players.map(p => p.name);
+  if ($("hlSel").options.length !== names.length + 1)
+    $("hlSel").innerHTML = '<option value="">Highlight…</option>' + names.map(n => `<option>${esc(n)}</option>`).join("");
+  $("hlSel").value = hl;
+  $("seasonSub").textContent = `${season.players.length} players · ${season.weeks.length} week${season.weeks.length===1?"":"s"} on file · ${done} complete`;
+
+  const leader = season.players[0];
+  const mostWins = [...season.players].sort((a,b) => b.wins - a.wins)[0];
+  const unpaid = season.weeks.reduce((n,w) => n + (w.entries - w.paidCount), 0);
+  $("seasonKpis").innerHTML = [
+    ["Leader", `${esc(leader.name)}`, ""],
+    ["Top score", `${leader.total}`, ""],
+    ["Weeks won", `${mostWins.wins} <small>${esc(mostWins.name)}</small>`, ""],
+    ["Unpaid entries", `${unpaid}`, unpaid ? "hot" : ""],
+  ].map(([k,v,c]) => `<div class="kpi"><div class="k">${k}</div><div class="v ${c}">${v}</div></div>`).join("");
+
+  const ws = season.weeks.map(w => w.week);
+  $("seasonTbl").innerHTML =
+    `<thead><tr><th></th><th>Player</th><th class="n">Total</th><th class="n">Avg</th><th class="n">Weeks won</th>` +
+    ws.map(w => `<th class="n">W${w}</th>`).join("") + `</tr></thead><tbody>` +
+    season.players.map((p,i) => `<tr class="${p.name===hl?"me":""}"><td class="pos">${i+1}</td>
+      <td>${esc(p.name)}</td><td class="n num" style="font-size:16px">${p.total}</td>
+      <td class="n mono">${(p.total/Math.max(p.weeks,1)).toFixed(1)}</td>
+      <td class="n">${p.wins ? `<span class="pill gold">${p.wins}</span>` : '<span class="note">—</span>'}</td>` +
+      ws.map(w => `<td class="n mono">${p.byWeek[w] ?? "·"}</td>`).join("") + `</tr>`).join("") + `</tbody>`;
+
+  $("weeksTbl").innerHTML =
+    `<thead><tr><th>Week</th><th class="n">Entries</th><th class="n">Games</th><th>Status</th><th>Winner</th><th class="n">Paid</th><th></th></tr></thead><tbody>` +
+    season.weeks.map(w => `<tr><td><b>${esc(w.label)}</b></td><td class="n mono">${w.entries}</td>
+      <td class="n mono">${w.finals}/${w.games}</td>
+      <td>${w.complete ? '<span class="pill ok">complete</span>' : '<span class="pill">in progress</span>'}</td>
+      <td>${w.winners.length ? esc(w.winners.join(" & ")) : '<span class="note">—</span>'}</td>
+      <td class="n mono">${w.paidCount}/${w.entries}</td>
+      <td class="n"><button class="sm" data-goweek="${w.week}">Open</button></td></tr>`).join("") + `</tbody>`;
+  $("weeksTbl").querySelectorAll("button[data-goweek]").forEach(b => b.onclick = () => {
+    week = Number(b.dataset.goweek);
+    ["weekSel","impWeek","moneyWeek"].forEach(id => $(id).value = week);
+    setView("week"); loadWeek();
+  });
+  $("navFoot").textContent = `${season.players.length} players · ${season.weeks.length} weeks`;
 }
 
+/* ---------- WEEK ---------- */
 function render() {
-  const rows = (pool.entries || []).map(e => ({ e, s: scoreOf(e) }))
-    .sort((a, b) => b.s.correct - a.s.correct || a.e.name.localeCompare(b.e.name));
-  const top = rows.length ? Math.max(...rows.map(r => r.s.correct)) : 0;
-
-  const sel = $("who"), names = (pool.entries || []).map(e => e.name);
-  if (sel.options.length !== names.length + 1)
-    sel.innerHTML = '<option value="">Scoring as…</option>' + names.map(n => `<option>${esc(n)}</option>`).join("");
-  sel.value = me;
-
-  renderStrip(rows, top);
-  renderBoard();
-  renderStandings(rows, top);
-  renderPath(rows);
-  renderWinner(rows);
-  renderGrid(rows);
-  if (!$("mgr").hidden) renderManager();
-}
-
-function renderStrip(rows, top) {
-  const final = games().filter(g => winnerOf(g)).length;
+  if (!pool) return;
+  const rows = ranked();
+  const finals = games().filter(g => winnerOf(g)).length;
   const live = games().filter(g => g.state === "in").length;
-  const mine = rows.find(r => r.e.name === me);
-  const rank = mine ? rows.findIndex(r => r.e.name === me) + 1 : null;
-  const cells = [
-    ["Week", `${week}`],
-    ["Games", `${final}<small>/${games().length}</small>`],
-    ["In progress", live ? `<span style="color:var(--live)">${live}</span>` : "0"],
-    ["Entries", `${(pool.entries || []).length}`],
-  ];
-  if (mine) {
-    cells.push(["Your record", `${mine.s.correct}<small>-${final - mine.s.correct}</small>`]);
-    cells.push(["Your rank", `${rank}${rank === 1 && mine.s.correct === top ? "" : ""}`]);
-  }
-  $("strip").innerHTML = cells.map(([k, v]) =>
-    `<div class="stat"><div class="k">${k}</div><div class="v mono">${v}</div></div>`).join("");
+  $("weekTitle").textContent = pool.label || ("Week " + week);
+  $("weekSub").textContent = `${entries().length} entries · ${finals} of ${games().length} games final`;
+  $("weekKpis").innerHTML = [
+    ["Games final", `${finals}<small>/${games().length}</small>`, ""],
+    ["In progress", `${live}`, live ? "hot" : ""],
+    ["Entries", `${entries().length}`, ""],
+    ["Top score", rows.length ? `${rows[0].s.correct}` : "—", ""],
+    ["Leader", rows.length ? esc(rows[0].e.name) : "—", ""],
+  ].map(([k,v,c]) => `<div class="kpi"><div class="k">${k}</div><div class="v ${c}">${v}</div></div>`).join("");
+
+  renderBoard(); renderStandings(rows); renderWinner(rows); renderPicks(rows);
+  renderEntries(); renderOverrides(); renderMoney(rows);
 }
 
 function renderBoard() {
-  if (!games().length) { $("board").innerHTML = '<p class="note">No games found for this week.</p>'; return; }
+  if (!games().length) { $("board").innerHTML = '<div class="empty"><b>No games</b>Nothing scheduled for this week.</div>'; return; }
   $("board").innerHTML = games().map(g => {
     const w = winnerOf(g);
-    const row = (ab, name, logo, pts, rec) => {
-      const lost = w && w !== "TIE" && w !== ab;
-      return `<div class="tm${lost ? " lost" : ""}">
-        ${logo ? `<img src="${esc(logo)}" alt="" loading="lazy">` : ""}
-        <span class="ab">${esc(ab)}</span>
-        <span class="rec">${esc(rec || "")}</span>
-        <span class="pts mono">${g.state === "pre" ? "" : pts}</span></div>`;
-    };
-    const foot = g.state === "in"
-      ? `<span class="live"><span class="dot"></span>Q${g.period} ${esc(g.clock)}</span>`
-      : g.final ? `<span>${w === "TIE" ? "Final · tie" : "Final"}</span>`
-                : `<span>${esc(g.detail)}</span>`;
-    const extra = !g.final && g.weather ? `<span>${esc(g.weather.text)} ${g.weather.temp}°</span>` : "";
-    return `<div class="gm${g.state === "in" ? " livegame" : ""}">
-      ${row(g.away, g.awayName, g.awayLogo, g.awayScore, g.awayRecord)}
-      ${row(g.home, g.homeName, g.homeLogo, g.homeScore, g.homeRecord)}
-      <div class="foot">${foot}${extra}</div></div>`;
+    const tm = (ab, logo, pts) => `<div class="tm${w && w!=="TIE" && w!==ab ? " dim":""}">
+      ${logo?`<img src="${esc(logo)}" alt="" loading="lazy">`:""}<span class="ab">${esc(ab)}</span>
+      <span class="pts">${g.state==="pre"?"":pts}</span></div>`;
+    const st = g.state === "in"
+      ? `<span class="l"><span class="dot"></span>Q${g.period} ${esc(g.clock)}</span>`
+      : `<span>${g.final ? (w==="TIE"?"Final · tie":"Final") : esc(g.detail)}</span>`;
+    return `<div class="gm${g.state==="in"?" live":""}">${tm(g.away,g.awayLogo,g.awayScore)}${tm(g.home,g.homeLogo,g.homeScore)}
+      <div class="st">${st}${!g.final && g.weather ? `<span>${esc(g.weather.text)} ${g.weather.temp}°</span>`:""}</div></div>`;
   }).join("");
 }
 
-function renderStandings(rows, top) {
-  $("standings").innerHTML =
-    `<thead><tr><th></th><th>Name</th><th class="n">Correct</th><th class="n">Left</th>
-     <th class="n">Max</th><th class="n">TB</th><th>Paid</th><th>Status</th></tr></thead><tbody>` +
-    rows.map((r, i) => `<tr class="${r.e.name === me ? "me" : ""}" data-name="${esc(r.e.name)}">
-      <td class="rank">${i + 1}</td>
-      <td>${esc(r.e.name)}</td>
-      <td class="n big">${r.s.correct}</td>
-      <td class="n mono">${r.s.remaining}</td>
-      <td class="n mono">${r.s.max}</td>
-      <td class="n mono">${r.e.tiebreaker ?? "—"}</td>
-      <td><span class="chip ${r.e.paid ? "ok" : "no"}">${r.e.paid ? "paid" : "unpaid"}</span></td>
-      <td>${r.s.max < top ? '<span class="chip no">eliminated</span>'
-          : i === 0 ? '<span class="chip ok">leading</span>' : ""}</td></tr>`).join("") + "</tbody>";
-}
-
-function renderPath(rows) {
-  const mine = (pool.entries || []).find(e => e.name === me);
-  if (!mine) { $("path").innerHTML = '<p class="note">Pick your name in the top bar.</p>'; return; }
-  const my = scoreOf(mine);
-  const open = games().filter(g => !winnerOf(g));
-  if (!open.length) {
-    $("path").innerHTML = `<p class="note">All games final. You finished ${my.correct}-${games().length - my.correct}.</p>`;
-    return;
-  }
-  const threats = (pool.entries || []).filter(e => e.name !== me).map(e => {
-    const s = scoreOf(e);
-    const diffs = open.filter(g => e.picks?.[g.id] && mine.picks?.[g.id] && e.picks[g.id] !== mine.picks[g.id]);
-    return { e, s, diffs, pass: s.correct + diffs.length > my.correct, tie: s.correct + diffs.length === my.correct };
-  }).filter(t => t.pass || t.tie).sort((a, b) => b.s.correct - a.s.correct || a.diffs.length - b.diffs.length);
-
-  $("path").innerHTML = threats.length
-    ? `<p class="note">You're at <b style="color:var(--ink)">${my.correct}</b> with ${open.length} game${open.length > 1 ? "s" : ""} open.</p><ul class="path">` +
-      threats.map(t => `<li>${esc(t.e.name)} (${t.s.correct}) ${t.pass ? "passes" : "ties"} you only if ` +
-        (t.diffs.map(g => `<b>${esc(t.e.picks[g.id])}</b>`).join(", ") || "nothing changes") +
-        ` win${t.diffs.length === 1 ? "s" : ""}</li>`).join("") + "</ul>"
-    : `<p class="note" style="color:var(--accent);font-weight:600">Nobody can catch you.</p>`;
+function renderStandings(rows) {
+  if (!rows.length) { $("stTbl").innerHTML = `<tbody><tr><td><div class="empty"><b>No entries for this week</b>Use Import sheets to add them.</div></td></tr></tbody>`; return; }
+  const top = Math.max(...rows.map(r => r.s.correct));
+  $("stSub").textContent = `${rows.filter(r => r.s.max >= top).length} still alive`;
+  $("stTbl").innerHTML = `<thead><tr><th></th><th>Player</th><th class="n">Correct</th><th class="n">Open</th>
+    <th class="n">Max</th><th class="n">TB</th><th>Paid</th><th>Status</th></tr></thead><tbody>` +
+    rows.map((r,i) => `<tr class="${r.e.name===hl?"me":""}"><td class="pos">${i+1}</td><td>${esc(r.e.name)}</td>
+      <td class="n num" style="font-size:17px">${r.s.correct}</td><td class="n mono">${r.s.remaining}</td>
+      <td class="n mono">${r.s.max}</td><td class="n mono">${r.e.tiebreaker ?? "—"}</td>
+      <td><span class="pill ${r.e.paid?"ok":"no"}">${r.e.paid?"paid":"unpaid"}</span></td>
+      <td>${r.s.max<top?'<span class="pill no">out</span>':(i===0?'<span class="pill ok">lead</span>':"")}</td></tr>`).join("") + `</tbody>`;
 }
 
 function renderWinner(rows) {
@@ -351,111 +403,132 @@ function renderWinner(rows) {
   const top = Math.max(...field.map(r => r.s.correct));
   const tied = field.filter(r => r.s.correct === top);
   if (open.length) {
-    $("winner").innerHTML = `<p class="note">${open.length} game${open.length > 1 ? "s" : ""} left · leader${tied.length > 1 ? "s" : ""}
-      <b style="color:var(--ink)">${tied.map(r => esc(r.e.name)).join(", ")}</b> at ${top}</p>`;
-    return;
+    $("winner").innerHTML = `<p class="note">${open.length} game${open.length>1?"s":""} still open · leader${tied.length>1?"s":""}
+      <b style="color:var(--ink)">${tied.map(r=>esc(r.e.name)).join(", ")}</b> at ${top}</p>`; return;
   }
   if (tied.length === 1) {
-    $("winner").innerHTML = `<div class="champ"><span class="cup">&#127942;</span><div>
-      <div class="nm">${esc(tied[0].e.name)}</div>
-      <div class="note">Wins at ${top}-${games().length - top} · no tiebreaker needed</div></div></div>`;
-    return;
+    $("winner").innerHTML = `<div class="champ"><span class="cup">&#127942;</span><div><div class="nm">${esc(tied[0].e.name)}</div>
+      <div class="note">${top}-${games().length-top} · outright, no tiebreaker</div></div></div>`; return;
   }
   const tb = games().find(g => g.id === pool.tiebreakerGameId) ||
-             [...games()].sort((a, b) => new Date(b.kickoff) - new Date(a.kickoff))[0];
+    [...games()].sort((a,b) => new Date(b.kickoff)-new Date(a.kickoff))[0];
   const actual = tb && tb.final ? tb.homeScore + tb.awayScore : null;
   if (actual == null) {
-    $("winner").innerHTML = `<div class="champ"><span class="cup">&#9203;</span><div>
-      <div class="nm">${tied.length}-way tie at ${top}</div>
-      <div class="note">${tied.map(r => `${esc(r.e.name)} (${r.e.tiebreaker ?? "—"})`).join(" · ")} — waiting on ${esc(tb ? tb.away + " at " + tb.home : "the tiebreaker")}</div></div></div>`;
-    return;
+    $("winner").innerHTML = `<div class="champ"><span class="cup">&#9203;</span><div><div class="nm">${tied.length}-way tie at ${top}</div>
+      <div class="note">Settles on ${esc(tb?tb.away+" at "+tb.home:"the last game")}</div></div></div>`; return;
   }
-  const scored = tied.map(r => ({ r, d: Math.abs((r.e.tiebreaker ?? 9999) - actual) })).sort((a, b) => a.d - b.d);
-  const champs = scored.filter(x => x.d === scored[0].d);
+  const sc = tied.map(r => ({r, d: Math.abs((r.e.tiebreaker ?? 9999) - actual)})).sort((a,b)=>a.d-b.d);
+  const champs = sc.filter(x => x.d === sc[0].d);
   $("winner").innerHTML = `<div class="champ"><span class="cup">&#127942;</span><div>
-    <div class="nm">${champs.map(c => esc(c.r.e.name)).join(" &amp; ")}</div>
-    <div class="note">${champs.length > 1 ? "Split" : "Wins"} at ${top}-${games().length - top} ·
-      ${esc(tb.away)} at ${esc(tb.home)} totalled ${actual}</div></div></div>
-    <p class="note" style="margin-top:10px">${scored.map(x => `${esc(x.r.e.name)} guessed ${x.r.e.tiebreaker ?? "—"} (off by ${x.d})`).join(" · ")}</p>`;
+    <div class="nm">${champs.map(c=>esc(c.r.e.name)).join(" &amp; ")}</div>
+    <div class="note">${champs.length>1?"Split":"Wins"} at ${top}-${games().length-top} · tiebreaker game totalled ${actual}</div></div></div>
+    <ul class="why">${sc.map(x=>`<li><b>${esc(x.r.e.name)}</b> guessed ${x.r.e.tiebreaker ?? "—"} · off by ${x.d}</li>`).join("")}</ul>`;
 }
 
-function renderGrid(rows) {
+function renderPicks(rows) {
   const gs = games();
-  $("grid").innerHTML =
-    `<thead><tr><th class="who"></th>${gs.map(g => `<th class="col">
-      ${g.awayLogo ? `<img src="${esc(g.awayLogo)}" alt="${esc(g.away)}" loading="lazy">` : esc(g.away)}
-      <div class="v">at</div>
-      ${g.homeLogo ? `<img src="${esc(g.homeLogo)}" alt="${esc(g.home)}" loading="lazy">` : esc(g.home)}
-     </th>`).join("")}<th class="n">TB</th></tr></thead><tbody>` +
-    rows.map(r => `<tr class="${r.e.name === me ? "me" : ""}"><td class="who">${esc(r.e.name)}</td>` +
-      gs.map(g => {
-        const p = r.e.picks?.[g.id] || "", w = winnerOf(g);
-        const cls = !w || !p || w === "TIE" ? "" : (p === w ? "hit" : "miss");
-        return `<td class="${cls}">${esc(p)}</td>`;
-      }).join("") + `<td class="n mono">${r.e.tiebreaker ?? ""}</td></tr>`).join("") + "</tbody>";
+  if (!rows.length || !gs.length) { $("pgTbl").innerHTML = ""; return; }
+  $("pgTbl").innerHTML = `<thead><tr><th class="who">Player</th>` +
+    gs.map(g => `<th class="c">${g.awayLogo?`<img src="${esc(g.awayLogo)}" alt="${esc(g.away)}">`:esc(g.away)}
+      <div class="vs">at</div>${g.homeLogo?`<img src="${esc(g.homeLogo)}" alt="${esc(g.home)}">`:esc(g.home)}</th>`).join("") +
+    `<th class="n">TB</th></tr></thead><tbody>` +
+    rows.map(r => `<tr class="${r.e.name===hl?"me":""}"><td class="who">${esc(r.e.name)}</td>` +
+      gs.map(g => { const p = r.e.picks?.[g.id]||"", w = winnerOf(g);
+        const c = !w||!p||w==="TIE" ? "" : (p===w?"hit":"miss");
+        return `<td class="${c}">${esc(p)}</td>`; }).join("") +
+      `<td class="n mono">${r.e.tiebreaker ?? ""}</td></tr>`).join("") + `</tbody>`;
 }
 
-function renderManager() {
-  $("reqPaid").checked = !!pool.requirePaid;
+/* ---------- IMPORT ---------- */
+function renderEntries() {
+  const es = entries();
+  $("entCount").textContent = `${es.length} on file for week ${week}`;
+  $("lockPill").textContent = pass ? "unlocked" : "locked";
+  $("lockPill").className = "pill " + (pass ? "ok" : "no");
+  if (!es.length) { $("entTbl").innerHTML = `<tbody><tr><td><div class="empty"><b>No entries yet</b>Drop in sheet photos above, or add rows by hand.</div></td></tr></tbody>`; return; }
+  $("entTbl").innerHTML = `<thead><tr><th>Player</th><th class="n">Picks read</th><th class="n">Tiebreaker</th><th>Paid</th><th></th></tr></thead><tbody>` +
+    es.map((e,i) => `<tr><td><input type="text" data-ei="${i}" data-f="name" value="${esc(e.name)}" style="width:150px;padding:4px 8px"></td>
+      <td class="n mono">${Object.keys(e.picks||{}).length}/${games().length}</td>
+      <td class="n"><input type="number" data-ei="${i}" data-f="tiebreaker" value="${e.tiebreaker ?? ""}" style="width:76px;padding:4px 6px"></td>
+      <td><button class="sm ${e.paid?"on":""}" data-paid="${i}">${e.paid?"paid":"unpaid"}</button></td>
+      <td class="n"><button class="sm" data-del="${i}">Remove</button></td></tr>`).join("") + `</tbody>`;
+  $("entTbl").querySelectorAll("input[data-ei]").forEach(inp => inp.oninput = () => {
+    const e = entries()[+inp.dataset.ei];
+    if (inp.dataset.f === "name") e.name = inp.value;
+    else e.tiebreaker = inp.value === "" ? null : Number(inp.value);
+  });
+  $("entTbl").querySelectorAll("button[data-paid]").forEach(b => b.onclick = () => {
+    const e = entries()[+b.dataset.paid]; e.paid = !e.paid; render();
+  });
+  $("entTbl").querySelectorAll("button[data-del]").forEach(b => b.onclick = () => {
+    pool.entries.splice(+b.dataset.del, 1); render();
+  });
+}
+
+function renderOverrides() {
   $("overrides").innerHTML = games().map(g => {
     const o = pool.manualResults?.[g.id] || "";
-    const b = (v, label) => `<button data-ov="${g.id}" data-v="${esc(v)}" class="${o === v ? "on" : ""}">${esc(label)}</button>`;
-    return `<div class="ovrow"><span class="lbl">${esc(g.away)} at ${esc(g.home)}${g.final ? " · feed says " + esc(g.winner || "—") : ""}</span>
-      ${b(g.away, g.away)}${b(g.home, g.home)}${b("TIE", "Tie")}${o ? `<button data-ov="${g.id}" data-v="">clear</button>` : ""}</div>`;
-  }).join("");
-  $("overrides").querySelectorAll("button[data-ov]").forEach(btn => btn.onclick = () => {
+    const b = (v,l) => `<button class="sm ${o===v?"on":""}" data-ov="${g.id}" data-v="${esc(v)}">${esc(l)}</button>`;
+    return `<div class="rowline"><span class="lb">${esc(g.away)} at ${esc(g.home)}${g.final?` · feed: ${esc(g.winner||"—")}`:""}</span>
+      ${b(g.away,g.away)}${b(g.home,g.home)}${b("TIE","Tie")}${o?`<button class="sm" data-ov="${g.id}" data-v="">clear</button>`:""}</div>`;
+  }).join("") || '<p class="note">No games loaded.</p>';
+  $("overrides").querySelectorAll("button[data-ov]").forEach(b => b.onclick = () => {
     pool.manualResults = pool.manualResults || {};
-    if (btn.dataset.v) pool.manualResults[btn.dataset.ov] = btn.dataset.v;
-    else delete pool.manualResults[btn.dataset.ov];
+    if (b.dataset.v) pool.manualResults[b.dataset.ov] = b.dataset.v; else delete pool.manualResults[b.dataset.ov];
     render();
-  });
-  $("standings").querySelectorAll("tr[data-name]").forEach(tr => {
-    tr.style.cursor = "pointer";
-    tr.title = "Click to toggle paid";
-    tr.onclick = () => {
-      const e = pool.entries.find(x => x.name === tr.dataset.name);
-      if (e) { e.paid = !e.paid; render(); }
-    };
   });
 }
 
-$("weekSel").onchange = e => { week = Number(e.target.value); history.replaceState(null, "", `?week=${week}`); load(); };
-$("who").onchange = e => { me = e.target.value; localStorage.setItem("pickem.me", me); render(); };
-$("mgrBtn").onclick = () => {
-  const m = $("mgr"); m.hidden = !m.hidden;
-  $("pass").value = pass;
-  if (!m.hidden) { if (pool) renderManager(); m.scrollIntoView({behavior:"smooth", block:"start"}); }
-};
-$("pass").oninput = e => { pass = e.target.value; localStorage.setItem("pickem.pass", pass); };
-$("reqPaid").onchange = e => { pool.requirePaid = e.target.checked; render(); };
+/* ---------- MONEY ---------- */
+function renderMoney(rows) {
+  const paid = entries().filter(e => e.paid).length, n = entries().length;
+  $("moneyKpis").innerHTML = [
+    ["Collected", `$${paid*buyin}`, ""],
+    ["Outstanding", `$${(n-paid)*buyin}`, (n-paid)?"hot":""],
+    ["Paid", `${paid}<small>/${n}</small>`, ""],
+    ["Pot", `$${n*buyin}`, ""],
+  ].map(([k,v,c]) => `<div class="kpi"><div class="k">${k}</div><div class="v ${c}">${v}</div></div>`).join("");
+  $("moneyTbl").innerHTML = n ? `<thead><tr><th>Player</th><th>Status</th><th class="n">Owes</th></tr></thead><tbody>` +
+    rows.map(r => `<tr data-pay="${esc(r.e.name)}" style="cursor:pointer"><td>${esc(r.e.name)}</td>
+      <td><span class="pill ${r.e.paid?"ok":"no"}">${r.e.paid?"paid":"unpaid"}</span></td>
+      <td class="n mono">${r.e.paid ? "—" : "$"+buyin}</td></tr>`).join("") + `</tbody>`
+    : `<tbody><tr><td><div class="empty"><b>No entries</b>Import this week's sheets first.</div></td></tr></tbody>`;
+  $("moneyTbl").querySelectorAll("tr[data-pay]").forEach(tr => tr.onclick = () => {
+    const e = entries().find(x => x.name === tr.dataset.pay); if (e) { e.paid = !e.paid; render(); }
+  });
+  if (season?.players?.length) {
+    $("oweTbl").innerHTML = `<thead><tr><th>Player</th><th class="n">Weeks entered</th><th class="n">Unpaid weeks</th><th class="n">Owes</th></tr></thead><tbody>` +
+      season.players.map(p => `<tr><td>${esc(p.name)}</td><td class="n mono">${p.weeks}</td>
+        <td class="n mono">${p.unpaid}</td><td class="n mono">${p.unpaid?`$${p.unpaid*buyin}`:"—"}</td></tr>`).join("") + `</tbody>`;
+  }
+}
 
+/* ---------- import actions ---------- */
 const drop = $("drop");
 drop.onclick = () => $("file").click();
 ["dragenter","dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
 ["dragleave","drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
-drop.addEventListener("drop", e => readFiles(Array.from(e.dataTransfer.files || [])));
-$("file").onchange = e => readFiles(Array.from(e.target.files || []));
+drop.addEventListener("drop", e => readFiles(Array.from(e.dataTransfer.files||[])));
+$("file").onchange = e => readFiles(Array.from(e.target.files||[]));
 
 async function readFiles(files) {
-  files = files.filter(f => f.type.startsWith("image/")).slice(0, 6);
+  files = files.filter(f => f.type.startsWith("image/")).slice(0,6);
   if (!files.length) return;
   if (!pass) { $("readMsg").innerHTML = '<span class="err">Enter the manager passcode first.</span>'; return; }
-  $("readMsg").textContent = `Reading ${files.length} image${files.length > 1 ? "s" : ""}…`;
-  const images = await Promise.all(files.map(f => new Promise((res, rej) => {
+  $("readMsg").textContent = `Reading ${files.length} image${files.length>1?"s":""}…`;
+  const images = await Promise.all(files.map(f => new Promise((res,rej) => {
     const fr = new FileReader();
-    fr.onload = () => res({ media_type: f.type, data: fr.result.split(",")[1] });
+    fr.onload = () => res({media_type:f.type, data:fr.result.split(",")[1]});
     fr.onerror = rej; fr.readAsDataURL(f);
   })));
   try {
-    const r = await fetch("/api/read-sheet", {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-admin-key": pass },
-      body: JSON.stringify({ images, games: games().map(g => ({ id: g.id, away: g.away, home: g.home })) })
-    });
+    const r = await fetch("/api/read-sheet", {method:"POST",
+      headers:{"content-type":"application/json","x-admin-key":pass},
+      body: JSON.stringify({images, games: games().map(g=>({id:g.id,away:g.away,home:g.home}))})});
     const out = await r.json();
-    if (!r.ok) { $("readMsg").innerHTML = `<span class="err">${esc(out.error || "Failed")}</span>`; return; }
+    if (!r.ok) { $("readMsg").innerHTML = `<span class="err">${esc(out.error||"Failed")}</span>`; return; }
     pending = out.entries || [];
-    $("readMsg").textContent = `Read ${pending.length} entries — check the names, then add them.`;
+    $("readMsg").textContent = `Read ${pending.length} entries — confirm below.`;
     renderReview();
   } catch (e) { $("readMsg").innerHTML = '<span class="err">Upload failed.</span>'; }
 }
@@ -463,46 +536,67 @@ async function readFiles(files) {
 function renderReview() {
   if (!pending?.length) { $("review").innerHTML = ""; return; }
   const gs = games();
-  $("review").innerHTML = `<div class="scroll" style="margin-top:12px"><table class="grid"><thead><tr><th class="who">Name</th>` +
-    gs.map(g => `<th class="col">${esc(g.away)}<div class="v">at</div>${esc(g.home)}</th>`).join("") +
+  const missing = pending.filter(p => Object.keys(p.picks||{}).length < gs.length).length;
+  $("review").innerHTML = `<div class="card"><div class="hd"><h2>Confirm what was read</h2>
+      <div class="r note">${pending.length} rows${missing?` · ${missing} with gaps`:""}</div></div>
+    <div class="bd flush scroll"><table class="pg"><thead><tr><th class="who">Player</th>` +
+    gs.map(g => `<th class="c">${esc(g.away)}<div class="vs">at</div>${esc(g.home)}</th>`).join("") +
     `<th class="n">TB</th></tr></thead><tbody>` +
-    pending.map((p, i) => `<tr><td class="who"><input type="text" data-i="${i}" value="${esc(p.name)}" style="width:118px;padding:4px 7px"></td>` +
-      gs.map(g => `<td>${esc(p.picks?.[g.id] || "?")}</td>`).join("") +
+    pending.map((p,i) => `<tr><td class="who"><input type="text" data-i="${i}" value="${esc(p.name)}" style="width:128px;padding:4px 7px"></td>` +
+      gs.map(g => { const v = p.picks?.[g.id]; return `<td class="${v?"":"miss"}">${esc(v||"?")}</td>`; }).join("") +
       `<td class="n mono">${p.tiebreaker ?? "?"}</td></tr>`).join("") + `</tbody></table></div>
-      <div class="bar"><button class="primary" id="merge">Add these entries</button><button id="toss">Discard</button></div>`;
+    <div class="bar"><button class="primary" id="merge">Accept ${pending.length} entries</button>
+      <button id="toss">Discard</button><span class="note">Nothing is published until you hit Publish below.</span></div></div>`;
   $("review").querySelectorAll("input[data-i]").forEach(inp => inp.oninput = () => { pending[+inp.dataset.i].name = inp.value; });
   $("merge").onclick = () => {
     pool.entries = pool.entries || [];
     for (const p of pending) {
       if (!p.name.trim()) continue;
       const i = pool.entries.findIndex(e => slug(e.name) === slug(p.name));
-      if (i >= 0) pool.entries[i] = { ...pool.entries[i], picks: p.picks, tiebreaker: p.tiebreaker };
+      if (i >= 0) pool.entries[i] = {...pool.entries[i], picks:p.picks, tiebreaker:p.tiebreaker};
       else pool.entries.push(p);
     }
-    pending = null; $("review").innerHTML = "";
-    $("readMsg").textContent = "Added. Hit Save changes to publish.";
+    pending = null; $("review").innerHTML = ""; $("readMsg").textContent = "Merged. Publish to make it live.";
     render();
   };
   $("toss").onclick = () => { pending = null; $("review").innerHTML = ""; $("readMsg").textContent = ""; };
 }
 
-$("save").onclick = async () => {
-  if (!pass) { $("saveMsg").innerHTML = '<span class="err">Passcode required.</span>'; return; }
-  $("saveMsg").textContent = "Saving…";
-  try {
-    const r = await fetch(`/api/pool?week=${week}`, {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-admin-key": pass },
-      body: JSON.stringify(pool)
-    });
-    const out = await r.json();
-    if (r.ok) { pool = out; $("saveMsg").textContent = "Saved."; render(); }
-    else $("saveMsg").innerHTML = `<span class="err">${esc(out.error)}</span>`;
-  } catch (e) { $("saveMsg").innerHTML = '<span class="err">Save failed.</span>'; }
+$("addRow").onclick = () => {
+  pool.entries = pool.entries || [];
+  pool.entries.push({name:"New entry", picks:{}, tiebreaker:null, paid:false});
+  render();
 };
+$("allPaid").onclick = () => { entries().forEach(e => e.paid = true); render(); };
 
-load();
-setInterval(() => { if (!document.hidden) load(); }, 30000);
+async function save(msgEl) {
+  if (!pass) { $(msgEl).innerHTML = '<span class="err">Manager passcode required.</span>'; return; }
+  $(msgEl).textContent = "Saving…";
+  try {
+    const r = await fetch(`/api/pool?week=${week}`, {method:"POST",
+      headers:{"content-type":"application/json","x-admin-key":pass}, body: JSON.stringify(pool)});
+    const out = await r.json();
+    if (r.ok) { pool = out; $(msgEl).textContent = "Published."; render(); loadSeason(); }
+    else $(msgEl).innerHTML = `<span class="err">${esc(out.error)}</span>`;
+  } catch (e) { $(msgEl).innerHTML = '<span class="err">Save failed.</span>'; }
+}
+$("saveImport").onclick = () => save("saveMsg");
+$("savePay").onclick = () => save("payMsg");
+
+$("pass").oninput = e => { pass = e.target.value; localStorage.setItem("pc.pass", pass); renderEntries(); };
+$("hlSel").onchange = e => { hl = e.target.value; localStorage.setItem("pc.hl", hl); renderSeason(); render(); };
+$("buyin").oninput = e => { buyin = Number(e.target.value||0); localStorage.setItem("pc.buyin", buyin); render(); };
+$("refreshBtn").onclick = loadWeek;
+["weekSel","impWeek","moneyWeek"].forEach(id => $(id).onchange = e => {
+  week = Number(e.target.value);
+  ["weekSel","impWeek","moneyWeek"].forEach(i2 => $(i2).value = week);
+  history.replaceState(null,"",`?v=${view}&week=${week}`);
+  loadWeek();
+});
+
+setView(view);
+loadWeek(); loadSeason();
+setInterval(() => { if (!document.hidden) loadWeek(); }, 30000);
 </script>
 </body>
 </html>
