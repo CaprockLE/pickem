@@ -204,7 +204,15 @@ ul.why b{color:var(--ink)}
     <div class="card"><div class="hd"><h2>Upload</h2></div><div class="bd">
       <div id="drop"><b>Drop pick-sheet photos here</b>or click to browse · up to 6 at once
         <input type="file" id="file" accept="image/*" multiple hidden></div>
-      <p class="note" id="readMsg" style="margin:10px 0 0"></p></div></div>
+      <p class="note" id="readMsg" style="margin:10px 0 0"></p>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--rule)">
+        <p class="note" style="margin:0 0 7px"><b style="color:var(--ink)">Or paste rows</b> — one player per line:
+          name, then one team code per game in sheet order, then the tiebreaker.
+          Tabs, commas or spaces all work, so a copied spreadsheet block pastes straight in.</p>
+        <textarea id="paste" rows="5" placeholder="RYAN DAL JAX HOU CIN NE MIN NYJ PIT WAS DEN CHI DET SEA ATL LAR 51"
+          style="width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;padding:9px 11px;border:1px solid var(--rule2);border-radius:9px;background:var(--panel);color:inherit"></textarea>
+        <div style="margin-top:8px"><button id="parseBtn">Parse rows</button></div>
+      </div></div></div>
     <div id="review"></div>
     <div class="card"><div class="hd"><h2>Entries on file</h2><div class="r note" id="entCount"></div></div>
       <div class="bd flush scroll"><table id="entTbl"></table></div>
@@ -561,6 +569,41 @@ function renderReview() {
   };
   $("toss").onclick = () => { pending = null; $("review").innerHTML = ""; $("readMsg").textContent = ""; };
 }
+
+$("parseBtn").onclick = () => {
+  const text = $("paste").value.trim();
+  if (!text) { $("readMsg").innerHTML = '<span class="err">Nothing pasted.</span>'; return; }
+  const gs = games();
+  if (!gs.length) { $("readMsg").innerHTML = '<span class="err">Load a week with games first.</span>'; return; }
+  const codeMap = new Map();          // team code -> game id
+  gs.forEach(g => { codeMap.set(g.away.toUpperCase(), g.id); codeMap.set(g.home.toUpperCase(), g.id); });
+  const alias = {JAC:"JAX", WSH:"WAS", LA:"LAR", LAR:"LAR", NOR:"NO", TAM:"TB", KAN:"KC", SFO:"SF", GNB:"GB", NWE:"NE"};
+  const out = [], bad = [];
+  for (const line of text.split(/\r?\n/)) {
+    const raw = line.trim(); if (!raw) continue;
+    const parts = raw.split(/[\t,;]+|\s{1,}/).map(x => x.trim()).filter(Boolean);
+    if (parts.length < 2) continue;
+    let tiebreaker = null;
+    if (/^\d+$/.test(parts[parts.length - 1])) tiebreaker = Number(parts.pop());
+    const picks = {};
+    const nameBits = [];
+    for (const tok of parts) {
+      const up = tok.toUpperCase().replace(/[^A-Z]/g, "");
+      const code = alias[up] || up;
+      if (codeMap.has(code)) picks[codeMap.get(code)] = gs.find(g => g.id === codeMap.get(code))
+        .away.toUpperCase() === code ? gs.find(g => g.id === codeMap.get(code)).away
+        : gs.find(g => g.id === codeMap.get(code)).home;
+      else nameBits.push(tok);
+    }
+    const name = nameBits.join(" ").trim();
+    if (!name) { bad.push(raw.slice(0, 24)); continue; }
+    out.push({ name, picks, tiebreaker, paid: false });
+  }
+  if (!out.length) { $("readMsg").innerHTML = '<span class="err">Couldn\'t read any rows.</span>'; return; }
+  pending = out;
+  $("readMsg").textContent = `Parsed ${out.length} rows` + (bad.length ? ` · skipped ${bad.length}` : "") + " — confirm below.";
+  renderReview();
+};
 
 $("addRow").onclick = () => {
   pool.entries = pool.entries || [];
