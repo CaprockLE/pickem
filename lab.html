@@ -112,7 +112,7 @@ button.sm{padding:2px 5px;font-size:12px;border-radius:6px;line-height:1.5;min-h
 
 /* card depth */
 .gm{transition:transform .12s ease, box-shadow .12s ease}
-.gm:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(5,10,18,.18);z-index:2}
+.gm:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(5,10,18,.16);z-index:2}
 
 /* view transitions */
 @keyframes viewIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
@@ -220,7 +220,12 @@ tbody tr:first-child .pos{color:var(--gold)}
 /* scoreboard */
 .board{display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:1px;background:var(--rule)}
 .gm{background:var(--panel);padding:10px 12px}
-.gm.live{background:linear-gradient(180deg,var(--hot2),var(--panel) 44%)}
+.gm.live{border-color:transparent;
+  background:linear-gradient(var(--panel2),var(--panel2)) padding-box,
+             linear-gradient(120deg,var(--live),var(--miss),var(--brand),var(--live)) border-box;
+  background-size:auto,300% 300%;border:1px solid transparent;animation:livering 5s linear infinite}
+@keyframes livering{0%{background-position:0 0,0% 50%}100%{background-position:0 0,300% 50%}}
+@media (prefers-reduced-motion:reduce){.gm.live{animation:none}}
 .tm{display:flex;align-items:center;gap:7px;padding:2px 0}
 .tm img{width:20px;height:20px;object-fit:contain;flex:none}
 .tm .ab{font-weight:600;font-size:13.5px}
@@ -234,13 +239,18 @@ tbody tr:first-child .pos{color:var(--gold)}
 #errBar button{background:transparent;border-color:currentColor;color:inherit;margin-left:auto;flex:none}
 #shareWrap{position:fixed;inset:0;background:rgba(5,9,14,.72);z-index:60;display:grid;place-items:center;padding:20px}
 #shareWrap[hidden]{display:none}
-.board.ticker{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
-.board.ticker .gm{display:flex;align-items:center;gap:10px;padding:7px 12px}
-.board.ticker .tm{padding:0;gap:5px}
-.board.ticker .tm img{width:17px;height:17px}
-.board.ticker .tm .ab{font-size:12.5px}
-.board.ticker .tm .pts{font-size:14px;margin-left:4px}
-.board.ticker .st{margin:0 0 0 auto;font-size:10.5px;white-space:nowrap}
+/* ticker: one line per game, each team in its own aligned column */
+.board.ticker{grid-template-columns:repeat(auto-fill,minmax(372px,1fr))}
+.board.ticker .gm{display:grid;grid-template-columns:1fr 1fr auto;align-items:center;
+  column-gap:18px;padding:9px 14px}
+.board.ticker .tm{padding:0;gap:7px;min-width:0}
+.board.ticker .tm img{width:18px;height:18px}
+.board.ticker .tm .ab{font-size:13px;letter-spacing:.01em}
+.board.ticker .tm .rec{display:none}
+.board.ticker .tm .pts{font-size:15px;margin-left:auto;padding-left:10px}
+.board.ticker .tm:first-of-type{border-right:1px solid var(--rule);padding-right:18px;margin-right:-4px}
+.board.ticker .st{grid-column:3;margin:0;font-size:10.5px;white-space:nowrap;justify-content:flex-end;gap:10px}
+.board.ticker .st .odds{margin-left:0}
 .gm .st .l{color:var(--hot);font-weight:700}
 .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--hot);margin-right:4px;animation:pulse 1.6s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
@@ -272,8 +282,6 @@ th.tbcol .vs{font-size:8.5px;color:var(--muted);letter-spacing:.02em;margin-top:
 .pg td.tied::after{content:"=";position:absolute;top:1px;right:3px;font-size:8px;opacity:.75}
 .slot{grid-column:1/-1;background:var(--panel2);padding:7px 12px;font-size:10.5px;font-weight:700;
   letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
-.gm.tiegame{box-shadow:inset 0 0 0 1px var(--hot)}
-.gm .st .tiefinal{color:var(--hot);font-weight:700}
 .gm .st .odds{margin-left:auto;color:var(--muted);font-variant-numeric:tabular-nums}
 .tm .ball{font-size:9px;color:var(--brand);margin-left:4px;line-height:1}
 .tm .ball.rz{color:var(--hot)}
@@ -349,6 +357,8 @@ ul.why b{color:var(--ink)}
   .kpi .v{font-size:24px}
   .board{grid-template-columns:1fr 1fr}
   .board.ticker{grid-template-columns:1fr}
+  .board.ticker .gm{column-gap:12px;padding:8px 11px}
+  .board.ticker .tm:first-of-type{padding-right:12px;margin-right:0}
   .gm{padding:9px 10px}
   .tm .ab{font-size:12.5px}
   .tm .rec{display:none}
@@ -548,7 +558,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
   <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
-    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">lab-47 · 2026-10-12 02:43 UTC</div>
+    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">lab-49 · 2026-10-12 02:43 UTC</div>
     <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
@@ -689,7 +699,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
 </div>
 
 <script>
-const BUILD = "lab-47 (2026-10-12 02:43 UTC)";
+const BUILD = "lab-49 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -1345,10 +1355,9 @@ function renderBoard() {
     })() : "";
     const st = g.state === "in"
       ? `<span class="l"><span class="dot"></span>Q${g.period} ${esc(g.clock)}</span>${liveOdds}`
-      : w === "TIE" ? `<span class="tiefinal">Final · Tie — No Credit</span>`
-      : `<span>${g.final ? "Final · " + shortSlot(g.kickoff) : esc(g.detail)}</span>`;
+      : `<span>${g.final ? (w === "TIE" ? "Final · Tie · " : "Final · ") + shortSlot(g.kickoff) : esc(g.detail)}</span>`;
     const flashed = bumped.has(g.id + ":" + g.away) || bumped.has(g.id + ":" + g.home);
-    return `<div class="gm${g.state==="in"?" live":""}${w==="TIE"?" tiegame":""}${flashed?" flash":""}">${tm(g.away,logoFor(g,"away"),g.awayScore)}${tm(g.home,logoFor(g,"home"),g.homeScore)}
+    return `<div class="gm${g.state==="in"?" live":""}${flashed?" flash":""}">${tm(g.away,logoFor(g,"away"),g.awayScore)}${tm(g.home,logoFor(g,"home"),g.homeScore)}
       <div class="st">${st}${!g.final && g.weather ? `<span>${esc(g.weather.text)} ${g.weather.temp}°</span>`:""}</div></div>`;
   }).join("");
 }
