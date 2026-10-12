@@ -229,15 +229,10 @@ ul.why b{color:var(--ink)}
           <option value="avg">Rank by Average</option>
           <option value="wins">Rank by Weeks Won</option>
         </select>
-        <label class="note" id="minWeeksWrap" hidden style="display:flex;gap:5px;align-items:center"
-          title="With average ranking, someone who played one lucky week can top the table. This sets how many weeks a player needs before they're ranked; everyone else is listed below.">
-          Needs <input type="number" id="minWeeks" min="1" value="1" style="width:56px;padding:5px 6px"> weeks to qualify</label>
         <select id="hlSel" title="Highlight a row"><option value="">Highlight…</option></select></div></div>
     <div class="kpis" id="seasonKpis"></div>
     <div class="card"><div class="hd"><h2>Cumulative</h2><div class="r note" id="seasonNote"></div></div>
       <div class="bd flush scroll"><table id="seasonTbl"></table></div></div>
-    <div class="card"><div class="hd"><h2>Records &amp; Streaks</h2><div class="r note">Across every published week</div></div>
-      <div class="bd" id="records"></div></div>
     <div class="card"><div class="hd"><h2>Week by Week</h2></div>
       <div class="bd flush scroll"><table id="weeksTbl"></table></div></div>
   </div>
@@ -377,7 +372,6 @@ let week = Number(qs.get("week") || 0);   // 0 = ask the feed what week it is
 let scores = {games:[]}, pool = null, season = null, pending = null;
 let hl = localStorage.getItem("pc.hl") || "";
 let sortBy = localStorage.getItem("pc.sort") || "total";
-let minWeeks = Number(localStorage.getItem("pc.minw") || 1);
 let pass = localStorage.getItem("pc.pass") || "";
 let buyin = Number(localStorage.getItem("pc.buyin") || 10);
 let roster = [];
@@ -542,9 +536,7 @@ function renderSeason() {
       <p class="note" style="max-width:380px;margin:6px auto 14px">Season standings build themselves as weeks get published.
         Head to Import sheets, drop in this week's photos, and publish &mdash; totals, records and streaks appear here automatically.</p>
       <button onclick="setView('import')">Go to Import Sheets</button></div></td></tr></tbody>`;
-    renderRecords(players, ws);
-
-  $("weeksTbl").innerHTML = "";
+    $("weeksTbl").innerHTML = "";
     return;
   }
   const done = season.weeks.filter(w => w.complete).length;
@@ -565,21 +557,15 @@ function renderSeason() {
   ].map(([k,v,c]) => `<div class="kpi"><div class="k">${k}</div><div class="v ${c}">${v}</div></div>`).join("");
 
   $("sortSel").value = sortBy;
-  $("minWeeks").value = minWeeks;
-  $("minWeeksWrap").hidden = sortBy !== "avg";     // only relevant to averages
+
   const avg = p => p.total / Math.max(p.weeks, 1);
-  const qualifies = p => p.weeks >= minWeeks;
   const rankKey = (a, b) =>
     sortBy === "avg" ? avg(b) - avg(a) || b.total - a.total
     : sortBy === "wins" ? b.wins - a.wins || avg(b) - avg(a)
     : b.total - a.total || avg(b) - avg(a);
-  const players = [...season.players].sort((a, b) =>
-    (qualifies(b) - qualifies(a)) || rankKey(a, b));
-  const shortCount = season.players.filter(p => !qualifies(p)).length;
-  $("seasonNote").textContent = [
-    sortBy === "avg" ? "Average is per week entered" : sortBy === "wins" ? "Ranked by weeks won" : "Ranked by total correct",
-    shortCount ? `${shortCount} under ${minWeeks} weeks, listed last` : ""
-  ].filter(Boolean).join(" · ");
+  const players = [...season.players].sort(rankKey);
+  $("seasonNote").textContent = sortBy === "avg" ? "Average is per week entered"
+    : sortBy === "wins" ? "Ranked by weeks won" : "Ranked by total correct";
   const ws = season.weeks.map(w => w.week);
   $("seasonTbl").innerHTML =
     `<thead><tr><th></th><th>Player</th><th class="n">Total</th><th class="n">Avg</th><th class="n">Weeks</th><th class="n">Won</th>` +
@@ -588,11 +574,9 @@ function renderSeason() {
       <td>${esc(tc(p.name))}</td>
       <td class="n num" style="font-size:16px">${p.total}</td>
       <td class="n mono">${avg(p).toFixed(1)}</td>
-      <td class="n mono">${p.weeks}/${season.weeks.length}${qualifies(p)?"":' <span class="pill">short</span>'}</td>
+      <td class="n mono">${p.weeks}/${season.weeks.length}</td>
       <td class="n">${p.wins ? `<span class="pill gold">${p.wins}</span>` : '<span class="note">—</span>'}</td>` +
       ws.map(w => `<td class="n mono">${p.byWeek[w] ?? "·"}</td>`).join("") + `</tr>`).join("") + `</tbody>`;
-
-  renderRecords(players, ws);
 
   $("weeksTbl").innerHTML =
     `<thead><tr><th>Week</th><th class="n">Entries</th><th class="n">Games</th><th>Status</th><th>Winner</th><th class="n">Paid</th><th></th></tr></thead><tbody>` +
@@ -608,53 +592,6 @@ function renderSeason() {
     setView("week"); loadWeek();
   });
   $("navFoot").textContent = `${season.players.length} players · ${season.weeks.length} weeks`;
-}
-
-function renderRecords(players, ws) {
-  if (!players.length || !ws.length) { $("records").innerHTML = '<p class="note">Publish a week to start the record book.</p>'; return; }
-  const avgOf = w => {
-    const vals = players.map(p => p.byWeek[w]).filter(v => v != null);
-    return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
-  };
-  const weekAvg = Object.fromEntries(ws.map(w => [w, avgOf(w)]));
-
-  let best = null, worst = null;
-  for (const p of players) for (const w of ws) {
-    const v = p.byWeek[w]; if (v == null) continue;
-    if (!best || v > best.v) best = { n:p.name, w, v };
-    if (!worst || v < worst.v) worst = { n:p.name, w, v };
-  }
-  // longest run of weeks finishing above the pool average
-  const streaks = players.map(p => {
-    let run = 0, bestRun = 0, cur = 0;
-    for (const w of ws) {
-      const v = p.byWeek[w];
-      if (v != null && v > weekAvg[w]) { cur++; bestRun = Math.max(bestRun, cur); } else cur = 0;
-      run = cur;
-    }
-    return { name:p.name, bestRun, live:run };
-  }).sort((a,b) => b.bestRun - a.bestRun || b.live - a.live);
-  const hot = streaks.filter(s => s.live > 0).sort((a,b)=>b.live-a.live)[0];
-  const steady = players.map(p => {
-    const vals = ws.map(w => p.byWeek[w]).filter(v => v != null);
-    if (vals.length < 2) return null;
-    const m = vals.reduce((a,b)=>a+b,0)/vals.length;
-    const sd = Math.sqrt(vals.reduce((a,b)=>a+(b-m)**2,0)/vals.length);
-    return { name:p.name, sd, m };
-  }).filter(Boolean).sort((a,b) => a.sd - b.sd)[0];
-  const mostWins = [...players].sort((a,b)=>b.wins-a.wins)[0];
-
-  const card = (k, v, sub) => `<div class="kpi" style="border:1px solid var(--rule);border-radius:10px">
-    <div class="k">${k}</div><div class="v" style="font-size:22px">${v}</div>
-    <div class="note" style="font-size:11.5px">${sub}</div></div>`;
-  $("records").innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px">` +
-    card("Best week", `${esc(tc(best.n))}`, `${best.v} correct in week ${best.w}`) +
-    card("Roughest week", `${esc(tc(worst.n))}`, `${worst.v} correct in week ${worst.w}`) +
-    card("Longest hot streak", `${streaks[0].bestRun} wk`, `${esc(tc(streaks[0].name))} above the pool average`) +
-    card("Currently hot", hot ? `${esc(tc(hot.name))}` : "—", hot ? `${hot.live} week${hot.live>1?"s":""} running` : "nobody above average last week") +
-    card("Most weeks won", `${mostWins.wins}`, `${esc(tc(mostWins.name))}`) +
-    (steady ? card("Most consistent", `${esc(tc(steady.name))}`, `±${steady.sd.toFixed(1)} around ${steady.m.toFixed(1)}`) : "") +
-    `</div>`;
 }
 
 /* ---------- HEAD TO HEAD ---------- */
@@ -722,7 +659,14 @@ function render() {
     ["In progress", `${live}`, live ? "hot" : ""],
     ["Entries", `${entries().length}`, ""],
     ["Top score", rows.length ? `${rows[0].s.correct}` : "—", ""],
-    ["Leader", rows.length ? esc(tc(rows[0].e.name)) : "—", ""],
+    ["Leader", (() => {
+      if (!rows.length) return "—";
+      const best = rows[0].s.correct;
+      const tiedTop = rows.filter(r => r.s.correct === best);
+      if (tiedTop.length === 1) return esc(tc(tiedTop[0].e.name));
+      if (tiedTop.length <= 3) return `<span style="font-size:19px">${tiedTop.map(r => esc(tc(r.e.name))).join(", ")}</span>`;
+      return `<span style="font-size:19px">${tiedTop.length} tied</span>`;
+    })(), ""],
   ].map(([k,v,c]) => `<div class="kpi"><div class="k">${k}</div><div class="v ${c}">${v}</div></div>`).join("");
 
   step("board", () => renderBoard());
@@ -780,7 +724,7 @@ function renderBoard() {
       <span class="pts">${g.state==="pre"?"":pts}</span></div>`;
     const st = g.state === "in"
       ? `<span class="l"><span class="dot"></span>Q${g.period} ${esc(g.clock)}</span>`
-      : w === "TIE" ? `<span class="tiefinal">Final · tie — no credit</span>`
+      : w === "TIE" ? `<span class="tiefinal">Final · Tie — No Credit</span>`
       : `<span>${g.final ? "Final · " + shortSlot(g.kickoff) : esc(g.detail)}</span>`;
     return `<div class="gm${g.state==="in"?" live":""}${w==="TIE"?" tiegame":""}">${tm(g.away,g.awayLogo,g.awayScore)}${tm(g.home,g.homeLogo,g.homeScore)}
       <div class="st">${st}${!g.final && g.weather ? `<span>${esc(g.weather.text)} ${g.weather.temp}°</span>`:""}</div></div>`;
@@ -835,8 +779,9 @@ function renderStandings(rows) {
       const status = o.complete
         ? (isChamp ? '<span class="pill gold">&#127942; winner</span>'
           : wasTied ? '<span class="pill">lost tiebreaker</span>' : "")
-        : (r.s.max < top ? '<span class="pill no">out</span>'
-          : (i === 0 ? '<span class="pill ok">lead</span>' : ""));
+        : (r.s.max < top ? '<span class="pill no">Out</span>'
+          : r.s.max === top && r.s.correct < top ? '<span class="pill">Tie Only</span>'
+          : r.s.correct === top ? '<span class="pill ok">Lead</span>' : "");
       return `<tr class="${r.e.name===hl?"me":""}${isChamp?" winrow":""}"><td class="pos">${i+1}</td><td>${esc(tc(r.e.name))}</td>
       <td class="n num" style="font-size:17px">${r.s.correct}</td><td class="n mono">${r.s.remaining}</td>
       <td class="n mono">${r.s.max}</td><td class="tbcol mono">${r.e.tiebreaker ?? "—"}</td>` +
@@ -879,49 +824,55 @@ function renderWinner(rows) {
 function renderScenarios(rows) {
   const open = games().filter(g => !winnerOf(g))
     .sort((a,b) => new Date(a.kickoff) - new Date(b.kickoff));
-  if (!rows.length || !open.length || open.length > 4) {
-    $("scenarioCard").hidden = true; return;
-  }
+  if (!rows.length || !open.length || open.length > 3) { $("scenarioCard").hidden = true; return; }
   $("scenarioCard").hidden = false;
-  const combos = [[]];
-  for (const g of open) {
-    const next = [];
-    for (const c of combos) { next.push([...c, g.away]); next.push([...c, g.home]); }
-    combos.length = 0; combos.push(...next);
-  }
-  $("scenarioSub").textContent = `${open.length} game${open.length>1?"s":""} left · ${combos.length} outcomes`;
 
   const field = rows.filter(r => !pool.requirePaid || r.e.paid);
   const tbg = tbGame();
-  const body = combos.map(combo => {
-    const hypo = Object.fromEntries(open.map((g,i) => [g.id, combo[i]]));
+  const tbKnown = tbg && tbg.final ? tbg.homeScore + tbg.awayScore : null;
+
+  // every way the remaining games can land
+  let combos = [[]];
+  for (const g of open) combos = combos.flatMap(c => [[...c, g.away], [...c, g.home]]);
+
+  const outcomes = combos.map(combo => {
+    const hypo = Object.fromEntries(open.map((g, i) => [g.id, combo[i]]));
     const scored = field.map(r => {
       let c = r.s.correct;
       for (const g of open) if (r.e.picks?.[g.id] === hypo[g.id]) c++;
       return { name: r.e.name, c, tb: r.e.tiebreaker };
     });
     const top = Math.max(...scored.map(x => x.c));
-    let winners = scored.filter(x => x.c === top);
-    let how = "";
-    if (winners.length > 1 && tbg) {
-      // if the tiebreaker game is one of the unplayed ones we can't know its total
-      const known = tbg.final ? tbg.homeScore + tbg.awayScore : null;
-      if (known != null) {
-        const d = winners.map(w => ({ ...w, d: Math.abs((w.tb ?? 9999) - known) })).sort((a,b)=>a.d-b.d);
+    let winners = scored.filter(x => x.c === top), note = "";
+    if (winners.length > 1) {
+      if (tbKnown != null) {
+        const d = winners.map(w => ({ ...w, d: Math.abs((w.tb ?? 9999) - tbKnown) })).sort((a,b) => a.d - b.d);
         winners = d.filter(x => x.d === d[0].d);
-        how = ` · on tiebreaker (${known})`;
-      } else how = " · tiebreaker still to come";
+        note = winners.length > 1 ? "splits the pot" : `wins on the tiebreaker (${tbKnown})`;
+      } else note = `${winners.length} would tie at ${top}, settled by the tiebreaker`;
     }
-    return { combo, top, winners, how };
+    return { combo, top, winners, note };
   });
 
-  $("scenarioTbl").innerHTML =
-    `<thead><tr>${open.map(g => `<th>${esc(g.away)} / ${esc(g.home)}</th>`).join("")}
-      <th class="n">Top</th><th>Takes the Week</th></tr></thead><tbody>` +
-    body.map(b => `<tr>${b.combo.map(t => `<td><b>${esc(t)}</b></td>`).join("")}
-      <td class="n num">${b.top}</td>
-      <td>${b.winners.map(w => `${esc(tc(w.name))}${hl && w.name===hl ? " \u2605" : ""}`).join(", ")}<span class="note">${b.how}</span></td></tr>`).join("") +
-    `</tbody>`;
+  const teamName = ab => {
+    const g = open.find(x => x.away === ab || x.home === ab);
+    return g ? (g.away === ab ? g.awayName : g.homeName) || ab : ab;
+  };
+  const condition = combo => combo.map(teamName).join(" and ") + (combo.length > 1 ? " win" : " wins");
+
+  $("scenarioSub").textContent = open.length === 1
+    ? `One game left: ${open[0].awayName} at ${open[0].homeName}`
+    : `${open.length} games left`;
+
+  $("scenarioTbl").innerHTML = `<thead><tr><th style="width:45%">If…</th><th>Then</th></tr></thead><tbody>` +
+    outcomes.map(o => {
+      const names = o.winners.map(w => `<b>${esc(tc(w.name))}</b>${hl && w.name === hl ? " &#9733;" : ""}`);
+      const who = names.length === 1
+        ? `${names[0]} takes the week at ${o.top}`
+        : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]} finish level at ${o.top}`;
+      return `<tr><td style="white-space:normal">${esc(condition(o.combo))}</td>
+        <td style="white-space:normal">${who}${o.note ? ` <span class="note">— ${esc(o.note)}</span>` : ""}</td></tr>`;
+    }).join("") + `</tbody>`;
 }
 
 function renderPicks(rows) {
@@ -944,8 +895,7 @@ function renderPicks(rows) {
     shown.map(r => `<tr class="${r.e.name===hl?"me":""}"><td class="who">${esc(tc(r.e.name))}</td>` +
       gs.map(g => { const p = r.e.picks?.[g.id]||"", w = winnerOf(g);
         const c = !w||!p ? "" : (w==="TIE" ? "miss tied" : (p===w?"hit":"miss"));
-        const col = !p ? "" : p === g.home ? g.homeColor : p === g.away ? g.awayColor : "";
-        return `<td class="${c}" style="${col?`box-shadow:inset 3px 0 0 ${esc(col)}`:""}" ${w==="TIE"&&p?'title="Tie — counts as a loss"':""}>${esc(p)}</td>`; }).join("") +
+        return `<td class="${c}" ${w==="TIE"&&p?'title="Tie — counts as a loss"':""}>${esc(p)}</td>`; }).join("") +
       `<td class="tbcol mono">${r.e.tiebreaker ?? "—"}</td></tr>`).join("") + `</tbody>`;
 }
 
@@ -1303,7 +1253,6 @@ $("saveImport").onclick = () => save("saveMsg");
 $("savePay").onclick = () => save("payMsg");
 
 $("pass").oninput = e => { pass = e.target.value; localStorage.setItem("pc.pass", pass); applyRole(); renderEntries(); };
-$("minWeeks").oninput = e => { minWeeks = Math.max(1, Number(e.target.value||1)); localStorage.setItem("pc.minw", minWeeks); renderSeason(); };
 $("picksFilter").oninput = () => { if (pool) renderPicks(ranked()); };
 $("h2hA").onchange = renderH2H; $("h2hB").onchange = renderH2H;
 $("sortSel").onchange = e => { sortBy = e.target.value; localStorage.setItem("pc.sort", sortBy); renderSeason(); };
