@@ -30,11 +30,15 @@
 *,*::before,*::after{box-sizing:inherit}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;font-size:14.5px;line-height:1.55;-webkit-font-smoothing:antialiased}
 .mono{font-variant-numeric:tabular-nums}
-/* house style: title case throughout, caps reserved for tiny structural labels */
-nav, h1, h2, th, td, button, select, .pill, .kpi .k, .kpi .v, .brand,
-.champ .nm, .rank, .pos, #drop b, .step b, .empty b, .note, .sub
+/* house style: Title Case on every label, heading, button and column */
+nav button.tab, nav .logo b, h1, h2, th, button, select, .pill, .kpi .k, .kpi .v,
+.champ .nm, #drop b, .step b, .empty b, .eyebrow, .brand, .slot, option
+  {text-transform:capitalize}
+/* running sentences stay sentences; codes and the tiny "at" keep their own case */
+.note, .sub, p, summary, textarea, input, .step p, .empty p, ul.why, ul.path,
+.pg td, .pg th.c, .vs, .gm, .tm, td.mono, .mono, #drop
   {text-transform:none}
-.eyebrow, .kpi .k, .step .n, .slot{text-transform:uppercase;letter-spacing:.11em}
+.eyebrow, .step .n, .slot{letter-spacing:.11em;text-transform:uppercase}
 h1{letter-spacing:.005em}
 h2{letter-spacing:.02em}
 th{letter-spacing:.03em}
@@ -198,27 +202,27 @@ ul.why b{color:var(--ink)}
 <nav>
   <div class="logo"><div class="mark">P</div><div><b>League Console</b><small id="seasonTag">NFL 2026</small></div></div>
   <div class="sec">Overview</div>
-  <button class="tab on" data-v="season">Season standings</button>
-  <button class="tab" data-v="week">Week results</button>
-  <button class="tab" data-v="picks">All picks</button>
-  <button class="tab" data-v="h2h">Head to head</button>
+  <button class="tab on" data-v="season">Season Standings</button>
+  <button class="tab" data-v="week">Week Results</button>
+  <button class="tab" data-v="picks">All Picks</button>
+  <button class="tab" data-v="h2h">Head to Head</button>
   <div class="sec" id="mgrSec" hidden>Manage</div>
-  <button class="tab" data-v="import" id="tabImport" hidden>Import sheets</button>
+  <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
-    <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / dark</button>
-    <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager sign-in</button></div>
+    <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
+    <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
 
 <main>
   <!-- SEASON -->
   <div id="v-season">
-    <div class="head"><div><h1>Season standings</h1><p class="sub" id="seasonSub">Loading…</p></div>
+    <div class="head"><div><h1>Season Standings</h1><p class="sub" id="seasonSub">Loading…</p></div>
       <div class="right">
         <select id="sortSel" title="Rank by">
-          <option value="total">Rank by total</option>
-          <option value="avg">Rank by average</option>
-          <option value="wins">Rank by weeks won</option>
+          <option value="total">Rank by Total</option>
+          <option value="avg">Rank by Average</option>
+          <option value="wins">Rank by Weeks Won</option>
         </select>
         <label class="note" style="display:flex;gap:5px;align-items:center" title="Players under this many weeks are listed below the ranked group">
           min <input type="number" id="minWeeks" min="1" value="1" style="width:56px;padding:5px 6px"> wks</label>
@@ -226,21 +230,21 @@ ul.why b{color:var(--ink)}
     <div class="kpis" id="seasonKpis"></div>
     <div class="card"><div class="hd"><h2>Cumulative</h2><div class="r note" id="seasonNote"></div></div>
       <div class="bd flush scroll"><table id="seasonTbl"></table></div></div>
-    <div class="card"><div class="hd"><h2>Records &amp; streaks</h2><div class="r note">Across every published week</div></div>
+    <div class="card"><div class="hd"><h2>Records &amp; Streaks</h2><div class="r note">Across every published week</div></div>
       <div class="bd" id="records"></div></div>
-    <div class="card"><div class="hd"><h2>Week by week</h2></div>
+    <div class="card"><div class="hd"><h2>Week by Week</h2></div>
       <div class="bd flush scroll"><table id="weeksTbl"></table></div></div>
   </div>
 
   <!-- WEEK -->
   <div id="v-week" hidden>
     <div class="head"><div><h1 id="weekTitle">Week</h1><p class="sub" id="weekSub">Loading…</p></div>
-      <div class="right"><select id="weekSel"></select><button id="shareBtn">Share card</button><button id="refreshBtn">Refresh</button></div></div>
+      <div class="right"><select id="weekSel"></select><button id="shareBtn">Share Card</button><button id="refreshBtn">Refresh</button></div></div>
     <div class="kpis" id="weekKpis"></div>
     <div class="card"><div class="hd"><h2>Scoreboard</h2><div class="r"><button id="boardView" class="sm">Ticker</button><span class="note" id="updTag"></span></div></div>
       <div class="bd flush"><div class="board" id="board"></div></div></div>
     <div class="card" id="winCard" hidden><div class="hd"><h2>Week winner</h2></div><div class="bd" id="winner"></div></div>
-    <div class="card" id="scenarioCard" hidden><div class="hd"><h2>What's still in play</h2>
+    <div class="card" id="scenarioCard" hidden><div class="hd"><h2>What's Still in Play</h2>
       <div class="r note" id="scenarioSub"></div></div>
       <div class="bd flush scroll"><table id="scenarioTbl"></table></div></div>
     <div class="card"><div class="hd"><h2>Standings</h2><div class="r note" id="stSub"></div></div>
@@ -249,7 +253,7 @@ ul.why b{color:var(--ink)}
 
   <!-- ALL PICKS -->
   <div id="v-picks" hidden>
-    <div class="head"><div><h1>All picks</h1><p class="sub" id="picksSub">Every entry side by side.</p></div>
+    <div class="head"><div><h1>All Picks</h1><p class="sub" id="picksSub">Every entry side by side.</p></div>
       <div class="right"><input type="text" id="picksFilter" placeholder="Filter player" style="width:150px">
         <select id="picksWeek"></select></div></div>
     <div class="card"><div class="hd"><h2>Grid</h2><div class="r note">Green hit · red missed · ties count as a loss for everyone</div></div>
@@ -258,25 +262,25 @@ ul.why b{color:var(--ink)}
 
   <!-- HEAD TO HEAD -->
   <div id="v-h2h" hidden>
-    <div class="head"><div><h1>Head to head</h1><p class="sub">Compare any two players.</p></div>
+    <div class="head"><div><h1>Head to Head</h1><p class="sub">Compare any two players.</p></div>
       <div class="right"><select id="h2hA"></select><span class="note">vs</span><select id="h2hB"></select></div></div>
     <div class="kpis" id="h2hKpis"></div>
-    <div class="card"><div class="hd"><h2>Week by week</h2></div>
+    <div class="card"><div class="hd"><h2>Week by Week</h2></div>
       <div class="bd flush scroll"><table id="h2hTbl"></table></div></div>
-    <div class="card"><div class="hd"><h2>Where they split</h2><div class="r note" id="h2hSplitSub">Current week</div></div>
+    <div class="card"><div class="hd"><h2>Where They Split</h2><div class="r note" id="h2hSplitSub">Current week</div></div>
       <div class="bd flush scroll"><table id="h2hGames"></table></div></div>
   </div>
 
   <!-- IMPORT -->
   <div id="v-import" hidden>
-    <div class="head"><div><h1>Import sheets</h1><p class="sub">Photograph the pool sheet, drop it in, confirm what it read.</p></div>
+    <div class="head"><div><h1>Import Sheets</h1><p class="sub">Photograph the pool sheet, drop it in, confirm what it read.</p></div>
       <div class="right"><select id="impWeek"></select></div></div>
     <div class="steps">
       <div class="step"><div class="n">STEP 1</div><b>Unlock</b><p>Enter the manager passcode once per device.</p></div>
       <div class="step"><div class="n">STEP 2</div><b>Drop photos</b><p>One or several images, whole sheet in frame.</p></div>
       <div class="step"><div class="n">STEP 3</div><b>Confirm</b><p>Fix any misread name, then publish to the league.</p></div>
     </div>
-    <div class="card"><div class="hd"><h2>Manager access</h2><div class="r"><span class="pill" id="lockPill">locked</span></div></div>
+    <div class="card"><div class="hd"><h2>Manager Access</h2><div class="r"><span class="pill" id="lockPill">locked</span></div></div>
       <div class="bd"><div class="right" style="display:flex;gap:8px;align-items:center">
         <input type="password" id="pass" placeholder="Manager passcode" autocomplete="off">
         <span class="note">Stored on this device only.</span></div></div></div>
@@ -302,16 +306,16 @@ ul.why b{color:var(--ink)}
         <div class="ctl" style="display:flex;gap:8px;flex-wrap:wrap">
           <input type="text" id="rosterNew" placeholder="Add a player" style="width:170px">
           <button id="rosterAdd">Add</button>
-          <button id="rosterFromWeek">Pull names from this week</button>
-          <button id="rosterSave" class="primary">Save roster</button>
+          <button id="rosterFromWeek">Pull Names from This Week</button>
+          <button id="rosterSave" class="primary">Save Roster</button>
           <span class="note" id="rosterMsg"></span>
         </div></div></div>
-    <div class="card"><div class="hd"><h2>Entries on file</h2><div class="r note" id="entCount"></div></div>
+    <div class="card"><div class="hd"><h2>Entries on File</h2><div class="r note" id="entCount"></div></div>
       <div class="bd" id="missingBox" hidden style="padding-bottom:0"></div>
       <div class="bd flush scroll"><table id="entTbl"></table></div>
-      <div class="bar"><button id="addRow">Add entry manually</button>
-        <button id="saveImport" class="primary">Publish to league</button><span class="note" id="saveMsg"></span></div></div>
-    <div class="card"><div class="hd"><h2>Result overrides</h2><div class="r note">Rarely needed</div></div>
+      <div class="bar"><button id="addRow">Add Entry Manually</button>
+        <button id="saveImport" class="primary">Publish to League</button><span class="note" id="saveMsg"></span></div></div>
+    <div class="card"><div class="hd"><h2>Result Overrides</h2><div class="r note">Rarely needed</div></div>
       <div class="bd"><p class="note" style="margin:0 0 10px">Winners come from the live feed automatically. Set an override only when the
         league scores a game differently than the scoreboard does &mdash; a suspended or postponed game your pool rules a certain way,
         a tie your pool awards to one side, or a feed error. An override replaces the feed result for everyone.</p>
@@ -324,22 +328,22 @@ ul.why b{color:var(--ink)}
       <div class="right"><select id="moneyWeek"></select>
         <label class="note" style="display:flex;gap:6px;align-items:center"><input type="number" id="buyin" value="10" style="width:72px"> buy-in</label></div></div>
     <div class="kpis" id="moneyKpis"></div>
-    <div class="card"><div class="hd"><h2>This week</h2><div class="r note">Click a row to toggle paid</div></div>
+    <div class="card"><div class="hd"><h2>This Week</h2><div class="r note">Click a row to toggle paid</div></div>
       <div class="bd flush scroll"><table id="moneyTbl"></table></div>
-      <div class="bar"><button id="allPaid">Mark all paid</button><button id="savePay" class="primary">Save</button><span class="note" id="payMsg"></span></div></div>
-    <div class="card"><div class="hd"><h2>Season totals</h2></div><div class="bd flush scroll"><table id="oweTbl"></table></div></div>
+      <div class="bar"><button id="allPaid">Mark All Paid</button><button id="savePay" class="primary">Save</button><span class="note" id="payMsg"></span></div></div>
+    <div class="card"><div class="hd"><h2>Season Totals</h2></div><div class="bd flush scroll"><table id="oweTbl"></table></div></div>
   </div>
 </main>
 </div>
 
 <div id="shareWrap" hidden>
   <div class="card" id="shareBox" style="max-width:560px;width:100%;margin:0">
-    <div class="hd"><h2>Share card</h2><div class="r">
-      <select id="shareMode"><option value="open">Start of week</option><option value="final">Results</option></select>
+    <div class="hd"><h2>Share Card</h2><div class="r">
+      <select id="shareMode"><option value="open">Start of Week</option><option value="final">Results</option></select>
       <button id="shareClose">Close</button></div></div>
     <div class="bd"><canvas id="shareCanvas" style="width:100%;border-radius:10px;border:1px solid var(--rule)"></canvas>
-      <div class="bar" style="margin:12px -16px -16px"><button id="shareDl" class="primary">Download image</button>
-        <button id="shareCopy">Copy image</button><span class="note" id="shareMsg"></span></div></div>
+      <div class="bar" style="margin:12px -16px -16px"><button id="shareDl" class="primary">Download Image</button>
+        <button id="shareCopy">Copy Image</button><span class="note" id="shareMsg"></span></div></div>
   </div>
 </div>
 
@@ -373,7 +377,7 @@ $("pass").value = pass;
 function applyRole() {
   const on = !!pass;
   ["mgrSec","tabImport","tabMoney"].forEach(id => $(id).hidden = !on);
-  $("unlockBtn").textContent = on ? "Sign out of manager" : "Manager sign-in";
+  $("unlockBtn").textContent = on ? "Sign Out of Manager" : "Manager Sign-In";
   $("lockPill") && ($("lockPill").textContent = on ? "unlocked" : "locked",
                     $("lockPill").className = "pill " + (on ? "ok" : "no"));
   if (!on && (view === "import" || view === "money")) setView("season");
@@ -392,7 +396,7 @@ function applyRole() {
 
 $("unlockBtn").onclick = () => {
   if (pass) {
-    if (!confirm("Sign out of manager mode on this device?")) return;
+    if (!confirm("Sign Out of Manager mode on this device?")) return;
     pass = ""; localStorage.removeItem("pc.pass"); $("pass").value = "";
     applyRole(); setView("season"); return;
   }
@@ -506,7 +510,7 @@ function renderSeason() {
       <b style="font-size:17px">No weeks published yet</b>
       <p class="note" style="max-width:380px;margin:6px auto 14px">Season standings build themselves as weeks get published.
         Head to Import sheets, drop in this week's photos, and publish &mdash; totals, records and streaks appear here automatically.</p>
-      <button onclick="setView('import')">Go to Import sheets</button></div></td></tr></tbody>`;
+      <button onclick="setView('import')">Go to Import Sheets</button></div></td></tr></tbody>`;
     renderRecords(players, ws);
 
   $("weeksTbl").innerHTML = "";
@@ -546,11 +550,10 @@ function renderSeason() {
   ].filter(Boolean).join(" · ");
   const ws = season.weeks.map(w => w.week);
   $("seasonTbl").innerHTML =
-    `<thead><tr><th></th><th>Player</th><th>Form</th><th class="n">Total</th><th class="n">Avg</th><th class="n">Weeks</th><th class="n">Won</th>` +
+    `<thead><tr><th></th><th>Player</th><th class="n">Total</th><th class="n">Avg</th><th class="n">Weeks</th><th class="n">Won</th>` +
     ws.map(w => `<th class="n">W${w}</th>`).join("") + `</tr></thead><tbody>` +
     players.map((p,i) => `<tr class="${p.name===hl?"me":""}"><td class="pos">${i+1}</td>
-      <td>${esc(tc(p.name))} ${movement(p, ws)}</td>
-      <td>${sparkline(p, ws)}</td>
+      <td>${esc(tc(p.name))}</td>
       <td class="n num" style="font-size:16px">${p.total}</td>
       <td class="n mono">${avg(p).toFixed(1)}</td>
       <td class="n mono">${p.weeks}/${season.weeks.length}${qualifies(p)?"":' <span class="pill">short</span>'}</td>
@@ -573,37 +576,6 @@ function renderSeason() {
     setView("week"); loadWeek();
   });
   $("navFoot").textContent = `${season.players.length} players · ${season.weeks.length} weeks`;
-}
-
-// tiny inline chart of a player's weekly scores
-function sparkline(p, ws) {
-  const vals = ws.map(w => p.byWeek[w]);
-  const pts = vals.map((v, i) => [i, v]).filter(([, v]) => v != null);
-  if (pts.length < 2) return '<span class="note">—</span>';
-  const all = pts.map(([, v]) => v);
-  const lo = Math.min(...all), hi = Math.max(...all), span = hi - lo || 1;
-  const W = 62, H = 20;
-  const xs = i => (i / Math.max(ws.length - 1, 1)) * (W - 3) + 1.5;
-  const ys = v => H - 2 - ((v - lo) / span) * (H - 5);
-  const d = pts.map(([i, v], k) => `${k ? "L" : "M"}${xs(i).toFixed(1)},${ys(v).toFixed(1)}`).join(" ");
-  const last = pts[pts.length - 1];
-  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true" style="vertical-align:middle">
-    <path d="${d}" fill="none" stroke="var(--brand)" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" opacity=".85"/>
-    <circle cx="${xs(last[0]).toFixed(1)}" cy="${ys(last[1]).toFixed(1)}" r="2.1" fill="var(--brand)"/></svg>`;
-}
-
-// did this player rise or fall once the newest week landed?
-function movement(p, ws) {
-  if (ws.length < 2 || !season) return "";
-  const lastW = ws[ws.length - 1];
-  const rankBy = fn => [...season.players].sort((a, b) => fn(b) - fn(a)).findIndex(x => x.name === p.name) + 1;
-  const now = rankBy(x => x.total);
-  const before = rankBy(x => x.total - (x.byWeek[lastW] ?? 0));
-  const d = before - now;
-  if (!d) return '<span class="note" style="font-size:11px" title="No change">·</span>';
-  return d > 0
-    ? `<span style="color:var(--brand);font-size:11px" title="Up ${d} since week ${lastW}">&#9650;${d}</span>`
-    : `<span style="color:var(--hot);font-size:11px" title="Down ${-d} since week ${lastW}">&#9660;${-d}</span>`;
 }
 
 function renderRecords(players, ws) {
@@ -888,7 +860,7 @@ function renderScenarios(rows) {
 
   $("scenarioTbl").innerHTML =
     `<thead><tr>${open.map(g => `<th>${esc(g.away)} / ${esc(g.home)}</th>`).join("")}
-      <th class="n">Top</th><th>Takes the week</th></tr></thead><tbody>` +
+      <th class="n">Top</th><th>Takes the Week</th></tr></thead><tbody>` +
     body.map(b => `<tr>${b.combo.map(t => `<td><b>${esc(t)}</b></td>`).join("")}
       <td class="n num">${b.top}</td>
       <td>${b.winners.map(w => `${esc(tc(w.name))}${hl && w.name===hl ? " \u2605" : ""}`).join(", ")}<span class="note">${b.how}</span></td></tr>`).join("") +
@@ -910,7 +882,7 @@ function renderPicks(rows) {
     gs.map(g => `<th class="c">${g.awayLogo?`<img src="${esc(g.awayLogo)}" alt="${esc(g.away)}">`:esc(g.away)}
       <div class="vs">at</div>${g.homeLogo?`<img src="${esc(g.homeLogo)}" alt="${esc(g.home)}">`:esc(g.home)}</th>`).join("") +
     `<th class="tbcol">Tie<br>breaker${tbGameLabel() ? `<div class="vs">${esc(tbGameLabel())}</div>` : ""}</th></tr></thead><tbody>` +
-    `<tr class="split"><td class="who">Pool split</td>` +
+    `<tr class="split"><td class="who">Pool Split</td>` +
       gs.map(g => `<td>${split(g)}</td>`).join("") + `<td class="tbcol">${tbActualLabel()}</td></tr>` +
     shown.map(r => `<tr class="${r.e.name===hl?"me":""}"><td class="who">${esc(tc(r.e.name))}</td>` +
       gs.map(g => { const p = r.e.picks?.[g.id]||"", w = winnerOf(g);
@@ -1118,7 +1090,7 @@ function renderReview() {
   if (!pending?.length) { $("review").innerHTML = ""; return; }
   const gs = games();
   const missing = pending.filter(p => Object.keys(p.picks||{}).length < gs.length).length;
-  $("review").innerHTML = `<div class="card"><div class="hd"><h2>Confirm what was read</h2>
+  $("review").innerHTML = `<div class="card"><div class="hd"><h2>Confirm What Was Read</h2>
       <div class="r note">${pending.length} rows${missing?` · ${missing} with gaps`:""}</div></div>
     <div class="bd flush scroll"><table class="pg"><thead><tr><th class="who">Player</th>` +
     gs.map(g => `<th class="c">${esc(g.away)}<div class="vs">at</div>${esc(g.home)}</th>`).join("") +
@@ -1260,7 +1232,7 @@ $("addRow").onclick = () => {
 $("allPaid").onclick = () => { entries().forEach(e => e.paid = true); render(); };
 
 async function save(msgEl) {
-  if (!pass) { $(msgEl).innerHTML = '<span class="err">Manager passcode required.</span>'; return; }
+  if (!pass) { $(msgEl).innerHTML = '<span class="err">Manager Passcode required.</span>'; return; }
   $(msgEl).textContent = "Saving…";
   try {
     const r = await fetch(`/api/pool?week=${week}`, {method:"POST",
