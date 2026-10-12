@@ -3,12 +3,13 @@
 
 export default async function handler(req, res) {
   const week = String(req.query.week || "").trim();
-  const season = String(req.query.season || new Date().getFullYear()).trim();
-  if (!week) return res.status(400).json({ error: "week is required" });
+  const season = String(req.query.season || process.env.SEASON || new Date().getFullYear()).trim();
 
-  const url =
-    `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard` +
-    `?seasontype=2&week=${encodeURIComponent(week)}&dates=${encodeURIComponent(season)}`;
+  // no week given: ask the feed what week it is right now
+  const url = week
+    ? `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard` +
+      `?seasontype=2&week=${encodeURIComponent(week)}&dates=${encodeURIComponent(season)}`
+    : `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard`;
 
   try {
     const r = await fetch(url, { headers: { accept: "application/json" } });
@@ -67,10 +68,26 @@ export default async function handler(req, res) {
 
     const byes = (data.week?.teamsOnBye || []).map((t) => t.abbreviation);
 
+    // The league's own week flips Wednesday ~2am CT. Our pool rolls over at
+    // Tuesday 00:00 CT, right after Monday night. When no week was requested and
+    // we're inside that gap, report the next week instead.
+    let reportedWeek = data.week?.number ?? Number(week) || null;
+    let rolledForward = false;
+    if (!week && reportedWeek) {
+      const cal = (data.leagues?.[0]?.calendar || []).find((c) => String(c.value) === "2");
+      const entry = (cal?.entries || []).find((e) => Number(e.value) === reportedWeek);
+      if (entry?.endDate) {
+        const rolloverAt = new Date(entry.endDate).getTime() - 26 * 60 * 60 * 1000; // ≈ Tue 00:00 CT
+        if (Date.now() >= rolloverAt) { reportedWeek += 1; rolledForward = true; }
+      }
+    }
+
     res.setHeader("Cache-Control", "s-maxage=20, stale-while-revalidate=40");
     return res.status(200).json({
       season: data.season?.year ?? Number(season),
-      week: data.week?.number ?? Number(week),
+      week: reportedWeek,
+      feedWeek: data.week?.number ?? null,
+      rolledForward,
       byes,
       games,
       fetchedAt: new Date().toISOString(),

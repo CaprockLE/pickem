@@ -17,6 +17,11 @@
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
 }
+:root[data-theme=dark]{
+  --bg:#080C12; --panel:#101823; --panel2:#15202D; --rule:#1F2A38; --rule2:#2B3A4B;
+  --ink:#E9EEF5; --ink2:#C2CCD9; --muted:#8696A8;
+  --brand:#39B28E; --brand2:#0E2A22; --hot:#E88A4D; --hot2:#2E1C0F;
+  --gold:#D4AC54; --nav:#0A1019; --navink:#8696A8; --navink2:#FFFFFF; --sh:none;}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){
   --bg:#080C12; --panel:#101823; --panel2:#15202D; --rule:#1F2A38; 
   --rule2:#2B3A4B; --ink:#E9EEF5; --ink2:#C2CCD9; --muted:#8696A8;
@@ -25,15 +30,15 @@
 *,*::before,*::after{box-sizing:inherit}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;font-size:14.5px;line-height:1.55;-webkit-font-smoothing:antialiased}
 .mono{font-variant-numeric:tabular-nums}
-/* house style: structural text in caps, explanatory copy left readable */
-nav, h1, h2, th, td, button, select, .pill, .eyebrow, .kpi .k, .kpi .v, .brand,
-.stat .k, .champ .nm, .rank, .pos, #drop b, .step b, .empty b
-  {text-transform:uppercase}
-td, th{letter-spacing:.025em}
-button, select, .pill{letter-spacing:.045em}
-h1{letter-spacing:.035em}
-.note, .sub, p.note, summary, textarea, input, .step p, .empty, ul.why, ul.path, #drop
-  {text-transform:none;letter-spacing:0}
+/* house style: title case throughout, caps reserved for tiny structural labels */
+nav, h1, h2, th, td, button, select, .pill, .kpi .k, .kpi .v, .brand,
+.champ .nm, .rank, .pos, #drop b, .step b, .empty b, .note, .sub
+  {text-transform:none}
+.eyebrow, .kpi .k, .step .n, .slot{text-transform:uppercase;letter-spacing:.11em}
+h1{letter-spacing:.005em}
+h2{letter-spacing:.02em}
+th{letter-spacing:.03em}
+td, button, select, .pill{letter-spacing:0}
 .pg tr.split td{background:var(--panel2);color:var(--muted);font-size:10.5px;font-weight:700;letter-spacing:.06em}
 .pg tr.split td.who{background:var(--panel2)}
 .num{font-family:Oswald,Inter,sans-serif;font-weight:600;font-variant-numeric:tabular-nums}
@@ -43,7 +48,7 @@ h1{letter-spacing:.035em}
 nav{background:var(--nav);color:var(--navink);padding:18px 14px;position:sticky;top:0;height:100vh;overflow:auto}
 nav .logo{display:flex;align-items:center;gap:9px;padding:0 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
 nav .logo .mark{width:30px;height:30px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-family:Oswald;font-size:17px;font-weight:700}
-nav .logo b{color:#fff;font-family:Oswald,Inter;font-weight:600;font-size:17px;letter-spacing:.04em;text-transform:uppercase;line-height:1.1}
+nav .logo b{color:#fff;font-family:Oswald,Inter;font-weight:600;font-size:17.5px;letter-spacing:.01em;line-height:1.1}
 nav .logo small{display:block;color:var(--navink);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase}
 nav button.tab{display:flex;width:100%;align-items:center;gap:10px;background:none;border:0;color:var(--navink);
   padding:9px 10px;border-radius:9px;font-size:14px;font-weight:500;cursor:pointer;text-align:left;margin-bottom:2px}
@@ -63,7 +68,7 @@ main{min-width:0;padding:22px 26px 80px;max-width:1320px}
 
 /* headers */
 .head{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:18px}
-h1{font-family:Oswald,Inter;font-weight:600;font-size:27px;letter-spacing:.02em;margin:0;line-height:1.15;text-transform:uppercase}
+h1{font-family:Oswald,Inter;font-weight:600;font-size:28px;margin:0;line-height:1.15}
 .head .sub{color:var(--muted);font-size:13px;margin:2px 0 0}
 .head .right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 select,input{font:inherit;color:inherit;background:var(--panel);border:1px solid var(--rule2);border-radius:9px;padding:7px 10px}
@@ -78,7 +83,7 @@ button.sm{padding:4px 9px;font-size:12.5px;border-radius:7px}
 /* cards */
 .card{background:var(--panel);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--sh);margin-bottom:16px;overflow:hidden}
 .card > .hd{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--rule)}
-.card > .hd h2{font-family:Oswald,Inter;font-weight:600;font-size:14px;letter-spacing:.09em;text-transform:uppercase;margin:0}
+.card > .hd h2{font-family:Oswald,Inter;font-weight:600;font-size:16px;letter-spacing:.01em;margin:0}
 .card > .hd .r{margin-left:auto;display:flex;gap:8px;align-items:center}
 .card > .bd{padding:16px}
 .card > .bd.flush{padding:0}
@@ -97,7 +102,7 @@ button.sm{padding:4px 9px;font-size:12.5px;border-radius:7px}
 /* tables */
 .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 table{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px}
-th{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;
+th{font-size:11.5px;color:var(--muted);font-weight:600;
   text-align:left;padding:10px;background:var(--panel2);border-bottom:1px solid var(--rule);white-space:nowrap;position:sticky;top:0;z-index:3}
 td{padding:9px 10px;border-bottom:1px solid var(--rule);white-space:nowrap}
 tbody tr:last-child td{border-bottom:0}
@@ -109,8 +114,8 @@ tr.winrow td:first-child{box-shadow:inset 3px 0 0 var(--gold)}
 tr.winrow .pos{color:var(--gold)}
 .pos{font-family:Oswald;font-size:16px;font-weight:600;color:var(--muted);width:30px}
 tbody tr:first-child .pos{color:var(--gold)}
-.pill{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;padding:2px 8px;border-radius:5px;
-  background:var(--panel2);border:1px solid var(--rule2);color:var(--muted);text-transform:uppercase}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:5px;
+  background:var(--panel2);border:1px solid var(--rule2);color:var(--muted)}
 .pill.ok{background:var(--brand2);border-color:transparent;color:var(--brand)}
 .pill.no{background:var(--hot2);border-color:transparent;color:var(--hot)}
 .pill.gold{background:transparent;border-color:var(--gold);color:var(--gold)}
@@ -125,15 +130,28 @@ tbody tr:first-child .pos{color:var(--gold)}
 .tm .pts{margin-left:auto;font-family:Oswald;font-weight:600;font-size:16px}
 .tm.dim{opacity:.45}
 .gm .st{margin-top:6px;font-size:11px;color:var(--muted);display:flex;justify-content:space-between}
+.board.ticker{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+.board.ticker .gm{display:flex;align-items:center;gap:10px;padding:7px 12px}
+.board.ticker .tm{padding:0;gap:5px}
+.board.ticker .tm img{width:17px;height:17px}
+.board.ticker .tm .ab{font-size:12.5px}
+.board.ticker .tm .pts{font-size:14px;margin-left:4px}
+.board.ticker .st{margin:0 0 0 auto;font-size:10.5px;white-space:nowrap}
 .gm .st .l{color:var(--hot);font-weight:700}
 .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--hot);margin-right:4px;animation:pulse 1.6s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
 /* picks grid */
-.tbcol{text-align:right;white-space:normal!important;line-height:1.15;
-  border-left:1px solid var(--rule2);padding-left:10px!important;min-width:62px}
+/* tiebreaker column: identical box in header and body so the label sits over its numbers */
+th.tbcol, td.tbcol{
+  text-align:center; white-space:normal; line-height:1.15;
+  border-left:1px solid var(--rule2);
+  padding:8px 14px; width:96px; min-width:96px; max-width:96px;
+}
 th.tbcol{vertical-align:bottom}
-th.tbcol .vs{font-size:8.5px;color:var(--muted);letter-spacing:.02em;margin-top:2px}
+td.tbcol{font-weight:600}
+th.tbcol .vs{font-size:8.5px;color:var(--muted);letter-spacing:.02em;margin-top:2px;display:block}
+.pg td.tbcol{font-size:12.5px}
 .pg th.c{text-align:center;padding:7px 3px}
 .pg th.c img{width:16px;height:16px;object-fit:contain;display:block;margin:0 auto}
 .pg th.c .vs{font-size:8.5px;color:var(--muted);line-height:1.3}
@@ -181,10 +199,12 @@ ul.why b{color:var(--ink)}
   <button class="tab on" data-v="season">Season standings</button>
   <button class="tab" data-v="week">Week results</button>
   <button class="tab" data-v="picks">All picks</button>
+  <button class="tab" data-v="h2h">Head to head</button>
   <div class="sec" id="mgrSec" hidden>Manage</div>
   <button class="tab" data-v="import" id="tabImport" hidden>Import sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
+    <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager sign-in</button></div>
 </nav>
 
@@ -204,6 +224,8 @@ ul.why b{color:var(--ink)}
     <div class="kpis" id="seasonKpis"></div>
     <div class="card"><div class="hd"><h2>Cumulative</h2><div class="r note" id="seasonNote"></div></div>
       <div class="bd flush scroll"><table id="seasonTbl"></table></div></div>
+    <div class="card"><div class="hd"><h2>Records &amp; streaks</h2><div class="r note">Across every published week</div></div>
+      <div class="bd" id="records"></div></div>
     <div class="card"><div class="hd"><h2>Week by week</h2></div>
       <div class="bd flush scroll"><table id="weeksTbl"></table></div></div>
   </div>
@@ -211,11 +233,14 @@ ul.why b{color:var(--ink)}
   <!-- WEEK -->
   <div id="v-week" hidden>
     <div class="head"><div><h1 id="weekTitle">Week</h1><p class="sub" id="weekSub">Loading…</p></div>
-      <div class="right"><select id="weekSel"></select><button id="refreshBtn">Refresh</button></div></div>
+      <div class="right"><select id="weekSel"></select><button id="shareBtn">Share card</button><button id="refreshBtn">Refresh</button></div></div>
     <div class="kpis" id="weekKpis"></div>
-    <div class="card"><div class="hd"><h2>Scoreboard</h2><div class="r note" id="updTag"></div></div>
+    <div class="card"><div class="hd"><h2>Scoreboard</h2><div class="r"><button id="boardView" class="sm">Ticker</button><span class="note" id="updTag"></span></div></div>
       <div class="bd flush"><div class="board" id="board"></div></div></div>
     <div class="card" id="winCard" hidden><div class="hd"><h2>Week winner</h2></div><div class="bd" id="winner"></div></div>
+    <div class="card" id="scenarioCard" hidden><div class="hd"><h2>What's still in play</h2>
+      <div class="r note" id="scenarioSub"></div></div>
+      <div class="bd flush scroll"><table id="scenarioTbl"></table></div></div>
     <div class="card"><div class="hd"><h2>Standings</h2><div class="r note" id="stSub"></div></div>
       <div class="bd flush scroll"><table id="stTbl"></table></div></div>
   </div>
@@ -227,6 +252,17 @@ ul.why b{color:var(--ink)}
         <select id="picksWeek"></select></div></div>
     <div class="card"><div class="hd"><h2>Grid</h2><div class="r note">Green hit · red missed · ties count as a loss for everyone</div></div>
       <div class="bd flush scroll"><table class="pg" id="pgTbl"></table></div></div>
+  </div>
+
+  <!-- HEAD TO HEAD -->
+  <div id="v-h2h" hidden>
+    <div class="head"><div><h1>Head to head</h1><p class="sub">Compare any two players.</p></div>
+      <div class="right"><select id="h2hA"></select><span class="note">vs</span><select id="h2hB"></select></div></div>
+    <div class="kpis" id="h2hKpis"></div>
+    <div class="card"><div class="hd"><h2>Week by week</h2></div>
+      <div class="bd flush scroll"><table id="h2hTbl"></table></div></div>
+    <div class="card"><div class="hd"><h2>Where they split</h2><div class="r note" id="h2hSplitSub">Current week</div></div>
+      <div class="bd flush scroll"><table id="h2hGames"></table></div></div>
   </div>
 
   <!-- IMPORT -->
@@ -269,6 +305,7 @@ ul.why b{color:var(--ink)}
           <span class="note" id="rosterMsg"></span>
         </div></div></div>
     <div class="card"><div class="hd"><h2>Entries on file</h2><div class="r note" id="entCount"></div></div>
+      <div class="bd" id="missingBox" hidden style="padding-bottom:0"></div>
       <div class="bd flush scroll"><table id="entTbl"></table></div>
       <div class="bar"><button id="addRow">Add entry manually</button>
         <button id="saveImport" class="primary">Publish to league</button><span class="note" id="saveMsg"></span></div></div>
@@ -293,14 +330,26 @@ ul.why b{color:var(--ink)}
 </main>
 </div>
 
+<div id="shareWrap" hidden style="position:fixed;inset:0;background:rgba(5,9,14,.72);z-index:60;display:grid;place-items:center;padding:20px">
+  <div class="card" style="max-width:560px;width:100%;margin:0">
+    <div class="hd"><h2>Share card</h2><div class="r">
+      <select id="shareMode"><option value="open">Start of week</option><option value="final">Results</option></select>
+      <button id="shareClose">Close</button></div></div>
+    <div class="bd"><canvas id="shareCanvas" style="width:100%;border-radius:10px;border:1px solid var(--rule)"></canvas>
+      <div class="bar" style="margin:12px -16px -16px"><button id="shareDl" class="primary">Download image</button>
+        <button id="shareCopy">Copy image</button><span class="note" id="shareMsg"></span></div></div>
+  </div>
+</div>
+
 <script>
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
 const slug = n => String(n).toLowerCase().trim().replace(/[^a-z0-9]+/g,"-");
+const tc = n => String(n ?? "").toLowerCase().replace(/\b[a-z]/g, m => m.toUpperCase());
 
 const qs = new URLSearchParams(location.search);
 let view = qs.get("v") || "season";
-let week = Number(qs.get("week") || 5);
+let week = Number(qs.get("week") || 0);   // 0 = ask the feed what week it is
 let scores = {games:[]}, pool = null, season = null, pending = null;
 let hl = localStorage.getItem("pc.hl") || "";
 let sortBy = localStorage.getItem("pc.sort") || "total";
@@ -308,6 +357,7 @@ let minWeeks = Number(localStorage.getItem("pc.minw") || 1);
 let pass = localStorage.getItem("pc.pass") || "";
 let buyin = Number(localStorage.getItem("pc.buyin") || 10);
 let roster = [];
+let boardMode = localStorage.getItem("pc.board") || "cards";
 
 ["weekSel","impWeek","moneyWeek","picksWeek"].forEach(id => {
   for (let w = 1; w <= 18; w++) {
@@ -326,6 +376,18 @@ function applyRole() {
                     $("lockPill").className = "pill " + (on ? "ok" : "no"));
   if (!on && (view === "import" || view === "money")) setView("season");
 }
+(function initTheme(){
+  const saved = localStorage.getItem("pc.theme");
+  if (saved) document.documentElement.setAttribute("data-theme", saved);
+  $("themeBtn").onclick = () => {
+    const now = document.documentElement.getAttribute("data-theme");
+    const sysDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const next = now ? (now === "dark" ? "light" : "dark") : (sysDark ? "light" : "dark");
+    document.documentElement.setAttribute("data-theme", next);
+    localStorage.setItem("pc.theme", next);
+  };
+})();
+
 $("unlockBtn").onclick = () => {
   if (pass) {
     if (!confirm("Sign out of manager mode on this device?")) return;
@@ -343,9 +405,9 @@ document.querySelectorAll("nav button.tab").forEach(b => b.onclick = () => setVi
 function setView(v) {
   view = v;
   document.querySelectorAll("nav button.tab").forEach(b => b.classList.toggle("on", b.dataset.v === v));
-  ["season","week","picks","import","money"].forEach(k => $("v-" + k).hidden = k !== v);
+  ["season","week","picks","h2h","import","money"].forEach(k => $("v-" + k).hidden = k !== v);
   history.replaceState(null, "", `?v=${v}&week=${week}`);
-  if (v === "season") loadSeason(); else render();
+  if (v === "season") loadSeason(); else if (v === "h2h") renderH2H(); else render();
   window.scrollTo({top:0});
 }
 
@@ -366,10 +428,24 @@ const ranked = () => entries().map(e => ({ e, s: scoreOf(e) }))
 async function loadWeek() {
   try {
     const [s, p] = await Promise.all([
-      fetch(`/api/scores?week=${week}`).then(r => r.json()),
-      fetch(`/api/pool?week=${week}`).then(r => r.json())
+      fetch(week ? `/api/scores?week=${week}` : `/api/scores`).then(r => r.json()),
+      fetch(`/api/pool?week=${week || 1}`).then(r => r.json())
     ]);
-    if (!s.error) { scores = s; if (s.season) $("seasonTag").textContent = "NFL " + s.season; }
+    if (!s.error) {
+      scores = s;
+      if (s.season) $("seasonTag").textContent = "NFL " + s.season;
+      if (!week && s.week) {                       // first load: adopt the live week
+        week = Number(s.week);
+        if (s.rolledForward) {                     // feed still on last week — pull the new one
+          const s2 = await fetch(`/api/scores?week=${week}`).then(r => r.json());
+          if (!s2.error) scores = s2;
+        }
+        ["weekSel","impWeek","moneyWeek","picksWeek"].forEach(id => $(id).value = week);
+        history.replaceState(null, "", `?v=${view}&week=${week}`);
+        const p2 = await fetch(`/api/pool?week=${week}`).then(r => r.json());
+        if (!p2.error) { pool = p2; $("updTag").textContent = "updated " + new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}); render(); return; }
+      }
+    }
     if (p.error) { $("weekSub").innerHTML = `<span class="err">${esc(p.error)}</span>`; return; }
     pool = p;
     $("updTag").textContent = "updated " + new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});
@@ -387,7 +463,7 @@ async function loadRoster() {
 function renderRoster() {
   $("rosterCount").textContent = `${roster.length} player${roster.length === 1 ? "" : "s"}`;
   $("rosterList").innerHTML = roster.length
-    ? roster.map((n, i) => `<span class="pill" style="display:inline-flex;gap:6px;align-items:center">${esc(n)}
+    ? roster.map((n, i) => `<span class="pill" style="display:inline-flex;gap:6px;align-items:center">${esc(tc(n))}
         <button data-rm="${i}" style="all:unset;cursor:pointer;color:var(--hot);font-weight:700">&times;</button></span>`).join("")
     : '<span class="note">Empty — add names, or pull them from a published week.</span>';
   $("rosterList").querySelectorAll("button[data-rm]").forEach(b => b.onclick = () => {
@@ -423,14 +499,21 @@ function renderSeason() {
   if (!season || !season.players?.length) {
     $("seasonSub").textContent = "No weeks published yet.";
     $("seasonKpis").innerHTML = "";
-    $("seasonTbl").innerHTML = `<tbody><tr><td><div class="empty"><b>Nothing here yet</b>Import a week's sheets to start the season record.</div></td></tr></tbody>`;
-    $("weeksTbl").innerHTML = "";
+    $("seasonTbl").innerHTML = `<tbody><tr><td><div class="empty" style="padding:48px 24px">
+      <div style="font-size:34px;line-height:1;margin-bottom:10px">&#128202;</div>
+      <b style="font-size:17px">No weeks published yet</b>
+      <p class="note" style="max-width:380px;margin:6px auto 14px">Season standings build themselves as weeks get published.
+        Head to Import sheets, drop in this week's photos, and publish &mdash; totals, records and streaks appear here automatically.</p>
+      <button onclick="setView('import')">Go to Import sheets</button></div></td></tr></tbody>`;
+    renderRecords(players, ws);
+
+  $("weeksTbl").innerHTML = "";
     return;
   }
   const done = season.weeks.filter(w => w.complete).length;
   const names = season.players.map(p => p.name);
   if ($("hlSel").options.length !== names.length + 1)
-    $("hlSel").innerHTML = '<option value="">Highlight…</option>' + names.map(n => `<option>${esc(n)}</option>`).join("");
+    $("hlSel").innerHTML = '<option value="">Highlight…</option>' + names.map(n => `<option value="${esc(n)}">${esc(tc(n))}</option>`).join("");
   $("hlSel").value = hl;
   $("seasonSub").textContent = `${season.players.length} players · ${season.weeks.length} week${season.weeks.length===1?"":"s"} on file · ${done} complete`;
 
@@ -438,9 +521,9 @@ function renderSeason() {
   const mostWins = [...season.players].sort((a,b) => b.wins - a.wins)[0];
   const unpaid = season.weeks.reduce((n,w) => n + (w.entries - w.paidCount), 0);
   $("seasonKpis").innerHTML = [
-    ["Leader", `${esc(leader.name)}`, ""],
+    ["Leader", `${esc(tc(leader.name))}`, ""],
     ["Top score", `${leader.total}`, ""],
-    ["Weeks won", `${mostWins.wins} <small>${esc(mostWins.name)}</small>`, ""],
+    ["Weeks won", `${mostWins.wins} <small>${esc(tc(mostWins.name))}</small>`, ""],
     ["Unpaid entries", `${unpaid}`, unpaid ? "hot" : ""],
   ].map(([k,v,c]) => `<div class="kpi"><div class="k">${k}</div><div class="v ${c}">${v}</div></div>`).join("");
 
@@ -461,21 +544,25 @@ function renderSeason() {
   ].filter(Boolean).join(" · ");
   const ws = season.weeks.map(w => w.week);
   $("seasonTbl").innerHTML =
-    `<thead><tr><th></th><th>Player</th><th class="n">Total</th><th class="n">Avg</th><th class="n">Weeks</th><th class="n">Won</th>` +
+    `<thead><tr><th></th><th>Player</th><th>Form</th><th class="n">Total</th><th class="n">Avg</th><th class="n">Weeks</th><th class="n">Won</th>` +
     ws.map(w => `<th class="n">W${w}</th>`).join("") + `</tr></thead><tbody>` +
     players.map((p,i) => `<tr class="${p.name===hl?"me":""}"><td class="pos">${i+1}</td>
-      <td>${esc(p.name)}</td><td class="n num" style="font-size:16px">${p.total}</td>
+      <td>${esc(tc(p.name))} ${movement(p, ws)}</td>
+      <td>${sparkline(p, ws)}</td>
+      <td class="n num" style="font-size:16px">${p.total}</td>
       <td class="n mono">${avg(p).toFixed(1)}</td>
       <td class="n mono">${p.weeks}/${season.weeks.length}${qualifies(p)?"":' <span class="pill">short</span>'}</td>
       <td class="n">${p.wins ? `<span class="pill gold">${p.wins}</span>` : '<span class="note">—</span>'}</td>` +
       ws.map(w => `<td class="n mono">${p.byWeek[w] ?? "·"}</td>`).join("") + `</tr>`).join("") + `</tbody>`;
+
+  renderRecords(players, ws);
 
   $("weeksTbl").innerHTML =
     `<thead><tr><th>Week</th><th class="n">Entries</th><th class="n">Games</th><th>Status</th><th>Winner</th><th class="n">Paid</th><th></th></tr></thead><tbody>` +
     season.weeks.map(w => `<tr><td><b>${esc(w.label)}</b></td><td class="n mono">${w.entries}</td>
       <td class="n mono">${w.finals}/${w.games}</td>
       <td>${w.complete ? '<span class="pill ok">complete</span>' : '<span class="pill">in progress</span>'}</td>
-      <td>${w.winners.length ? esc(w.winners.join(" & ")) : '<span class="note">—</span>'}</td>
+      <td>${w.winners.length ? esc(w.winners.map(tc).join(" & ")) : '<span class="note">—</span>'}</td>
       <td class="n mono">${w.paidCount}/${w.entries}</td>
       <td class="n"><button class="sm" data-goweek="${w.week}">Open</button></td></tr>`).join("") + `</tbody>`;
   $("weeksTbl").querySelectorAll("button[data-goweek]").forEach(b => b.onclick = () => {
@@ -484,6 +571,136 @@ function renderSeason() {
     setView("week"); loadWeek();
   });
   $("navFoot").textContent = `${season.players.length} players · ${season.weeks.length} weeks`;
+}
+
+// tiny inline chart of a player's weekly scores
+function sparkline(p, ws) {
+  const vals = ws.map(w => p.byWeek[w]);
+  const pts = vals.map((v, i) => [i, v]).filter(([, v]) => v != null);
+  if (pts.length < 2) return '<span class="note">—</span>';
+  const all = pts.map(([, v]) => v);
+  const lo = Math.min(...all), hi = Math.max(...all), span = hi - lo || 1;
+  const W = 62, H = 20;
+  const xs = i => (i / Math.max(ws.length - 1, 1)) * (W - 3) + 1.5;
+  const ys = v => H - 2 - ((v - lo) / span) * (H - 5);
+  const d = pts.map(([i, v], k) => `${k ? "L" : "M"}${xs(i).toFixed(1)},${ys(v).toFixed(1)}`).join(" ");
+  const last = pts[pts.length - 1];
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true" style="vertical-align:middle">
+    <path d="${d}" fill="none" stroke="var(--brand)" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" opacity=".85"/>
+    <circle cx="${xs(last[0]).toFixed(1)}" cy="${ys(last[1]).toFixed(1)}" r="2.1" fill="var(--brand)"/></svg>`;
+}
+
+// did this player rise or fall once the newest week landed?
+function movement(p, ws) {
+  if (ws.length < 2 || !season) return "";
+  const lastW = ws[ws.length - 1];
+  const rankBy = fn => [...season.players].sort((a, b) => fn(b) - fn(a)).findIndex(x => x.name === p.name) + 1;
+  const now = rankBy(x => x.total);
+  const before = rankBy(x => x.total - (x.byWeek[lastW] ?? 0));
+  const d = before - now;
+  if (!d) return '<span class="note" style="font-size:11px" title="No change">·</span>';
+  return d > 0
+    ? `<span style="color:var(--brand);font-size:11px" title="Up ${d} since week ${lastW}">&#9650;${d}</span>`
+    : `<span style="color:var(--hot);font-size:11px" title="Down ${-d} since week ${lastW}">&#9660;${-d}</span>`;
+}
+
+function renderRecords(players, ws) {
+  if (!players.length || !ws.length) { $("records").innerHTML = '<p class="note">Publish a week to start the record book.</p>'; return; }
+  const avgOf = w => {
+    const vals = players.map(p => p.byWeek[w]).filter(v => v != null);
+    return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+  };
+  const weekAvg = Object.fromEntries(ws.map(w => [w, avgOf(w)]));
+
+  let best = null, worst = null;
+  for (const p of players) for (const w of ws) {
+    const v = p.byWeek[w]; if (v == null) continue;
+    if (!best || v > best.v) best = { n:p.name, w, v };
+    if (!worst || v < worst.v) worst = { n:p.name, w, v };
+  }
+  // longest run of weeks finishing above the pool average
+  const streaks = players.map(p => {
+    let run = 0, bestRun = 0, cur = 0;
+    for (const w of ws) {
+      const v = p.byWeek[w];
+      if (v != null && v > weekAvg[w]) { cur++; bestRun = Math.max(bestRun, cur); } else cur = 0;
+      run = cur;
+    }
+    return { name:p.name, bestRun, live:run };
+  }).sort((a,b) => b.bestRun - a.bestRun || b.live - a.live);
+  const hot = streaks.filter(s => s.live > 0).sort((a,b)=>b.live-a.live)[0];
+  const steady = players.map(p => {
+    const vals = ws.map(w => p.byWeek[w]).filter(v => v != null);
+    if (vals.length < 2) return null;
+    const m = vals.reduce((a,b)=>a+b,0)/vals.length;
+    const sd = Math.sqrt(vals.reduce((a,b)=>a+(b-m)**2,0)/vals.length);
+    return { name:p.name, sd, m };
+  }).filter(Boolean).sort((a,b) => a.sd - b.sd)[0];
+  const mostWins = [...players].sort((a,b)=>b.wins-a.wins)[0];
+
+  const card = (k, v, sub) => `<div class="kpi" style="border:1px solid var(--rule);border-radius:10px">
+    <div class="k">${k}</div><div class="v" style="font-size:22px">${v}</div>
+    <div class="note" style="font-size:11.5px">${sub}</div></div>`;
+  $("records").innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px">` +
+    card("Best week", `${esc(tc(best.n))}`, `${best.v} correct in week ${best.w}`) +
+    card("Roughest week", `${esc(tc(worst.n))}`, `${worst.v} correct in week ${worst.w}`) +
+    card("Longest hot streak", `${streaks[0].bestRun} wk`, `${esc(tc(streaks[0].name))} above the pool average`) +
+    card("Currently hot", hot ? `${esc(tc(hot.name))}` : "—", hot ? `${hot.live} week${hot.live>1?"s":""} running` : "nobody above average last week") +
+    card("Most weeks won", `${mostWins.wins}`, `${esc(tc(mostWins.name))}`) +
+    (steady ? card("Most consistent", `${esc(tc(steady.name))}`, `±${steady.sd.toFixed(1)} around ${steady.m.toFixed(1)}`) : "") +
+    `</div>`;
+}
+
+/* ---------- HEAD TO HEAD ---------- */
+function renderH2H() {
+  if (!season || !season.players?.length) { $("h2hKpis").innerHTML = ""; $("h2hTbl").innerHTML = `<tbody><tr><td><div class="empty"><b>No season data yet</b>Publish a week first.</div></td></tr></tbody>`; return; }
+  const names = season.players.map(p => p.name);
+  [["h2hA", hl || names[0]], ["h2hB", names.find(n => n !== (hl || names[0])) || names[1]]].forEach(([id, dflt]) => {
+    if ($(id).options.length !== names.length)
+      $(id).innerHTML = names.map(n => `<option value="${esc(n)}">${esc(tc(n))}</option>`).join("");
+    if (!$(id).value) $(id).value = dflt;
+  });
+  const A = season.players.find(p => p.name === $("h2hA").value);
+  const B = season.players.find(p => p.name === $("h2hB").value);
+  if (!A || !B) return;
+  const ws = season.weeks.map(w => w.week);
+  let aw = 0, bw = 0, tie = 0;
+  for (const w of ws) {
+    const a = A.byWeek[w], b = B.byWeek[w];
+    if (a == null || b == null) continue;
+    if (a > b) aw++; else if (b > a) bw++; else tie++;
+  }
+  $("h2hKpis").innerHTML = [
+    ["Head to head", `${aw}\u2013${bw}${tie?`\u2013${tie}`:""}`, `${esc(tc(A.name))} leads`.replace("leads", aw>bw?"leads":aw<bw?"trails":"level")],
+    [`${tc(A.name)} total`, A.total, `${A.weeks} weeks`],
+    [`${tc(B.name)} total`, B.total, `${B.weeks} weeks`],
+    ["Gap", Math.abs(A.total - B.total), A.total === B.total ? "dead even" : `${esc(tc(A.total > B.total ? A.name : B.name))} ahead`],
+  ].map(([k,v,sub]) => `<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="note" style="font-size:11.5px">${sub}</div></div>`).join("");
+
+  $("h2hTbl").innerHTML = `<thead><tr><th>Week</th><th class="n">${esc(tc(A.name))}</th><th class="n">${esc(tc(B.name))}</th><th>Edge</th></tr></thead><tbody>` +
+    ws.map(w => {
+      const a = A.byWeek[w], b = B.byWeek[w];
+      const edge = a == null || b == null ? '<span class="note">—</span>'
+        : a > b ? `<span class="pill ok">${esc(tc(A.name))}</span>`
+        : b > a ? `<span class="pill ok">${esc(tc(B.name))}</span>` : '<span class="pill">tied</span>';
+      return `<tr><td>Week ${w}</td><td class="n mono">${a ?? "·"}</td><td class="n mono">${b ?? "·"}</td><td>${edge}</td></tr>`;
+    }).join("") + `</tbody>`;
+
+  // this week's disagreements, if that week is loaded
+  const ea = entries().find(e => e.name === A.name), eb = entries().find(e => e.name === B.name);
+  $("h2hSplitSub").textContent = `Week ${week}`;
+  if (!ea || !eb) { $("h2hGames").innerHTML = `<tbody><tr><td><div class="empty"><b>Not both entered</b>One of them has no sheet in week ${week}.</div></td></tr></tbody>`; return; }
+  const diffs = games().filter(g => ea.picks?.[g.id] && eb.picks?.[g.id] && ea.picks[g.id] !== eb.picks[g.id]);
+  $("h2hGames").innerHTML = diffs.length
+    ? `<thead><tr><th>Game</th><th>${esc(tc(A.name))}</th><th>${esc(tc(B.name))}</th><th>Result</th></tr></thead><tbody>` +
+      diffs.map(g => {
+        const w = winnerOf(g);
+        const mark = who => w ? (w === "TIE" ? '<span class="pill no">tie</span>' : who === w ? '<span class="pill ok">hit</span>' : '<span class="pill no">miss</span>') : '<span class="note">pending</span>';
+        return `<tr><td>${esc(g.away)} at ${esc(g.home)}</td><td>${esc(ea.picks[g.id])} ${mark(ea.picks[g.id])}</td>
+          <td>${esc(eb.picks[g.id])} ${mark(eb.picks[g.id])}</td>
+          <td>${w ? (w === "TIE" ? "Tie" : esc(w) + " won") : esc(g.detail)}</td></tr>`;
+      }).join("") + `</tbody>`
+    : `<tbody><tr><td><div class="empty"><b>Identical sheets</b>They picked every game the same way in week ${week}.</div></td></tr></tbody>`;
 }
 
 /* ---------- WEEK ---------- */
@@ -499,11 +716,18 @@ function render() {
     ["In progress", `${live}`, live ? "hot" : ""],
     ["Entries", `${entries().length}`, ""],
     ["Top score", rows.length ? `${rows[0].s.correct}` : "—", ""],
-    ["Leader", rows.length ? esc(rows[0].e.name) : "—", ""],
+    ["Leader", rows.length ? esc(tc(rows[0].e.name)) : "—", ""],
   ].map(([k,v,c]) => `<div class="kpi"><div class="k">${k}</div><div class="v ${c}">${v}</div></div>`).join("");
 
-  renderBoard(); renderStandings(rows); renderWinner(rows); renderPicks(rows);
+  renderBoard(); renderStandings(rows); renderWinner(rows); renderScenarios(rows); renderPicks(rows);
   renderEntries(); renderOverrides(); renderMoney(rows);
+}
+
+function shortSlot(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return "";
+  return d.toLocaleDateString([], { weekday: "short" }) + " " +
+         d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }).replace(":00", "");
 }
 
 function slotLabel(iso) {
@@ -515,8 +739,9 @@ function slotLabel(iso) {
 }
 
 function renderBoard() {
+  $("board").className = boardMode === "ticker" ? "board ticker" : "board";
+  $("boardView").textContent = boardMode === "ticker" ? "Cards" : "Ticker";
   if (!games().length) { $("board").innerHTML = '<div class="empty"><b>No games</b>Nothing scheduled for this week.</div>'; return; }
-  let lastSlot = null;
   $("board").innerHTML = games().map(g => {
     const w = winnerOf(g);
     const tm = (ab, logo, pts) => `<div class="tm${w && w!=="TIE" && w!==ab ? " dim":""}">
@@ -525,10 +750,8 @@ function renderBoard() {
     const st = g.state === "in"
       ? `<span class="l"><span class="dot"></span>Q${g.period} ${esc(g.clock)}</span>`
       : w === "TIE" ? `<span class="tiefinal">Final · tie — no credit</span>`
-      : `<span>${g.final ? "Final" : esc(g.detail)}</span>`;
-    const slot = slotLabel(g.kickoff);
-    const head = slot !== lastSlot ? (lastSlot = slot, `<div class="slot">${esc(slot)}</div>`) : "";
-    return head + `<div class="gm${g.state==="in"?" live":""}${w==="TIE"?" tiegame":""}">${tm(g.away,g.awayLogo,g.awayScore)}${tm(g.home,g.homeLogo,g.homeScore)}
+      : `<span>${g.final ? "Final · " + shortSlot(g.kickoff) : esc(g.detail)}</span>`;
+    return `<div class="gm${g.state==="in"?" live":""}${w==="TIE"?" tiegame":""}">${tm(g.away,g.awayLogo,g.awayScore)}${tm(g.home,g.homeLogo,g.homeScore)}
       <div class="st">${st}${!g.final && g.weather ? `<span>${esc(g.weather.text)} ${g.weather.temp}°</span>`:""}</div></div>`;
   }).join("");
 }
@@ -565,7 +788,7 @@ function renderStandings(rows) {
   }
   $("stSub").innerHTML = o.complete
     ? (o.champs.size
-        ? `Won by <b style="color:var(--ink)">${[...o.champs].map(esc).join(" &amp; ")}</b>` +
+        ? `Won by <b style="color:var(--ink)">${[...o.champs].map(n=>esc(tc(n))).join(" &amp; ")}</b>` +
           (o.tied.length > 1 && o.actual != null
             ? ` · tiebreaker ${o.actual}, closest of ${o.tied.length} tied at ${o.top}`
             : ` · outright at ${o.top}`)
@@ -583,7 +806,7 @@ function renderStandings(rows) {
           : wasTied ? '<span class="pill">lost tiebreaker</span>' : "")
         : (r.s.max < top ? '<span class="pill no">out</span>'
           : (i === 0 ? '<span class="pill ok">lead</span>' : ""));
-      return `<tr class="${r.e.name===hl?"me":""}${isChamp?" winrow":""}"><td class="pos">${i+1}</td><td>${esc(r.e.name)}</td>
+      return `<tr class="${r.e.name===hl?"me":""}${isChamp?" winrow":""}"><td class="pos">${i+1}</td><td>${esc(tc(r.e.name))}</td>
       <td class="n num" style="font-size:17px">${r.s.correct}</td><td class="n mono">${r.s.remaining}</td>
       <td class="n mono">${r.s.max}</td><td class="tbcol mono">${r.e.tiebreaker ?? "—"}</td>` +
       (o.complete && o.actual != null ? `<td class="n mono">${off != null && off < 9999 ? off : "—"}</td>` : "") +
@@ -601,10 +824,10 @@ function renderWinner(rows) {
   const top = o0.top, tied = o0.tied;
   if (open.length) {
     $("winner").innerHTML = `<p class="note">${open.length} game${open.length>1?"s":""} still open · leader${tied.length>1?"s":""}
-      <b style="color:var(--ink)">${tied.map(r=>esc(r.e.name)).join(", ")}</b> at ${top}</p>`; return;
+      <b style="color:var(--ink)">${tied.map(r=>esc(tc(r.e.name))).join(", ")}</b> at ${top}</p>`; return;
   }
   if (tied.length === 1) {
-    $("winner").innerHTML = `<div class="champ"><span class="cup">&#127942;</span><div><div class="nm">${esc(tied[0].e.name)}</div>
+    $("winner").innerHTML = `<div class="champ"><span class="cup">&#127942;</span><div><div class="nm">${esc(tc(tied[0].e.name))}</div>
       <div class="note">${top}-${games().length-top} · outright, no tiebreaker</div></div></div>`; return;
   }
   const tb = games().find(g => g.id === pool.tiebreakerGameId) ||
@@ -617,9 +840,57 @@ function renderWinner(rows) {
   const sc = tied.map(r => ({r, d: Math.abs((r.e.tiebreaker ?? 9999) - actual)})).sort((a,b)=>a.d-b.d);
   const champs = sc.filter(x => x.d === sc[0].d);
   $("winner").innerHTML = `<div class="champ"><span class="cup">&#127942;</span><div>
-    <div class="nm">${champs.map(c=>esc(c.r.e.name)).join(" &amp; ")}</div>
+    <div class="nm">${champs.map(c=>esc(tc(c.r.e.name))).join(" &amp; ")}</div>
     <div class="note">${champs.length>1?"Split":"Wins"} at ${top}-${games().length-top} · tiebreaker game totalled ${actual}</div></div></div>
-    <ul class="why">${sc.map(x=>`<li><b>${esc(x.r.e.name)}</b> guessed ${x.r.e.tiebreaker ?? "—"} · off by ${x.d}</li>`).join("")}</ul>`;
+    <ul class="why">${sc.map(x=>`<li><b>${esc(tc(x.r.e.name))}</b> guessed ${x.r.e.tiebreaker ?? "—"} · off by ${x.d}</li>`).join("")}</ul>`;
+}
+
+function renderScenarios(rows) {
+  const open = games().filter(g => !winnerOf(g))
+    .sort((a,b) => new Date(a.kickoff) - new Date(b.kickoff));
+  if (!rows.length || !open.length || open.length > 4) {
+    $("scenarioCard").hidden = true; return;
+  }
+  $("scenarioCard").hidden = false;
+  const combos = [[]];
+  for (const g of open) {
+    const next = [];
+    for (const c of combos) { next.push([...c, g.away]); next.push([...c, g.home]); }
+    combos.length = 0; combos.push(...next);
+  }
+  $("scenarioSub").textContent = `${open.length} game${open.length>1?"s":""} left · ${combos.length} outcomes`;
+
+  const field = rows.filter(r => !pool.requirePaid || r.e.paid);
+  const tbg = tbGame();
+  const body = combos.map(combo => {
+    const hypo = Object.fromEntries(open.map((g,i) => [g.id, combo[i]]));
+    const scored = field.map(r => {
+      let c = r.s.correct;
+      for (const g of open) if (r.e.picks?.[g.id] === hypo[g.id]) c++;
+      return { name: r.e.name, c, tb: r.e.tiebreaker };
+    });
+    const top = Math.max(...scored.map(x => x.c));
+    let winners = scored.filter(x => x.c === top);
+    let how = "";
+    if (winners.length > 1 && tbg) {
+      // if the tiebreaker game is one of the unplayed ones we can't know its total
+      const known = tbg.final ? tbg.homeScore + tbg.awayScore : null;
+      if (known != null) {
+        const d = winners.map(w => ({ ...w, d: Math.abs((w.tb ?? 9999) - known) })).sort((a,b)=>a.d-b.d);
+        winners = d.filter(x => x.d === d[0].d);
+        how = ` · on tiebreaker (${known})`;
+      } else how = " · tiebreaker still to come";
+    }
+    return { combo, top, winners, how };
+  });
+
+  $("scenarioTbl").innerHTML =
+    `<thead><tr>${open.map(g => `<th>${esc(g.away)} / ${esc(g.home)}</th>`).join("")}
+      <th class="n">Top</th><th>Takes the week</th></tr></thead><tbody>` +
+    body.map(b => `<tr>${b.combo.map(t => `<td><b>${esc(t)}</b></td>`).join("")}
+      <td class="n num">${b.top}</td>
+      <td>${b.winners.map(w => `${esc(tc(w.name))}${hl && w.name===hl ? " \u2605" : ""}`).join(", ")}<span class="note">${b.how}</span></td></tr>`).join("") +
+    `</tbody>`;
 }
 
 function renderPicks(rows) {
@@ -639,10 +910,11 @@ function renderPicks(rows) {
     `<th class="tbcol">Tie<br>breaker${tbGameLabel() ? `<div class="vs">${esc(tbGameLabel())}</div>` : ""}</th></tr></thead><tbody>` +
     `<tr class="split"><td class="who">Pool split</td>` +
       gs.map(g => `<td>${split(g)}</td>`).join("") + `<td class="tbcol">${tbActualLabel()}</td></tr>` +
-    shown.map(r => `<tr class="${r.e.name===hl?"me":""}"><td class="who">${esc(r.e.name)}</td>` +
+    shown.map(r => `<tr class="${r.e.name===hl?"me":""}"><td class="who">${esc(tc(r.e.name))}</td>` +
       gs.map(g => { const p = r.e.picks?.[g.id]||"", w = winnerOf(g);
         const c = !w||!p ? "" : (w==="TIE" ? "miss tied" : (p===w?"hit":"miss"));
-        return `<td class="${c}" ${w==="TIE"&&p?'title="Tie — counts as a loss"':""}>${esc(p)}</td>`; }).join("") +
+        const col = !p ? "" : p === g.home ? g.homeColor : p === g.away ? g.awayColor : "";
+        return `<td class="${c}" style="${col?`box-shadow:inset 3px 0 0 ${esc(col)}`:""}" ${w==="TIE"&&p?'title="Tie — counts as a loss"':""}>${esc(p)}</td>`; }).join("") +
       `<td class="tbcol mono">${r.e.tiebreaker ?? "—"}</td></tr>`).join("") + `</tbody>`;
 }
 
@@ -658,6 +930,15 @@ function tbActualLabel() { const g = tbGame(); return g && g.final ? (g.homeScor
 function renderEntries() {
   const es = entries();
   $("entCount").textContent = `${es.length} on file for week ${week}`;
+  // who's on the roster but has no sheet in yet — sitting out, or a sheet still to upload
+  const missing = roster.filter(n => !es.some(e => slug(e.name) === slug(n)));
+  $("missingBox").hidden = !roster.length;
+  if (roster.length) {
+    $("missingBox").innerHTML = missing.length
+      ? `<p class="note" style="margin:0 0 10px"><b style="color:var(--ink)">No sheet yet this week:</b> ${missing.map(n=>esc(tc(n))).join(", ")}
+         <span style="opacity:.7">— sitting out, or still to upload.</span></p>`
+      : `<p class="note" style="margin:0 0 10px">Every roster player has a sheet in for week ${week}.</p>`;
+  }
   $("lockPill").textContent = pass ? "unlocked" : "locked";
   $("lockPill").className = "pill " + (pass ? "ok" : "no");
   if (!es.length) { $("entTbl").innerHTML = `<tbody><tr><td><div class="empty"><b>No entries yet</b>Drop in sheet photos above, or add rows by hand.</div></td></tr></tbody>`; return; }
@@ -704,7 +985,7 @@ function renderMoney(rows) {
     ["Pot", `$${n*buyin}`, ""],
   ].map(([k,v,c]) => `<div class="kpi"><div class="k">${k}</div><div class="v ${c}">${v}</div></div>`).join("");
   $("moneyTbl").innerHTML = n ? `<thead><tr><th>Player</th><th>Status</th><th class="n">Owes</th></tr></thead><tbody>` +
-    rows.map(r => `<tr data-pay="${esc(r.e.name)}" style="cursor:pointer"><td>${esc(r.e.name)}</td>
+    rows.map(r => `<tr data-pay="${esc(r.e.name)}" style="cursor:pointer"><td>${esc(tc(r.e.name))}</td>
       <td><span class="pill ${r.e.paid?"ok":"no"}">${r.e.paid?"paid":"unpaid"}</span></td>
       <td class="n mono">${r.e.paid ? "—" : "$"+buyin}</td></tr>`).join("") + `</tbody>`
     : `<tbody><tr><td><div class="empty"><b>No entries</b>Import this week's sheets first.</div></td></tr></tbody>`;
@@ -713,10 +994,90 @@ function renderMoney(rows) {
   });
   if (season?.players?.length) {
     $("oweTbl").innerHTML = `<thead><tr><th>Player</th><th class="n">Weeks entered</th><th class="n">Unpaid weeks</th><th class="n">Owes</th></tr></thead><tbody>` +
-      season.players.map(p => `<tr><td>${esc(p.name)}</td><td class="n mono">${p.weeks}</td>
+      season.players.map(p => `<tr><td>${esc(tc(p.name))}</td><td class="n mono">${p.weeks}</td>
         <td class="n mono">${p.unpaid}</td><td class="n mono">${p.unpaid?`$${p.unpaid*buyin}`:"—"}</td></tr>`).join("") + `</tbody>`;
   }
 }
+
+/* ---------- share card ---------- */
+function drawShare(mode) {
+  const cv = $("shareCanvas"), W = 1080, H = 1350, x = cv.getContext("2d");
+  cv.width = W; cv.height = H;
+  const ink = "#0A111B", panel = "#131F2D", line = "#263445", text = "#E9EEF5",
+        muted = "#8696A8", brand = "#39B28E", gold = "#D4AC54";
+  x.fillStyle = ink; x.fillRect(0, 0, W, H);
+  x.fillStyle = brand; x.fillRect(0, 0, W, 10);
+
+  const rows = ranked();
+  const finals = games().filter(g => winnerOf(g)).length;
+  const o = weekOutcome(rows);
+
+  x.fillStyle = text; x.font = "700 62px Oswald, Inter, sans-serif";
+  x.fillText(mode === "final" ? "Week " + week + " Results" : "Week " + week, 56, 112);
+  x.fillStyle = muted; x.font = "400 28px Inter, sans-serif";
+  x.fillText(mode === "final"
+    ? `${rows.length} entries · ${games().length} games`
+    : `${rows.length} entries in · ${finals} of ${games().length} final`, 56, 156);
+
+  let y = 210;
+  if (mode === "final" && o.champs.size) {
+    x.fillStyle = panel; x.fillRect(40, y, W - 80, 120);
+    x.fillStyle = gold; x.fillRect(40, y, 7, 120);
+    x.fillStyle = muted; x.font = "600 22px Inter, sans-serif";
+    x.fillText("WINNER", 76, y + 44);
+    x.fillStyle = text; x.font = "700 52px Oswald, Inter, sans-serif";
+    x.fillText([...o.champs].map(tc).join(" & "), 76, y + 96);
+    x.fillStyle = gold; x.font = "700 46px Oswald, Inter, sans-serif";
+    x.textAlign = "right"; x.fillText(String(o.top), W - 76, y + 96); x.textAlign = "left";
+    y += 160;
+  }
+
+  const show = rows.slice(0, mode === "final" ? 12 : 14);
+  x.font = "600 22px Inter, sans-serif"; x.fillStyle = muted;
+  x.fillText("PLAYER", 76, y); x.textAlign = "right";
+  x.fillText(mode === "final" ? "CORRECT" : "TIEBREAK", W - 76, y); x.textAlign = "left";
+  y += 22;
+  show.forEach((r, i) => {
+    const isWin = o.champs.has(r.e.name);
+    x.fillStyle = i % 2 ? "#0F1926" : "#111C29"; x.fillRect(40, y, W - 80, 62);
+    if (isWin) { x.fillStyle = "rgba(212,172,84,.13)"; x.fillRect(40, y, W - 80, 62);
+                 x.fillStyle = gold; x.fillRect(40, y, 5, 62); }
+    x.fillStyle = isWin ? gold : muted; x.font = "600 26px Oswald, Inter, sans-serif";
+    x.fillText(String(i + 1), 72, y + 40);
+    x.fillStyle = text; x.font = "500 30px Inter, sans-serif";
+    x.fillText(tc(r.e.name), 128, y + 40);
+    x.textAlign = "right"; x.font = "700 32px Oswald, Inter, sans-serif";
+    x.fillStyle = isWin ? gold : text;
+    x.fillText(mode === "final" ? String(r.s.correct) : String(r.e.tiebreaker ?? "—"), W - 76, y + 40);
+    x.textAlign = "left";
+    y += 66;
+  });
+
+  x.fillStyle = muted; x.font = "400 24px Inter, sans-serif";
+  const foot = mode === "final" && o.champs.size && o.tied.length > 1
+    ? `Tiebreaker ${o.actual} · ${o.tied.length} tied at ${o.top}`
+    : location.host;
+  x.fillText(foot, 56, H - 48);
+  x.fillStyle = line; x.fillRect(56, H - 86, W - 112, 1);
+}
+
+$("shareBtn").onclick = () => { if (!pool) return; $("shareWrap").hidden = false;
+  $("shareMode").value = games().every(g => winnerOf(g)) ? "final" : "open"; drawShare($("shareMode").value); };
+$("shareClose").onclick = () => { $("shareWrap").hidden = true; };
+$("shareMode").onchange = e => drawShare(e.target.value);
+$("shareDl").onclick = () => {
+  const a = document.createElement("a");
+  a.download = `week-${week}-${$("shareMode").value}.png`;
+  a.href = $("shareCanvas").toDataURL("image/png"); a.click();
+};
+$("shareCopy").onclick = async () => {
+  try {
+    const blob = await new Promise(res => $("shareCanvas").toBlob(res, "image/png"));
+    await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+    $("shareMsg").textContent = "Copied — paste it in the group chat.";
+  } catch (e) { $("shareMsg").textContent = "Copy blocked; use Download."; }
+  setTimeout(() => $("shareMsg").textContent = "", 2600);
+};
 
 /* ---------- import actions ---------- */
 const drop = $("drop");
@@ -759,7 +1120,7 @@ function renderReview() {
     `<th class="tbcol">Tie<br>breaker</th></tr></thead><tbody>` +
     pending.map((p,i) => {
       const guess = p.assigned !== undefined ? p.assigned : (p.assigned = matchRoster(p.name));
-      const opts = roster.map(n => `<option value="${esc(n)}" ${guess === n ? "selected" : ""}>${esc(n)}</option>`).join("");
+      const opts = roster.map(n => `<option value="${esc(n)}" ${guess === n ? "selected" : ""}>${esc(tc(n))}</option>`).join("");
       return `<tr><td class="who">
         <select data-pick="${i}" style="width:128px;padding:4px 6px">
           <option value="">— choose player —</option>${opts}
@@ -910,9 +1271,14 @@ $("savePay").onclick = () => save("payMsg");
 $("pass").oninput = e => { pass = e.target.value; localStorage.setItem("pc.pass", pass); applyRole(); renderEntries(); };
 $("minWeeks").oninput = e => { minWeeks = Math.max(1, Number(e.target.value||1)); localStorage.setItem("pc.minw", minWeeks); renderSeason(); };
 $("picksFilter").oninput = () => { if (pool) renderPicks(ranked()); };
+$("h2hA").onchange = renderH2H; $("h2hB").onchange = renderH2H;
 $("sortSel").onchange = e => { sortBy = e.target.value; localStorage.setItem("pc.sort", sortBy); renderSeason(); };
 $("hlSel").onchange = e => { hl = e.target.value; localStorage.setItem("pc.hl", hl); renderSeason(); render(); };
 $("buyin").oninput = e => { buyin = Number(e.target.value||0); localStorage.setItem("pc.buyin", buyin); render(); };
+$("boardView").onclick = () => {
+  boardMode = boardMode === "ticker" ? "cards" : "ticker";
+  localStorage.setItem("pc.board", boardMode); renderBoard();
+};
 $("refreshBtn").onclick = loadWeek;
 ["weekSel","impWeek","moneyWeek","picksWeek"].forEach(id => $(id).onchange = e => {
   week = Number(e.target.value);
