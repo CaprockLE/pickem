@@ -551,7 +551,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
   <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
-    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">lab-43 · 2026-10-12 02:43 UTC</div>
+    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">lab-44 · 2026-10-12 02:43 UTC</div>
     <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
@@ -694,7 +694,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
 </div>
 
 <script>
-const BUILD = "lab-43 (2026-10-12 02:43 UTC)";
+const BUILD = "lab-44 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -1025,6 +1025,7 @@ async function loadWeek() {
   } catch (e) { $("weekSub").innerHTML = '<span class="err">Connection problem — retrying.</span>'; showError("loadWeek: " + (e?.message || e)); }
 }
 let archiveError = "";
+let archiveDirty = false;
 async function loadArchive() {
   archiveError = "";
   try {
@@ -1043,7 +1044,7 @@ async function loadArchive() {
 // push whatever photos are waiting into the archive
 async function saveArchive() {
   if (!authed) { toast("Manager passcode required", "bad"); return false; }
-  if (!pendingShots.length) { toast("No new photos to archive", "bad"); return false; }
+  if (!pendingShots.length && !archiveDirty) { toast("Nothing new to archive", "bad"); return false; }
   $("archMsg").textContent = "Saving…";
   const merged = [...archive, ...pendingShots].slice(-24);
   try {
@@ -1058,7 +1059,7 @@ async function saveArchive() {
       return false;
     }
     archive = (JSON.parse(body).sheets) || merged;
-    pendingShots = [];
+    pendingShots = []; archiveDirty = false;
     $("archMsg").textContent = "";
     renderArchive();
     toast("Sheet photos archived", "ok");
@@ -1072,24 +1073,37 @@ async function saveArchive() {
 function renderArchive() {
   if (!$("archGrid")) return;
   $("archCount").textContent = archive.length
-    ? `${archive.length} photo${archive.length === 1 ? "" : "s"} for week ${week}`
+    ? `${archive.length} Photo${archive.length === 1 ? "" : "s"} for Week ${week}`
     : "";
-  $("archBar").hidden = !pendingShots.length;
-  if (pendingShots.length) $("archMsg").textContent = `${pendingShots.length} waiting to save`;
+  $("archBar").hidden = !(pendingShots.length || archiveDirty);
+  if (pendingShots.length) $("archMsg").textContent = `${pendingShots.length} Waiting to Save`;
   if (archiveError) {
     $("archGrid").innerHTML = `<p class="err" style="grid-column:1/-1">${esc(archiveError)}</p>`;
     return;
   }
   $("archGrid").innerHTML = archive.length
-    ? archive.map(sh => `<div class="sheetcard" data-img="${esc(sh.id)}">
-        <img src="${esc(sh.data)}" alt="${esc(sh.label || "Pick sheet")}" loading="lazy">
-        <div class="cap"><span>${esc(sh.label || "Sheet")}</span>
-          <span>${new Date(sh.uploadedAt).toLocaleDateString([], {month:"short", day:"numeric"})}</span></div></div>`).join("")
+    ? archive.map(sh => `<div class="sheetcard">
+        <img src="${esc(sh.data)}" alt="${esc(sh.label || "Pick sheet")}" loading="lazy" data-img="${esc(sh.id)}">
+        <div class="cap">
+          ${authed
+            ? `<input type="text" data-label="${esc(sh.id)}" value="${esc(sh.label || "")}" placeholder="Player name"
+                 style="width:100%;font-size:11px;padding:3px 5px;background:var(--panel);border:1px solid var(--rule);border-radius:5px">`
+            : `<span>${esc(tc(sh.label || "Sheet"))}</span>`}
+          <span style="white-space:nowrap">${new Date(sh.uploadedAt).toLocaleDateString([], {month:"short", day:"numeric"})}</span>
+        </div></div>`).join("")
     : '<p class="note">No photos archived for this week yet.</p>';
-  $("archGrid").querySelectorAll("[data-img]").forEach(cardEl => cardEl.onclick = () => {
-    const sh = archive.find(x => x.id === cardEl.dataset.img);
+  $("archGrid").querySelectorAll("img[data-img]").forEach(el => el.onclick = () => {
+    const sh = archive.find(x => x.id === el.dataset.img);
     if (!sh) return;
     $("lbImg").src = sh.data; $("lightbox").hidden = false;
+  });
+  $("archGrid").querySelectorAll("input[data-label]").forEach(inp => inp.oninput = () => {
+    const sh = archive.find(x => x.id === inp.dataset.label);
+    if (!sh) return;
+    sh.label = inp.value;
+    archiveDirty = true;
+    $("archBar").hidden = false;
+    $("archMsg").textContent = "Unsaved Name Changes";
   });
 }
 
@@ -2022,16 +2036,26 @@ function renderReview() {
   });
   $("merge").onclick = () => {
     pool.entries = pool.entries || [];
+    const names = [];
     const unassigned = pending.filter(p => !(p.assigned || p.name.trim()));
     if (unassigned.length) { $("readMsg").innerHTML = `<span class="err">${unassigned.length} sheet(s) still need a player.</span>`; return; }
     for (const p of pending) {
       const finalName = (p.assigned || p.name).trim();
       if (!finalName) continue;
       if (!roster.some(r => slug(r) === slug(finalName))) roster.push(finalName);
-      p.name = finalName;
+      p.name = finalName; names.push(finalName);
       const i = pool.entries.findIndex(e => slug(e.name) === slug(p.name));
       if (i >= 0) pool.entries[i] = {...pool.entries[i], picks:p.picks, tiebreaker:p.tiebreaker};
       else pool.entries.push(p);
+    }
+    // name the queued photos after the players they were assigned to
+    if (pendingShots.length && names.length) {
+      if (pendingShots.length === names.length) {
+        pendingShots.forEach((shot, i) => { shot.label = names[i]; });
+      } else if (pendingShots.length === 1) {
+        pendingShots[0].label = names.length <= 3 ? names.join(", ") : `${names.length} entries`;
+      }
+      renderArchive();
     }
     pending = null; $("review").innerHTML = ""; $("readMsg").textContent = "Merged. Publish to make it live.";
     roster = [...new Set(roster)].sort((a,b) => a.localeCompare(b));
