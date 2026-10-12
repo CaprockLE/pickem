@@ -25,6 +25,17 @@
 *,*::before,*::after{box-sizing:inherit}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;font-size:14.5px;line-height:1.55;-webkit-font-smoothing:antialiased}
 .mono{font-variant-numeric:tabular-nums}
+/* house style: structural text in caps, explanatory copy left readable */
+nav, h1, h2, th, td, button, select, .pill, .eyebrow, .kpi .k, .kpi .v, .brand,
+.stat .k, .champ .nm, .rank, .pos, #drop b, .step b, .empty b
+  {text-transform:uppercase}
+td, th{letter-spacing:.025em}
+button, select, .pill{letter-spacing:.045em}
+h1{letter-spacing:.035em}
+.note, .sub, p.note, summary, textarea, input, .step p, .empty, ul.why, ul.path, #drop
+  {text-transform:none;letter-spacing:0}
+.pg tr.split td{background:var(--panel2);color:var(--muted);font-size:10.5px;font-weight:700;letter-spacing:.06em}
+.pg tr.split td.who{background:var(--panel2)}
 .num{font-family:Oswald,Inter,sans-serif;font-weight:600;font-variant-numeric:tabular-nums}
 
 /* shell */
@@ -93,8 +104,9 @@ tbody tr:last-child td{border-bottom:0}
 tbody tr:hover td{background:var(--panel2)}
 td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 tr.me td{background:var(--brand2)!important}
-tr.champ td{background:rgba(154,115,24,.09)}
-tr.champ td:first-child{box-shadow:inset 3px 0 0 var(--gold)}
+tr.winrow td{background:rgba(154,115,24,.10)}
+tr.winrow td:first-child{box-shadow:inset 3px 0 0 var(--gold)}
+tr.winrow .pos{color:var(--gold)}
 .pos{font-family:Oswald;font-size:16px;font-weight:600;color:var(--muted);width:30px}
 tbody tr:first-child .pos{color:var(--gold)}
 .pill{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;padding:2px 8px;border-radius:5px;
@@ -158,6 +170,7 @@ ul.why b{color:var(--ink)}
   <div class="sec">Overview</div>
   <button class="tab on" data-v="season">Season standings</button>
   <button class="tab" data-v="week">Week results</button>
+  <button class="tab" data-v="picks">All picks</button>
   <div class="sec" id="mgrSec" hidden>Manage</div>
   <button class="tab" data-v="import" id="tabImport" hidden>Import sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
@@ -175,6 +188,8 @@ ul.why b{color:var(--ink)}
           <option value="avg">Rank by average</option>
           <option value="wins">Rank by weeks won</option>
         </select>
+        <label class="note" style="display:flex;gap:5px;align-items:center" title="Players under this many weeks are listed below the ranked group">
+          min <input type="number" id="minWeeks" min="1" value="1" style="width:56px;padding:5px 6px"> wks</label>
         <select id="hlSel" title="Highlight a row"><option value="">Highlight…</option></select></div></div>
     <div class="kpis" id="seasonKpis"></div>
     <div class="card"><div class="hd"><h2>Cumulative</h2><div class="r note" id="seasonNote"></div></div>
@@ -193,7 +208,14 @@ ul.why b{color:var(--ink)}
     <div class="card" id="winCard" hidden><div class="hd"><h2>Week winner</h2></div><div class="bd" id="winner"></div></div>
     <div class="card"><div class="hd"><h2>Standings</h2><div class="r note" id="stSub"></div></div>
       <div class="bd flush scroll"><table id="stTbl"></table></div></div>
-    <div class="card"><div class="hd"><h2>All picks</h2><div class="r note">Green hit · red missed</div></div>
+  </div>
+
+  <!-- ALL PICKS -->
+  <div id="v-picks" hidden>
+    <div class="head"><div><h1>All picks</h1><p class="sub" id="picksSub">Every entry side by side.</p></div>
+      <div class="right"><input type="text" id="picksFilter" placeholder="Filter player" style="width:150px">
+        <select id="picksWeek"></select></div></div>
+    <div class="card"><div class="hd"><h2>Grid</h2><div class="r note">Green hit · red missed · top row is how the pool split</div></div>
       <div class="bd flush scroll"><table class="pg" id="pgTbl"></table></div></div>
   </div>
 
@@ -260,10 +282,11 @@ let week = Number(qs.get("week") || 5);
 let scores = {games:[]}, pool = null, season = null, pending = null;
 let hl = localStorage.getItem("pc.hl") || "";
 let sortBy = localStorage.getItem("pc.sort") || "total";
+let minWeeks = Number(localStorage.getItem("pc.minw") || 1);
 let pass = localStorage.getItem("pc.pass") || "";
 let buyin = Number(localStorage.getItem("pc.buyin") || 10);
 
-["weekSel","impWeek","moneyWeek"].forEach(id => {
+["weekSel","impWeek","moneyWeek","picksWeek"].forEach(id => {
   for (let w = 1; w <= 18; w++) {
     const o = document.createElement("option"); o.value = w; o.textContent = "Week " + w; $(id).appendChild(o);
   }
@@ -297,7 +320,7 @@ document.querySelectorAll("nav button.tab").forEach(b => b.onclick = () => setVi
 function setView(v) {
   view = v;
   document.querySelectorAll("nav button.tab").forEach(b => b.classList.toggle("on", b.dataset.v === v));
-  ["season","week","import","money"].forEach(k => $("v-" + k).hidden = k !== v);
+  ["season","week","picks","import","money"].forEach(k => $("v-" + k).hidden = k !== v);
   history.replaceState(null, "", `?v=${v}&week=${week}`);
   if (v === "season") loadSeason(); else render();
   window.scrollTo({top:0});
@@ -365,11 +388,20 @@ function renderSeason() {
   ].map(([k,v,c]) => `<div class="kpi"><div class="k">${k}</div><div class="v ${c}">${v}</div></div>`).join("");
 
   $("sortSel").value = sortBy;
+  $("minWeeks").value = minWeeks;
   const avg = p => p.total / Math.max(p.weeks, 1);
-  const players = [...season.players].sort((a, b) =>
+  const qualifies = p => p.weeks >= minWeeks;
+  const rankKey = (a, b) =>
     sortBy === "avg" ? avg(b) - avg(a) || b.total - a.total
     : sortBy === "wins" ? b.wins - a.wins || avg(b) - avg(a)
-    : b.total - a.total || avg(b) - avg(a));
+    : b.total - a.total || avg(b) - avg(a);
+  const players = [...season.players].sort((a, b) =>
+    (qualifies(b) - qualifies(a)) || rankKey(a, b));
+  const shortCount = season.players.filter(p => !qualifies(p)).length;
+  $("seasonNote").textContent = [
+    sortBy === "avg" ? "Average is per week entered" : sortBy === "wins" ? "Ranked by weeks won" : "Ranked by total correct",
+    shortCount ? `${shortCount} under ${minWeeks} weeks, listed last` : ""
+  ].filter(Boolean).join(" · ");
   const ws = season.weeks.map(w => w.week);
   $("seasonTbl").innerHTML =
     `<thead><tr><th></th><th>Player</th><th class="n">Total</th><th class="n">Avg</th><th class="n">Weeks</th><th class="n">Won</th>` +
@@ -377,7 +409,7 @@ function renderSeason() {
     players.map((p,i) => `<tr class="${p.name===hl?"me":""}"><td class="pos">${i+1}</td>
       <td>${esc(p.name)}</td><td class="n num" style="font-size:16px">${p.total}</td>
       <td class="n mono">${avg(p).toFixed(1)}</td>
-      <td class="n mono">${p.weeks}/${season.weeks.length}</td>
+      <td class="n mono">${p.weeks}/${season.weeks.length}${qualifies(p)?"":' <span class="pill">short</span>'}</td>
       <td class="n">${p.wins ? `<span class="pill gold">${p.wins}</span>` : '<span class="note">—</span>'}</td>` +
       ws.map(w => `<td class="n mono">${p.byWeek[w] ?? "·"}</td>`).join("") + `</tr>`).join("") + `</tbody>`;
 
@@ -391,7 +423,7 @@ function renderSeason() {
       <td class="n"><button class="sm" data-goweek="${w.week}">Open</button></td></tr>`).join("") + `</tbody>`;
   $("weeksTbl").querySelectorAll("button[data-goweek]").forEach(b => b.onclick = () => {
     week = Number(b.dataset.goweek);
-    ["weekSel","impWeek","moneyWeek"].forEach(id => $(id).value = week);
+    ["weekSel","impWeek","moneyWeek","picksWeek"].forEach(id => $(id).value = week);
     setView("week"); loadWeek();
   });
   $("navFoot").textContent = `${season.players.length} players · ${season.weeks.length} weeks`;
@@ -482,7 +514,7 @@ function renderStandings(rows) {
           : wasTied ? '<span class="pill">lost tiebreaker</span>' : "")
         : (r.s.max < top ? '<span class="pill no">out</span>'
           : (i === 0 ? '<span class="pill ok">lead</span>' : ""));
-      return `<tr class="${r.e.name===hl?"me":""}${isChamp?" champ":""}"><td class="pos">${i+1}</td><td>${esc(r.e.name)}</td>
+      return `<tr class="${r.e.name===hl?"me":""}${isChamp?" winrow":""}"><td class="pos">${i+1}</td><td>${esc(r.e.name)}</td>
       <td class="n num" style="font-size:17px">${r.s.correct}</td><td class="n mono">${r.s.remaining}</td>
       <td class="n mono">${r.s.max}</td><td class="n mono">${r.e.tiebreaker ?? "—"}</td>` +
       (o.complete && o.actual != null ? `<td class="n mono">${off != null && off < 9999 ? off : "—"}</td>` : "") +
@@ -523,12 +555,22 @@ function renderWinner(rows) {
 
 function renderPicks(rows) {
   const gs = games();
-  if (!rows.length || !gs.length) { $("pgTbl").innerHTML = ""; return; }
+  if (!rows.length || !gs.length) { $("pgTbl").innerHTML = ""; $("picksSub").textContent = "Nothing published for this week yet."; return; }
+  const q = ($("picksFilter").value || "").trim().toLowerCase();
+  const shown = q ? rows.filter(r => r.e.name.toLowerCase().includes(q)) : rows;
+  $("picksSub").textContent = `${shown.length} of ${rows.length} entries · week ${week}`;
+  const split = g => {
+    const a = rows.filter(r => r.e.picks?.[g.id] === g.away).length;
+    const h = rows.filter(r => r.e.picks?.[g.id] === g.home).length;
+    return `${a}-${h}`;
+  };
   $("pgTbl").innerHTML = `<thead><tr><th class="who">Player</th>` +
     gs.map(g => `<th class="c">${g.awayLogo?`<img src="${esc(g.awayLogo)}" alt="${esc(g.away)}">`:esc(g.away)}
       <div class="vs">at</div>${g.homeLogo?`<img src="${esc(g.homeLogo)}" alt="${esc(g.home)}">`:esc(g.home)}</th>`).join("") +
     `<th class="n">TB</th></tr></thead><tbody>` +
-    rows.map(r => `<tr class="${r.e.name===hl?"me":""}"><td class="who">${esc(r.e.name)}</td>` +
+    `<tr class="split"><td class="who">Pool split</td>` +
+      gs.map(g => `<td>${split(g)}</td>`).join("") + `<td></td></tr>` +
+    shown.map(r => `<tr class="${r.e.name===hl?"me":""}"><td class="who">${esc(r.e.name)}</td>` +
       gs.map(g => { const p = r.e.picks?.[g.id]||"", w = winnerOf(g);
         const c = !w||!p||w==="TIE" ? "" : (p===w?"hit":"miss");
         return `<td class="${c}">${esc(p)}</td>`; }).join("") +
@@ -743,13 +785,15 @@ $("saveImport").onclick = () => save("saveMsg");
 $("savePay").onclick = () => save("payMsg");
 
 $("pass").oninput = e => { pass = e.target.value; localStorage.setItem("pc.pass", pass); applyRole(); renderEntries(); };
+$("minWeeks").oninput = e => { minWeeks = Math.max(1, Number(e.target.value||1)); localStorage.setItem("pc.minw", minWeeks); renderSeason(); };
+$("picksFilter").oninput = () => { if (pool) renderPicks(ranked()); };
 $("sortSel").onchange = e => { sortBy = e.target.value; localStorage.setItem("pc.sort", sortBy); renderSeason(); };
 $("hlSel").onchange = e => { hl = e.target.value; localStorage.setItem("pc.hl", hl); renderSeason(); render(); };
 $("buyin").oninput = e => { buyin = Number(e.target.value||0); localStorage.setItem("pc.buyin", buyin); render(); };
 $("refreshBtn").onclick = loadWeek;
-["weekSel","impWeek","moneyWeek"].forEach(id => $(id).onchange = e => {
+["weekSel","impWeek","moneyWeek","picksWeek"].forEach(id => $(id).onchange = e => {
   week = Number(e.target.value);
-  ["weekSel","impWeek","moneyWeek"].forEach(i2 => $(i2).value = week);
+  ["weekSel","impWeek","moneyWeek","picksWeek"].forEach(i2 => $(i2).value = week);
   history.replaceState(null,"",`?v=${view}&week=${week}`);
   loadWeek();
 });
