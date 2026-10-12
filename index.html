@@ -239,17 +239,30 @@ tbody tr:first-child .pos{color:var(--gold)}
 #errBar button{background:transparent;border-color:currentColor;color:inherit;margin-left:auto;flex:none}
 #shareWrap{position:fixed;inset:0;background:rgba(5,9,14,.72);z-index:60;display:grid;place-items:center;padding:20px}
 #shareWrap[hidden]{display:none}
-/* ticker: one line per game, each team in its own aligned column */
-.board.ticker{grid-template-columns:repeat(auto-fill,minmax(372px,1fr))}
-.board.ticker .gm{display:grid;grid-template-columns:1fr 1fr auto;align-items:center;
-  column-gap:18px;padding:9px 14px}
-.board.ticker .tm{padding:0;gap:7px;min-width:0}
-.board.ticker .tm img{width:18px;height:18px}
-.board.ticker .tm .ab{font-size:13px;letter-spacing:.01em}
-.board.ticker .tm .rec{display:none}
-.board.ticker .tm .pts{font-size:15px;margin-left:auto;padding-left:10px}
-.board.ticker .tm:first-of-type{border-right:1px solid var(--rule);padding-right:18px;margin-right:-4px}
-.board.ticker .st{grid-column:3;margin:0;font-size:10.5px;white-space:nowrap;justify-content:flex-end;gap:10px}
+/* ticker: one game per line, columns aligned down the whole list.
+   .tm uses display:contents so each logo / code / score becomes a grid cell
+   of the row itself — that's what keeps every row in step. */
+.board.ticker{grid-template-columns:1fr;gap:0}
+.board.ticker .gm{
+  display:grid;
+  grid-template-columns:24px 50px 40px 24px 50px 40px minmax(130px,1fr);
+  align-items:center;column-gap:8px;padding:8px 14px;
+  border:0;border-bottom:1px solid var(--rule);border-radius:0;background:var(--panel)}
+.board.ticker .gm:last-child{border-bottom:0}
+.board.ticker .gm:hover{transform:none;box-shadow:none;background:var(--panel2)}
+.board.ticker .gm.live{border:0;border-bottom:1px solid var(--rule);background:var(--panel);animation:none;
+  box-shadow:inset 3px 0 0 var(--live)}
+.board.ticker .tm{display:contents}
+.board.ticker .tm.dim img,.board.ticker .tm.dim .ab,.board.ticker .tm.dim .pts{opacity:.45}
+.board.ticker .tm img{width:22px;height:22px}
+.board.ticker .tm .ab{font-size:13px;font-weight:600}
+.board.ticker .tm .rec,.board.ticker .tm .ball{display:none}
+.board.ticker .nologo{width:22px;height:22px;display:block}
+.gm .nologo{display:none}
+.board.ticker .tm .pts{font-size:15px;text-align:right;margin:0;font-variant-numeric:tabular-nums}
+.board.ticker .tm:first-of-type .pts{padding-right:8px;border-right:1px solid var(--rule);margin-right:8px}
+.board.ticker .st{display:flex;justify-content:flex-end;gap:12px;margin:0;padding-left:14px;
+  font-size:11px;white-space:nowrap;border-top:0}
 .board.ticker .st .odds{margin-left:0}
 .gm .st .l{color:var(--hot);font-weight:700}
 .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--hot);margin-right:4px;animation:pulse 1.6s infinite}
@@ -285,6 +298,9 @@ th.tbcol .vs{font-size:8.5px;color:var(--muted);letter-spacing:.02em;margin-top:
 .gm .st .odds{margin-left:auto;color:var(--muted);font-variant-numeric:tabular-nums}
 .tm .ball{font-size:9px;color:var(--brand);margin-left:4px;line-height:1}
 .tm .ball.rz{color:var(--hot)}
+.gm .st .poss{display:none}                 /* cards show the dot beside the team instead */
+.board.ticker .st .poss{display:inline;color:var(--brand);font-weight:600}
+.board.ticker .st .poss.rz{color:var(--live)}
 .pg td.who,.pg th.who{text-align:left;position:sticky;left:0;background:var(--panel);z-index:2;font-size:13px;font-weight:600}
 .pg th.who{z-index:4;background:var(--panel2)}
 .pg tr:hover td.who{background:var(--panel2)}
@@ -356,9 +372,10 @@ ul.why b{color:var(--ink)}
   .kpi{padding:11px 12px}
   .kpi .v{font-size:24px}
   .board{grid-template-columns:1fr 1fr}
-  .board.ticker{grid-template-columns:1fr}
-  .board.ticker .gm{column-gap:12px;padding:8px 11px}
-  .board.ticker .tm:first-of-type{padding-right:12px;margin-right:0}
+  .board.ticker .gm{grid-template-columns:20px 42px 32px 20px 42px 32px minmax(82px,1fr);
+    column-gap:6px;padding:8px 10px;font-size:12px}
+  .board.ticker .tm img{width:19px;height:19px}
+  .board.ticker .st{padding-left:8px;font-size:10px;gap:7px}
   .gm{padding:9px 10px}
   .tm .ab{font-size:12.5px}
   .tm .rec{display:none}
@@ -409,7 +426,7 @@ ul.why b{color:var(--ink)}
   <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
-    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">build-49 · 2026-10-12 02:43 UTC</div>
+    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">build-52 · 2026-10-12 02:43 UTC</div>
     <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
@@ -550,7 +567,7 @@ ul.why b{color:var(--ink)}
 </div>
 
 <script>
-const BUILD = "build-49 (2026-10-12 02:43 UTC)";
+const BUILD = "build-52 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -1196,7 +1213,7 @@ function renderBoard() {
       if (changed) bumped.add(key);
       const hasBall = g.state === "in" && g.possession === ab;
       return `<div class="tm${w && w!=="TIE" && w!==ab ? " dim":""}">
-        ${logo?`<img src="${esc(logo)}" alt="" loading="lazy">`:""}<span class="ab">${esc(ab)}</span>
+        ${logo?`<img src="${esc(logo)}" alt="" loading="lazy">`:`<span class="nologo"></span>`}<span class="ab">${esc(ab)}</span>
         ${hasBall ? `<span class="ball${g.redZone ? " rz" : ""}" title="${esc(g.downDistance || "Has the ball")}">&#9679;</span>` : ""}
         <span class="pts${bumped.has(key) ? " bumped" : ""}">${g.state==="pre"?"":pts}</span></div>`;
     };
@@ -1204,8 +1221,13 @@ function renderBoard() {
       const ph = homeWinProb(g), fav = ph >= 0.5 ? g.home : g.away;
       return `<span class="odds">${esc(fav)} ${Math.round(Math.max(ph, 1 - ph) * 100)}%</span>`;
     })() : "";
+    // the ticker has no room for the possession dot, so it reads as text there
+    const possText = g.state === "in" && g.possession
+      ? `<span class="poss${g.redZone ? " rz" : ""}" title="${esc(g.downDistance || "")}">
+           &#9679; ${esc(g.possession)}${g.redZone ? " red zone" : ""}</span>`
+      : "";
     const st = g.state === "in"
-      ? `<span class="l"><span class="dot"></span>Q${g.period} ${esc(g.clock)}</span>${liveOdds}`
+      ? `<span class="l"><span class="dot"></span>Q${g.period} ${esc(g.clock)}</span>${possText}${liveOdds}`
       : `<span>${g.final ? (w === "TIE" ? "Final · Tie · " : "Final · ") + shortSlot(g.kickoff) : esc(g.detail)}</span>`;
     const flashed = bumped.has(g.id + ":" + g.away) || bumped.has(g.id + ":" + g.home);
     return `<div class="gm${g.state==="in"?" live":""}${flashed?" flash":""}">${tm(g.away,logoFor(g,"away"),g.awayScore)}${tm(g.home,logoFor(g,"home"),g.homeScore)}
