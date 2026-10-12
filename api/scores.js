@@ -63,6 +63,8 @@ export default async function handler(req, res) {
       };
     });
 
+    games.sort((a, b) => new Date(a.kickoff) - new Date(b.kickoff) || String(a.id).localeCompare(String(b.id)));
+
     const byes = (data.week?.teamsOnBye || []).map((t) => t.abbreviation);
 
     res.setHeader("Cache-Control", "s-maxage=20, stale-while-revalidate=40");

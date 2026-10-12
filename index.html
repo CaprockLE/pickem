@@ -130,6 +130,10 @@ tbody tr:first-child .pos{color:var(--gold)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
 /* picks grid */
+.tbcol{text-align:right;white-space:normal!important;line-height:1.15;
+  border-left:1px solid var(--rule2);padding-left:10px!important;min-width:62px}
+th.tbcol{vertical-align:bottom}
+th.tbcol .vs{font-size:8.5px;color:var(--muted);letter-spacing:.02em;margin-top:2px}
 .pg th.c{text-align:center;padding:7px 3px}
 .pg th.c img{width:16px;height:16px;object-fit:contain;display:block;margin:0 auto}
 .pg th.c .vs{font-size:8.5px;color:var(--muted);line-height:1.3}
@@ -138,6 +142,8 @@ tbody tr:first-child .pos{color:var(--gold)}
 .pg td.miss{background:var(--hot2);color:var(--hot);font-weight:400}
 .pg td.tied{background:var(--hot2);color:var(--hot);font-weight:400;position:relative}
 .pg td.tied::after{content:"=";position:absolute;top:1px;right:3px;font-size:8px;opacity:.75}
+.slot{grid-column:1/-1;background:var(--panel2);padding:7px 12px;font-size:10.5px;font-weight:700;
+  letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
 .gm.tiegame{box-shadow:inset 0 0 0 1px var(--hot)}
 .gm .st .tiefinal{color:var(--hot);font-weight:700}
 .pg td.who,.pg th.who{text-align:left;position:sticky;left:0;background:var(--panel);z-index:2;font-size:13px;font-weight:600}
@@ -500,8 +506,17 @@ function render() {
   renderEntries(); renderOverrides(); renderMoney(rows);
 }
 
+function slotLabel(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return "";
+  const day = d.toLocaleDateString([], { weekday: "long" });
+  const time = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  return `${day} · ${time}`;
+}
+
 function renderBoard() {
   if (!games().length) { $("board").innerHTML = '<div class="empty"><b>No games</b>Nothing scheduled for this week.</div>'; return; }
+  let lastSlot = null;
   $("board").innerHTML = games().map(g => {
     const w = winnerOf(g);
     const tm = (ab, logo, pts) => `<div class="tm${w && w!=="TIE" && w!==ab ? " dim":""}">
@@ -511,7 +526,9 @@ function renderBoard() {
       ? `<span class="l"><span class="dot"></span>Q${g.period} ${esc(g.clock)}</span>`
       : w === "TIE" ? `<span class="tiefinal">Final · tie — no credit</span>`
       : `<span>${g.final ? "Final" : esc(g.detail)}</span>`;
-    return `<div class="gm${g.state==="in"?" live":""}${w==="TIE"?" tiegame":""}">${tm(g.away,g.awayLogo,g.awayScore)}${tm(g.home,g.homeLogo,g.homeScore)}
+    const slot = slotLabel(g.kickoff);
+    const head = slot !== lastSlot ? (lastSlot = slot, `<div class="slot">${esc(slot)}</div>`) : "";
+    return head + `<div class="gm${g.state==="in"?" live":""}${w==="TIE"?" tiegame":""}">${tm(g.away,g.awayLogo,g.awayScore)}${tm(g.home,g.homeLogo,g.homeScore)}
       <div class="st">${st}${!g.final && g.weather ? `<span>${esc(g.weather.text)} ${g.weather.temp}°</span>`:""}</div></div>`;
   }).join("");
 }
@@ -556,7 +573,7 @@ function renderStandings(rows) {
     : `${rows.filter(r => r.s.max >= top).length} still alive`;
 
   $("stTbl").innerHTML = `<thead><tr><th></th><th>Player</th><th class="n">Correct</th><th class="n">Open</th>
-    <th class="n">Max</th><th class="n">TB</th>${o.complete && o.actual != null ? '<th class="n">Off by</th>' : ""}<th>Paid</th><th>Result</th></tr></thead><tbody>` +
+    <th class="n">Max</th><th class="tbcol">Tie<br>breaker</th>${o.complete && o.actual != null ? '<th class="n">Off<br>by</th>' : ""}<th>Paid</th><th>Result</th></tr></thead><tbody>` +
     list.map((r,i) => {
       const isChamp = o.champs.has(r.e.name);
       const wasTied = o.complete && o.tied.some(t => t.e.name === r.e.name);
@@ -568,7 +585,7 @@ function renderStandings(rows) {
           : (i === 0 ? '<span class="pill ok">lead</span>' : ""));
       return `<tr class="${r.e.name===hl?"me":""}${isChamp?" winrow":""}"><td class="pos">${i+1}</td><td>${esc(r.e.name)}</td>
       <td class="n num" style="font-size:17px">${r.s.correct}</td><td class="n mono">${r.s.remaining}</td>
-      <td class="n mono">${r.s.max}</td><td class="n mono">${r.e.tiebreaker ?? "—"}</td>` +
+      <td class="n mono">${r.s.max}</td><td class="tbcol mono">${r.e.tiebreaker ?? "—"}</td>` +
       (o.complete && o.actual != null ? `<td class="n mono">${off != null && off < 9999 ? off : "—"}</td>` : "") +
       `<td><span class="pill ${r.e.paid?"ok":"no"}">${r.e.paid?"paid":"unpaid"}</span></td>
       <td>${status}</td></tr>`;
@@ -619,15 +636,23 @@ function renderPicks(rows) {
   $("pgTbl").innerHTML = `<thead><tr><th class="who">Player</th>` +
     gs.map(g => `<th class="c">${g.awayLogo?`<img src="${esc(g.awayLogo)}" alt="${esc(g.away)}">`:esc(g.away)}
       <div class="vs">at</div>${g.homeLogo?`<img src="${esc(g.homeLogo)}" alt="${esc(g.home)}">`:esc(g.home)}</th>`).join("") +
-    `<th class="n">TB</th></tr></thead><tbody>` +
+    `<th class="tbcol">Tie<br>breaker${tbGameLabel() ? `<div class="vs">${esc(tbGameLabel())}</div>` : ""}</th></tr></thead><tbody>` +
     `<tr class="split"><td class="who">Pool split</td>` +
-      gs.map(g => `<td>${split(g)}</td>`).join("") + `<td></td></tr>` +
+      gs.map(g => `<td>${split(g)}</td>`).join("") + `<td class="tbcol">${tbActualLabel()}</td></tr>` +
     shown.map(r => `<tr class="${r.e.name===hl?"me":""}"><td class="who">${esc(r.e.name)}</td>` +
       gs.map(g => { const p = r.e.picks?.[g.id]||"", w = winnerOf(g);
         const c = !w||!p ? "" : (w==="TIE" ? "miss tied" : (p===w?"hit":"miss"));
         return `<td class="${c}" ${w==="TIE"&&p?'title="Tie — counts as a loss"':""}>${esc(p)}</td>`; }).join("") +
-      `<td class="n mono">${r.e.tiebreaker ?? ""}</td></tr>`).join("") + `</tbody>`;
+      `<td class="tbcol mono">${r.e.tiebreaker ?? "—"}</td></tr>`).join("") + `</tbody>`;
 }
+
+// which game settles the week, and its final total once it's in
+function tbGame() {
+  const gs = games(); if (!gs.length) return null;
+  return gs.find(g => g.id === pool?.tiebreakerGameId) || gs[gs.length - 1];
+}
+function tbGameLabel() { const g = tbGame(); return g ? `${g.away}-${g.home}` : ""; }
+function tbActualLabel() { const g = tbGame(); return g && g.final ? (g.homeScore + g.awayScore) : "—"; }
 
 /* ---------- IMPORT ---------- */
 function renderEntries() {
@@ -636,10 +661,10 @@ function renderEntries() {
   $("lockPill").textContent = pass ? "unlocked" : "locked";
   $("lockPill").className = "pill " + (pass ? "ok" : "no");
   if (!es.length) { $("entTbl").innerHTML = `<tbody><tr><td><div class="empty"><b>No entries yet</b>Drop in sheet photos above, or add rows by hand.</div></td></tr></tbody>`; return; }
-  $("entTbl").innerHTML = `<thead><tr><th>Player</th><th class="n">Picks read</th><th class="n">Tiebreaker</th><th>Paid</th><th></th></tr></thead><tbody>` +
+  $("entTbl").innerHTML = `<thead><tr><th>Player</th><th class="n">Picks read</th><th class="tbcol">Tie<br>breaker</th><th>Paid</th><th></th></tr></thead><tbody>` +
     es.map((e,i) => `<tr><td><input type="text" data-ei="${i}" data-f="name" value="${esc(e.name)}" style="width:150px;padding:4px 8px"></td>
       <td class="n mono">${Object.keys(e.picks||{}).length}/${games().length}</td>
-      <td class="n"><input type="number" data-ei="${i}" data-f="tiebreaker" value="${e.tiebreaker ?? ""}" style="width:76px;padding:4px 6px"></td>
+      <td class="tbcol"><input type="number" data-ei="${i}" data-f="tiebreaker" value="${e.tiebreaker ?? ""}" style="width:76px;padding:4px 6px"></td>
       <td><button class="sm ${e.paid?"on":""}" data-paid="${i}">${e.paid?"paid":"unpaid"}</button></td>
       <td class="n"><button class="sm" data-del="${i}">Remove</button></td></tr>`).join("") + `</tbody>`;
   $("entTbl").querySelectorAll("input[data-ei]").forEach(inp => inp.oninput = () => {
@@ -731,7 +756,7 @@ function renderReview() {
       <div class="r note">${pending.length} rows${missing?` · ${missing} with gaps`:""}</div></div>
     <div class="bd flush scroll"><table class="pg"><thead><tr><th class="who">Player</th>` +
     gs.map(g => `<th class="c">${esc(g.away)}<div class="vs">at</div>${esc(g.home)}</th>`).join("") +
-    `<th class="n">TB</th></tr></thead><tbody>` +
+    `<th class="tbcol">Tie<br>breaker</th></tr></thead><tbody>` +
     pending.map((p,i) => {
       const guess = p.assigned !== undefined ? p.assigned : (p.assigned = matchRoster(p.name));
       const opts = roster.map(n => `<option value="${esc(n)}" ${guess === n ? "selected" : ""}>${esc(n)}</option>`).join("");
@@ -743,7 +768,7 @@ function renderReview() {
           style="width:128px;padding:4px 7px;margin-top:4px;${guess === null ? "" : "display:none"}">
         <div class="note" style="font-size:10.5px;margin-top:2px">read: ${esc(p.name) || "—"}</div></td>` +
       gs.map(g => { const v = p.picks?.[g.id]; return `<td class="${v?"":"miss"}">${esc(v||"?")}</td>`; }).join("") +
-      `<td class="n mono">${p.tiebreaker ?? "?"}</td></tr>`;
+      `<td class="tbcol mono">${p.tiebreaker ?? "?"}</td></tr>`;
     }).join("") + `</tbody></table></div>
     <div class="bar"><button class="primary" id="merge">Accept ${pending.length} entries</button>
       <button id="toss">Discard</button><span class="note">Nothing is published until you hit Publish below.</span></div></div>`;

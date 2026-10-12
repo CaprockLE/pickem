@@ -35,7 +35,7 @@ async function espnWeek(week) {
       homeScore: hs, awayScore: as, final: !!st.completed, winner,
       kickoff: ev.date,
     };
-  });
+  }).sort((a, b) => new Date(a.kickoff) - new Date(b.kickoff));
 }
 
 export default async function handler(req, res) {
