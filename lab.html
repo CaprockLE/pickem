@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>League Console · Lab</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0C1420">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pick'em">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -133,6 +140,54 @@ main > div:not([hidden]){animation:viewIn .22s ease-out}
 .card>.hd .r+.chev{margin-left:12px}
 .card.folded .chev{transform:rotate(-90deg)}
 .card.folded>.bd,.card.folded>.bar,.card.folded>#missingBox{display:none}
+
+/* toasts */
+#toasts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));
+  z-index:90;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:var(--panel);border:1px solid var(--rule2);border-radius:11px;padding:10px 16px;
+  box-shadow:0 12px 30px rgba(5,12,22,.28);font-size:13.5px;display:flex;gap:9px;align-items:center;
+  animation:toastIn .22s ease-out}
+.toast.ok{border-color:var(--brand);color:var(--brand)}
+.toast.bad{border-color:var(--miss);color:var(--miss)}
+.toast.fade{opacity:0;transform:translateY(8px);transition:.3s}
+@keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* loading skeletons */
+.skel{border-radius:7px;background:linear-gradient(90deg,var(--panel2) 25%,var(--rule) 37%,var(--panel2) 63%);
+  background-size:400% 100%;animation:shimmer 1.3s ease-in-out infinite;height:13px}
+@keyframes shimmer{0%{background-position:100% 0}100%{background-position:0 0}}
+.skelrow{display:flex;gap:12px;align-items:center;padding:11px 10px;border-bottom:1px solid var(--rule)}
+.skelrow .skel:nth-child(1){width:26px}.skelrow .skel:nth-child(2){flex:1;max-width:190px}
+.skelrow .skel:nth-child(3){width:48px;margin-left:auto}.skelrow .skel:nth-child(4){width:64px}
+
+/* archived sheets */
+.sheetgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px}
+.sheetcard{border:1px solid var(--rule);border-radius:10px;overflow:hidden;background:var(--panel2);cursor:zoom-in}
+.sheetcard img{width:100%;height:104px;object-fit:cover;display:block}
+.sheetcard .cap{font-size:11px;padding:6px 8px;color:var(--muted);display:flex;justify-content:space-between;gap:6px}
+#lightbox{position:fixed;inset:0;background:rgba(4,8,14,.88);z-index:95;display:grid;place-items:center;padding:18px}
+#lightbox[hidden]{display:none}
+#lightbox img{max-width:100%;max-height:88vh;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+#lightbox .x{position:absolute;top:14px;right:16px}
+
+/* locked state */
+.locked{text-align:center;padding:44px 22px}
+.locked .lk{font-size:32px;line-height:1;margin-bottom:10px}
+.locked b{display:block;font-size:17px;margin-bottom:5px}
+.locked .cd{font-family:Oswald,Inter;font-size:30px;font-weight:600;color:var(--brand);margin-top:12px}
+
+/* print */
+@media print{
+  nav,.head .right,#toasts,#labTag,.card>.hd .r,button,select,input{display:none!important}
+  body{background:#fff;color:#000}
+  .app{display:block}
+  main{padding:0;max-width:none}
+  .card{border:1px solid #bbb;box-shadow:none;break-inside:avoid;margin-bottom:12px}
+  .pg td,.pg th{font-size:10px;padding:3px}
+  .pg td.hit{background:#e9f6ef!important;color:#000}
+  .pg td.miss{background:#fbeae9!important;color:#000}
+  a[href]:after{content:""}
+}
 
 /* kpis */
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--rule);
@@ -464,7 +519,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
   <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
-    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">lab-34 · 2026-10-12 02:43 UTC</div>
+    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">lab-37 · 2026-10-12 02:43 UTC</div>
     <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
@@ -558,6 +613,12 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
       <div class="bd flush scroll"><table id="entTbl"></table></div>
       <div class="bar"><button id="addRow">Add Entry Manually</button>
         <button id="saveImport" class="primary">Publish to League</button><span class="note" id="saveMsg"></span></div></div>
+    <div class="card"><div class="hd"><h2>Sheet Archive</h2><div class="r note" id="archCount"></div></div>
+      <div class="bd">
+        <p class="note" style="margin:0 0 10px">Photos of this week's sheets, kept as the receipt if anyone disputes a pick.
+          Saved automatically when you publish.</p>
+        <div class="sheetgrid" id="archGrid"></div>
+      </div></div>
     <div class="card"><div class="hd"><h2>Result Overrides</h2><div class="r note">Rarely needed</div></div>
       <div class="bd"><p class="note" style="margin:0 0 10px">Winners come from the live feed automatically. Set an override only when the
         league scores a game differently than the scoreboard does &mdash; a suspended or postponed game your pool rules a certain way,
@@ -579,6 +640,8 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
 </main>
 </div>
 
+<div id="toasts"></div>
+<div id="lightbox" hidden><button class="x" id="lbClose">Close</button><img id="lbImg" alt="Pick sheet"></div>
 <div id="labTag"><a href="/">Lab · back to main</a></div>
 <canvas id="confetti" hidden></canvas>
 <div id="errBar" hidden></div>
@@ -595,7 +658,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
 </div>
 
 <script>
-const BUILD = "lab-34 (2026-10-12 02:43 UTC)";
+const BUILD = "lab-37 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -728,6 +791,37 @@ const logoFor = (g, side) => (darkMode()
   ? (side === "home" ? g.homeLogoDark : g.awayLogoDark) || (side === "home" ? g.homeLogo : g.awayLogo)
   : (side === "home" ? g.homeLogo : g.awayLogo)) || "";
 
+function toast(msg, kind) {
+  const el = document.createElement("div");
+  el.className = "toast" + (kind ? " " + kind : "");
+  el.textContent = msg;
+  $("toasts").appendChild(el);
+  setTimeout(() => { el.classList.add("fade"); setTimeout(() => el.remove(), 320); }, 2600);
+}
+
+function skeleton(rowCount) {
+  return `<tbody>` + Array.from({ length: rowCount }, () =>
+    `<tr><td colspan="9"><div class="skelrow"><div class="skel"></div><div class="skel"></div>
+      <div class="skel"></div><div class="skel"></div></div></td></tr>`).join("") + `</tbody>`;
+}
+
+// shrink a photo in the browser so the archive stays small
+function shrinkImage(file, maxEdge = 1100, quality = 0.62) {
+  return new Promise((resolve, reject) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const scale = Math.min(1, maxEdge / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("bad image")); };
+    img.src = url;
+  });
+}
+
 const tc = n => String(n ?? "").toLowerCase().replace(/\b[a-z]/g, m => m.toUpperCase());
 
 const qs = new URLSearchParams(location.search);
@@ -740,6 +834,8 @@ let pass = localStorage.getItem("pc.pass") || "";
 let authed = false;                       // verified against the server, not just "a passcode exists"
 let buyin = Number(localStorage.getItem("pc.buyin") || 10);
 let roster = [];
+let archive = [];            // {id,label,uploadedAt,data}
+let pendingShots = [];       // photos from the current import, saved on publish
 let boardMode = localStorage.getItem("pc.board") || "cards";
 let picksOrder = localStorage.getItem("pc.picksOrder") || "az";
 const lastScores = new Map();            // game+team -> last score we drew
@@ -864,6 +960,32 @@ async function loadWeek() {
     render();
   } catch (e) { $("weekSub").innerHTML = '<span class="err">Connection problem — retrying.</span>'; showError("loadWeek: " + (e?.message || e)); }
 }
+async function loadArchive() {
+  try {
+    const r = await getJSON(`/api/sheets?week=${week || 1}`);
+    archive = r.sheets || [];
+  } catch (e) { archive = []; }
+  renderArchive();
+}
+
+function renderArchive() {
+  if (!$("archGrid")) return;
+  $("archCount").textContent = archive.length
+    ? `${archive.length} photo${archive.length === 1 ? "" : "s"} for week ${week}`
+    : "";
+  $("archGrid").innerHTML = archive.length
+    ? archive.map(sh => `<div class="sheetcard" data-img="${esc(sh.id)}">
+        <img src="${esc(sh.data)}" alt="${esc(sh.label || "Pick sheet")}" loading="lazy">
+        <div class="cap"><span>${esc(sh.label || "Sheet")}</span>
+          <span>${new Date(sh.uploadedAt).toLocaleDateString([], {month:"short", day:"numeric"})}</span></div></div>`).join("")
+    : '<p class="note">No photos archived for this week yet.</p>';
+  $("archGrid").querySelectorAll("[data-img]").forEach(cardEl => cardEl.onclick = () => {
+    const sh = archive.find(x => x.id === cardEl.dataset.img);
+    if (!sh) return;
+    $("lbImg").src = sh.data; $("lightbox").hidden = false;
+  });
+}
+
 async function loadRoster() {
   try {
     const r = await getJSON("/api/pool?roster=1");
@@ -1212,8 +1334,17 @@ function renderStandings(rows) {
   if (o.complete && o.actual != null) {
     const dist = r => Math.abs((r.e.tiebreaker ?? 9999) - o.actual);
     list = [...rows].sort((a,b) => b.s.correct - a.s.correct || dist(a) - dist(b) || a.e.name.localeCompare(b.e.name));
+  } else if (!o.complete && chance.size) {
+    const ch = r => chance.get(r.e.name) || 0;
+    const openCount = games().filter(g => !winnerOf(g)).length;
+    list = openCount <= 1
+      // last game: likelihood is what matters
+      ? [...rows].sort((a,b) => ch(b) - ch(a) || b.s.correct - a.s.correct || a.e.name.localeCompare(b.e.name))
+      // earlier in the week: the board is still the board
+      : [...rows].sort((a,b) => b.s.correct - a.s.correct || ch(b) - ch(a) || a.e.name.localeCompare(b.e.name));
   }
   const aliveCount = alive.size;
+  const liveOrder = !o.complete && chance.size > 0;
   $("stSub").innerHTML = o.complete
     ? (o.champs.size
         ? `Won by <b style="color:var(--ink)">${[...o.champs].map(n=>esc(tc(n))).join(" &amp; ")}</b>` +
@@ -1342,8 +1473,42 @@ function renderScenarios(rows) {
     }).join("") + `</tbody>`;
 }
 
+function picksLocked() {
+  if (authed) return false;                       // the manager always sees them
+  const gs = games();
+  if (!gs.length) return false;
+  const first = gs.map(g => new Date(g.kickoff).getTime()).filter(t => !isNaN(t)).sort((a, b) => a - b)[0];
+  return first ? Date.now() < first : false;
+}
+
+function untilText(ms) {
+  const m = Math.max(0, Math.floor(ms / 60000)), d = Math.floor(m / 1440),
+        h = Math.floor((m % 1440) / 60), mm = m % 60;
+  return d ? `${d}d ${h}h ${mm}m` : h ? `${h}h ${mm}m` : `${mm}m`;
+}
+
 function renderPicks(rows) {
   const gs = games();
+  if (picksLocked()) {
+    const first = gs.map(g => new Date(g.kickoff).getTime()).sort((a, b) => a - b)[0];
+    $("picksSub").textContent = `Hidden until kickoff · Week ${week}`;
+    $("pgTbl").innerHTML = `<tbody><tr><td><div class="locked">
+      <div class="lk">&#128274;</div>
+      <b>Picks Are Hidden Until Kickoff</b>
+      <p class="note" style="max-width:420px;margin:0 auto">Everyone's sheet opens when the week's first game starts,
+        so nobody can read the field before turning theirs in.</p>
+      <div class="cd" id="lockCd">${untilText(first - Date.now())}</div>
+      <p class="note">${esc(new Date(first).toLocaleString([], {weekday:"long", hour:"numeric", minute:"2-digit"}))}</p>
+    </div></td></tr></tbody>`;
+    clearInterval(window._lockTimer);
+    window._lockTimer = setInterval(() => {
+      const el = $("lockCd");
+      if (!el) return clearInterval(window._lockTimer);
+      if (Date.now() >= first) { clearInterval(window._lockTimer); if (pool) render(); return; }
+      el.textContent = untilText(first - Date.now());
+    }, 30000);
+    return;
+  }
   if (!rows.length || !gs.length) { $("pgTbl").innerHTML = ""; $("picksSub").textContent = "Nothing published for this week yet."; return; }
   const q = ($("picksFilter").value || "").trim().toLowerCase();
   let shown = q ? rows.filter(r => r.e.name.toLowerCase().includes(q)) : rows.slice();
@@ -1618,7 +1783,13 @@ $("shareBtn").onclick = () => { if (!pool) return; $("shareWrap").hidden = false
 function closeShare() { $("shareWrap").hidden = true; $("shareMsg").textContent = ""; }
 $("shareClose").onclick = closeShare;
 $("shareWrap").addEventListener("click", e => { if (e.target === $("shareWrap")) closeShare(); });
-document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("shareWrap").hidden) closeShare(); });
+document.addEventListener("keydown", e => {
+  if (e.key !== "Escape") return;
+  if (!$("shareWrap").hidden) closeShare();
+  if (!$("lightbox").hidden) $("lightbox").hidden = true;
+});
+$("lbClose").onclick = () => { $("lightbox").hidden = true; };
+$("lightbox").addEventListener("click", e => { if (e.target === $("lightbox")) $("lightbox").hidden = true; });
 $("shareMode").onchange = e => drawShare(e.target.value);
 $("shareDl").onclick = () => {
   const a = document.createElement("a");
@@ -1839,9 +2010,22 @@ async function save(msgEl) {
     const r = await fetch(`/api/pool?week=${week}`, {method:"POST",
       headers:{"content-type":"application/json","x-admin-key":pass}, body: JSON.stringify(pool)});
     const out = await r.json();
-    if (r.ok) { pool = out; $(msgEl).textContent = "Published."; render(); loadSeason(); }
-    else $(msgEl).innerHTML = `<span class="err">${esc(out.error)}</span>`;
-  } catch (e) { $(msgEl).innerHTML = '<span class="err">Save failed.</span>'; }
+    if (r.ok) {
+      pool = out; $(msgEl).textContent = "";
+      toast("Published to the league", "ok");
+      if (pendingShots.length) {
+        const merged = [...archive, ...pendingShots].slice(-24);
+        try {
+          const ar = await fetch(`/api/sheets?week=${week}`, { method: "POST",
+            headers: { "content-type": "application/json", "x-admin-key": pass },
+            body: JSON.stringify({ sheets: merged }) });
+          if (ar.ok) { archive = (await ar.json()).sheets || merged; pendingShots = []; renderArchive();
+                       toast("Sheet photos archived", "ok"); }
+        } catch (e) { toast("Picks saved, photo archive failed", "bad"); }
+      }
+      render(); loadSeason();
+    } else { $(msgEl).textContent = ""; toast(out.error || "Save failed", "bad"); }
+  } catch (e) { $(msgEl).textContent = ""; toast("Save failed", "bad"); }
 }
 $("saveImport").onclick = () => save("saveMsg");
 $("savePay").onclick = () => save("payMsg");
@@ -1871,7 +2055,7 @@ $("refreshBtn").onclick = loadWeek;
   week = Number(e.target.value);
   ["weekSel","impWeek","moneyWeek","picksWeek"].forEach(i2 => $(i2).value = week);
   syncUrl();
-  loadWeek();
+  loadWeek(); loadArchive();
 });
 
 applyRole();
@@ -1884,7 +2068,9 @@ verifyPass(pass).then(ok => {
   const wanted = new URLSearchParams(location.search).get("v");
   if (ok && (wanted === "import" || wanted === "money")) setView(wanted);
 });
-loadWeek(); loadSeason(); loadRoster();
+$("stTbl").innerHTML = skeleton(6);
+$("seasonTbl").innerHTML = skeleton(6);
+loadWeek(); loadSeason(); loadRoster(); loadArchive();
 setInterval(() => { if (!document.hidden) loadWeek(); }, 30000);
 </script>
 </body>
