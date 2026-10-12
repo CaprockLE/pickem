@@ -207,6 +207,9 @@ th.tbcol .vs{font-size:8.5px;color:var(--muted);letter-spacing:.02em;margin-top:
   letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
 .gm.tiegame{box-shadow:inset 0 0 0 1px var(--hot)}
 .gm .st .tiefinal{color:var(--hot);font-weight:700}
+.gm .st .odds{margin-left:auto;color:var(--muted);font-variant-numeric:tabular-nums}
+.tm .ball{font-size:9px;color:var(--brand);margin-left:4px;line-height:1}
+.tm .ball.rz{color:var(--hot)}
 .pg td.who,.pg th.who{text-align:left;position:sticky;left:0;background:var(--panel);z-index:2;font-size:13px;font-weight:600}
 .pg th.who{z-index:4;background:var(--panel2)}
 .pg tr:hover td.who{background:var(--panel2)}
@@ -282,137 +285,165 @@ ul.why b{color:var(--ink)}
 }
 @media (min-width:901px){ .swipe{display:none} }
 
-/* ================= LAB SKIN ================= */
+/* ===================== LAB SKIN =====================
+   Tokens first, so light and dark each get a real treatment
+   instead of dark styling leaking onto a white page.        */
 :root{
   --r:18px;
-  --neon1:#00E59B; --neon2:#36C8FF; --neon3:#A96BFF; --amber:#FFC14D;
+  --n1:#00A472; --n2:#1A78C2; --n3:#6F44CC; --amber:#B4710F;
+  --glass:rgba(255,255,255,.82); --glass-2:rgba(255,255,255,.58);
+  --brd:rgba(14,30,52,.11); --brd-lit:rgba(14,30,52,.20);
+  --lab-shadow:0 14px 38px rgba(14,30,52,.10), inset 0 1px 0 rgba(255,255,255,.7);
+  --head-grad:linear-gradient(100deg,#0B2231 6%, #0A6450 46%, #1A5B93 88%);
+  --num-grad:linear-gradient(180deg,#14283C,#1A6C9B);
+  --row-hover:rgba(26,120,194,.10);
+  --aurora-1:rgba(0,164,114,.13); --aurora-2:rgba(26,120,194,.12); --aurora-3:rgba(111,68,204,.10);
+  --noise:.028; --mark-glow:0 6px 20px rgba(0,164,114,.30);
+  --sheen:rgba(255,255,255,.55);
 }
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+  --n1:#00E59B; --n2:#36C8FF; --n3:#A96BFF; --amber:#FFC14D;
+  --glass:rgba(255,255,255,.055); --glass-2:rgba(255,255,255,.02);
+  --brd:rgba(255,255,255,.10); --brd-lit:rgba(255,255,255,.20);
+  --lab-shadow:0 16px 42px rgba(2,8,16,.46), inset 0 1px 0 rgba(255,255,255,.07);
+  --head-grad:linear-gradient(100deg,#FFFFFF 8%, #9FE9D2 48%, #8FD4FF 82%);
+  --num-grad:linear-gradient(180deg,#FFFFFF,#A9DFFF);
+  --row-hover:rgba(54,200,255,.12);
+  --aurora-1:rgba(0,229,155,.17); --aurora-2:rgba(54,200,255,.15); --aurora-3:rgba(169,107,255,.14);
+  --noise:.038; --mark-glow:0 6px 22px rgba(0,229,155,.38);
+  --sheen:rgba(255,255,255,.10);
+}}
+:root[data-theme=dark]{
+  --n1:#00E59B; --n2:#36C8FF; --n3:#A96BFF; --amber:#FFC14D;
+  --glass:rgba(255,255,255,.055); --glass-2:rgba(255,255,255,.02);
+  --brd:rgba(255,255,255,.10); --brd-lit:rgba(255,255,255,.20);
+  --lab-shadow:0 16px 42px rgba(2,8,16,.46), inset 0 1px 0 rgba(255,255,255,.07);
+  --head-grad:linear-gradient(100deg,#FFFFFF 8%, #9FE9D2 48%, #8FD4FF 82%);
+  --num-grad:linear-gradient(180deg,#FFFFFF,#A9DFFF);
+  --row-hover:rgba(54,200,255,.12);
+  --aurora-1:rgba(0,229,155,.17); --aurora-2:rgba(54,200,255,.15); --aurora-3:rgba(169,107,255,.14);
+  --noise:.038; --mark-glow:0 6px 22px rgba(0,229,155,.38);
+  --sheen:rgba(255,255,255,.10);
+}
+
+/* slow-drifting aurora field */
 body{
   background:
-    radial-gradient(1100px 620px at 12% -8%, rgba(54,200,255,.17), transparent 60%),
-    radial-gradient(900px 560px at 88% 4%, rgba(169,107,255,.15), transparent 62%),
-    radial-gradient(800px 500px at 50% 108%, rgba(0,229,155,.13), transparent 60%),
+    radial-gradient(1200px 680px at 10% -10%, var(--aurora-2), transparent 60%),
+    radial-gradient(1000px 620px at 92% 2%, var(--aurora-3), transparent 62%),
+    radial-gradient(900px 560px at 46% 112%, var(--aurora-1), transparent 60%),
     var(--bg);
-  background-attachment:fixed;
+  background-attachment:fixed; background-size:180% 180%,170% 170%,190% 190%;
+  animation:drift 34s ease-in-out infinite alternate;
 }
-body::before{            /* fine noise so the gradients don't band */
-  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.035;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
+@keyframes drift{0%{background-position:0% 0%,100% 0%,50% 100%}100%{background-position:14% 8%,86% 10%,42% 88%}}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:var(--noise);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 .app{position:relative;z-index:1}
 
-/* glass sidebar */
-nav{
-  background:linear-gradient(180deg, rgba(10,16,25,.92), rgba(10,16,25,.72));
-  backdrop-filter:blur(18px) saturate(140%);
-  border-right:1px solid rgba(255,255,255,.07);
-}
-nav .logo .mark{
-  background:linear-gradient(135deg,var(--neon1),var(--neon2) 55%,var(--neon3));
-  box-shadow:0 6px 22px rgba(0,229,155,.38);
-}
-nav .logo b{
-  background:linear-gradient(90deg,#fff,#BFE9FF 60%,#C3B4FF);
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-}
-nav button.tab{transition:.16s}
-nav button.tab:hover{transform:translateX(2px)}
-nav button.tab.on{
-  background:linear-gradient(90deg, rgba(0,229,155,.22), rgba(54,200,255,.10) 70%, transparent);
-  color:#fff;box-shadow:inset 2px 0 0 var(--neon1), 0 0 20px rgba(0,229,155,.12);
-}
+/* sidebar stays dark in both themes — it reads as chrome */
+nav{background:linear-gradient(180deg, rgba(8,14,22,.95), rgba(8,14,22,.82));
+  backdrop-filter:blur(20px) saturate(150%); border-right:1px solid rgba(255,255,255,.08)}
+nav .logo .mark{background:linear-gradient(135deg,var(--n1),var(--n2) 55%,var(--n3));box-shadow:var(--mark-glow)}
+nav .logo b{background:linear-gradient(90deg,#fff,#BFE9FF 58%,#C9B9FF);-webkit-background-clip:text;background-clip:text;color:transparent}
+nav button.tab{transition:.18s cubic-bezier(.2,.8,.2,1);border-radius:11px;color:#9BA9BA}
+nav button.tab:hover{transform:translateX(3px);background:rgba(255,255,255,.07);color:#fff}
+nav button.tab.on{background:linear-gradient(90deg, rgba(0,229,155,.26), rgba(54,200,255,.10) 70%, transparent);
+  color:#fff;box-shadow:inset 3px 0 0 #00E59B, 0 0 24px rgba(0,229,155,.14)}
 
-/* glass cards with a lit top edge */
-.card, .kpis{
-  background:linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.015));
-  backdrop-filter:blur(13px) saturate(130%);
-  border:1px solid rgba(255,255,255,.10);
-  box-shadow:0 16px 40px rgba(2,8,16,.42), inset 0 1px 0 rgba(255,255,255,.07);
-  position:relative;overflow:hidden;
-}
-.card::before{
-  content:"";position:absolute;left:0;right:0;top:0;height:1px;
-  background:linear-gradient(90deg,transparent,var(--neon1),var(--neon2),transparent);opacity:.75;
-}
-.card>.hd{border-bottom:1px solid rgba(255,255,255,.08);background:transparent}
-.card>.hd h2{
-  background:linear-gradient(90deg,var(--neon1),var(--neon2));
-  -webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:.04em;
-}
+/* glass cards with a lit edge and an occasional sheen */
+.card,.kpis{background:linear-gradient(180deg,var(--glass),var(--glass-2));
+  backdrop-filter:blur(15px) saturate(135%); border:1px solid var(--brd);
+  box-shadow:var(--lab-shadow); position:relative; overflow:hidden}
+.card::before{content:"";position:absolute;left:0;right:0;top:0;height:1.5px;z-index:1;
+  background:linear-gradient(90deg,transparent,var(--n1),var(--n2),transparent);opacity:.85}
+.card::after{content:"";position:absolute;top:-60%;left:-35%;width:38%;height:220%;pointer-events:none;
+  background:linear-gradient(100deg,transparent,var(--sheen),transparent);
+  transform:rotate(8deg);animation:sheen 11s ease-in-out infinite}
+@keyframes sheen{0%,76%{left:-38%}100%{left:128%}}
+.card>.hd{border-bottom:1px solid var(--brd);background:transparent;position:relative;z-index:2}
+.card>.hd h2{background:linear-gradient(90deg,var(--n1),var(--n2));-webkit-background-clip:text;background-clip:text;
+  color:transparent;letter-spacing:.03em}
+.card>.bd{position:relative;z-index:2}
 
-/* headline type */
-h1{
-  font-size:34px;letter-spacing:.01em;
-  background:linear-gradient(100deg,#FFFFFF 10%, #9FE9D2 48%, #8FD4FF 78%);
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-}
+h1{font-size:35px;letter-spacing:.01em;background:var(--head-grad);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
 
-/* stat tiles glow */
-.kpi{background:transparent}
-.kpi .v{
-  background:linear-gradient(180deg,#FFFFFF,#9FE0FF);
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-  text-shadow:0 0 26px rgba(54,200,255,.25);
-}
-.kpi .v.hot{background:linear-gradient(180deg,#FFD59A,#FF7A45);-webkit-background-clip:text;background-clip:text}
+/* stat tiles */
+.kpi{background:transparent;position:relative}
+.kpi .v{background:var(--num-grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.kpi .k{letter-spacing:.16em}
 
 /* game cards */
-.gm{
-  border:1px solid rgba(255,255,255,.09);border-radius:14px;
-  background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015));
-}
-.gm:hover{transform:translateY(-3px) scale(1.012);box-shadow:0 14px 30px rgba(2,8,16,.5), 0 0 0 1px rgba(54,200,255,.35)}
-.gm.live{border-color:transparent;background:linear-gradient(var(--panel),var(--panel)) padding-box,
-  linear-gradient(120deg,var(--amber),#FF5E5B,var(--amber)) border-box;border:1px solid transparent;
-  animation:liveSweep 3.4s linear infinite}
-@keyframes liveSweep{0%{filter:hue-rotate(0deg)}100%{filter:hue-rotate(14deg)}}
-.tm .pts{font-family:Oswald,Inter;font-size:19px;
-  background:linear-gradient(180deg,#fff,#A9DFFF);-webkit-background-clip:text;background-clip:text;color:transparent}
+.gm{border:1px solid var(--brd);border-radius:14px;
+  background:linear-gradient(180deg,var(--glass),var(--glass-2));transition:.16s cubic-bezier(.2,.8,.2,1)}
+.gm:hover{transform:translateY(-3px) scale(1.015);box-shadow:0 16px 34px rgba(2,8,16,.20), 0 0 0 1px var(--brd-lit)}
+.gm.live{border-color:transparent;
+  background:linear-gradient(var(--panel),var(--panel)) padding-box,
+             linear-gradient(120deg,var(--amber),#FF5E5B,var(--n2),var(--amber)) border-box;
+  background-size:auto,300% 300%; border:1.5px solid transparent; animation:ring 5s linear infinite}
+@keyframes ring{0%{background-position:0 0,0% 50%}100%{background-position:0 0,300% 50%}}
+.tm .pts{font-family:Oswald,Inter;font-size:19px;background:var(--num-grad);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.gm .st .odds{font-weight:700;color:var(--n2)}
 
 /* tables */
-th{background:rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.10);
-  letter-spacing:.09em;text-transform:uppercase;font-size:10px}
-td{border-bottom:1px solid rgba(255,255,255,.055)}
-tbody tr{transition:background .14s, box-shadow .14s}
-tbody tr:hover td{background:linear-gradient(90deg, rgba(54,200,255,.12), transparent 70%)}
-.pos{background:linear-gradient(180deg,#fff,#7FD9FF);-webkit-background-clip:text;background-clip:text;color:transparent}
-.num,.big{background:linear-gradient(180deg,#fff,#B9ECD9);-webkit-background-clip:text;background-clip:text;color:transparent}
+th{background:transparent;border-bottom:1px solid var(--brd-lit);letter-spacing:.11em;text-transform:uppercase;font-size:10px}
+td{border-bottom:1px solid var(--brd)}
+tbody tr{transition:background .15s}
+tbody tr:hover td{background:linear-gradient(90deg,var(--row-hover),transparent 72%)}
+.num,.big{background:var(--num-grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+/* podium medallions */
+#stTbl tbody tr:nth-child(-n+3) .pos,#seasonTbl tbody tr:nth-child(-n+3) .pos{
+  -webkit-text-fill-color:#fff;color:#fff;display:inline-grid;place-items:center;
+  width:25px;height:25px;border-radius:50%;font-size:13px;line-height:1}
+#stTbl tbody tr:nth-child(1) .pos,#seasonTbl tbody tr:nth-child(1) .pos{
+  background:linear-gradient(140deg,#F7D794,#C9962C);box-shadow:0 3px 12px rgba(201,150,44,.45)}
+#stTbl tbody tr:nth-child(2) .pos,#seasonTbl tbody tr:nth-child(2) .pos{background:linear-gradient(140deg,#DCE3EA,#8D9BA9)}
+#stTbl tbody tr:nth-child(3) .pos,#seasonTbl tbody tr:nth-child(3) .pos{background:linear-gradient(140deg,#E3B289,#9C6837)}
 
-/* winner row shimmer */
-tr.winrow td{background:linear-gradient(90deg, rgba(255,193,77,.20), rgba(255,193,77,.05) 60%, transparent)!important}
+/* winner row: slow gold sweep */
+tr.winrow td{background:linear-gradient(90deg, rgba(201,150,44,.26), rgba(201,150,44,.06) 55%, transparent)!important;
+  background-size:220% 100%;animation:gold 6s ease-in-out infinite}
+@keyframes gold{0%,100%{background-position:0 0}50%{background-position:60% 0}}
 tr.winrow td:first-child{box-shadow:inset 3px 0 0 var(--amber)}
-tr.winrow .pos{background:linear-gradient(180deg,#FFE8B0,#FFB03A);-webkit-background-clip:text;background-clip:text;color:transparent}
 
-/* pills */
-.pill{border-radius:999px;backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.14)}
-.pill.ok{background:linear-gradient(90deg, rgba(0,229,155,.28), rgba(0,229,155,.10));color:#9FFFD8;border-color:transparent}
-.pill.no{background:linear-gradient(90deg, rgba(255,110,80,.26), rgba(255,110,80,.08));color:#FFC2AE;border-color:transparent}
-.pill.gold{background:linear-gradient(90deg, rgba(255,193,77,.30), rgba(255,193,77,.08));color:#FFE2A6;border-color:transparent}
+/* pills + buttons */
+.pill{border-radius:999px;border:1px solid var(--brd-lit);backdrop-filter:blur(6px)}
+.pill.ok{background:linear-gradient(90deg,rgba(0,164,114,.26),rgba(0,164,114,.08));border-color:transparent}
+.pill.no{background:linear-gradient(90deg,rgba(201,84,46,.24),rgba(201,84,46,.07));border-color:transparent}
+.pill.gold{background:linear-gradient(90deg,rgba(201,150,44,.30),rgba(201,150,44,.08));border-color:transparent}
+button{border-radius:11px;transition:.16s}
+button:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(26,120,194,.18)}
+button.primary{background:linear-gradient(120deg,var(--n1),var(--n2));border-color:transparent;color:#03211A;font-weight:700}
+button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
 
-/* buttons */
-button{border-radius:11px;transition:.15s}
-button:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,229,155,.18)}
-button.primary{background:linear-gradient(120deg,var(--neon1),var(--neon2));border-color:transparent;color:#04221A;font-weight:700}
-button.primary:hover{box-shadow:0 10px 26px rgba(54,200,255,.35)}
+/* pick grid */
+.pg td.hit{background:linear-gradient(180deg,rgba(0,164,114,.20),rgba(0,164,114,.05));box-shadow:inset 0 -2px 0 var(--n1)}
+.pg td.miss{background:linear-gradient(180deg,rgba(201,84,46,.16),rgba(201,84,46,.04));box-shadow:inset 0 -2px 0 #C9542E}
+.pg td.hit img.pick{filter:drop-shadow(0 0 7px rgba(0,164,114,.45))}
+.pg tr.split td{background:var(--panel2)}
+.pg td.who,.pg th.who{background:var(--panel)}
 
-/* grid cells */
-.pg td.hit{background:linear-gradient(180deg, rgba(0,229,155,.20), rgba(0,229,155,.05));box-shadow:inset 0 -2px 0 var(--neon1)}
-.pg td.miss{background:linear-gradient(180deg, rgba(255,110,80,.16), rgba(255,110,80,.04));box-shadow:inset 0 -2px 0 #FF6E50}
-.pg td.hit img.pick{filter:drop-shadow(0 0 6px rgba(0,229,155,.55))}
-.pg tr.split td{background:rgba(255,255,255,.05);color:#9FD6FF}
+/* import */
+#drop{border:1.5px dashed var(--brd-lit);background:linear-gradient(180deg,rgba(26,120,194,.07),transparent)}
+#drop:hover,#drop.over{border-color:var(--n1);background:linear-gradient(180deg,rgba(0,164,114,.13),transparent);
+  box-shadow:0 0 0 1px rgba(0,164,114,.30), 0 12px 32px rgba(0,164,114,.14)}
 
-/* drop zone */
-#drop{border:1.5px dashed rgba(54,200,255,.45);background:linear-gradient(180deg, rgba(54,200,255,.07), transparent)}
-#drop:hover,#drop.over{border-color:var(--neon1);background:linear-gradient(180deg, rgba(0,229,155,.14), transparent);
-  box-shadow:0 0 0 1px rgba(0,229,155,.3), 0 10px 30px rgba(0,229,155,.15)}
-
-/* lab ribbon */
+/* lab badge */
 #labTag{position:fixed;right:14px;bottom:14px;z-index:75;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
-  padding:7px 13px;border-radius:999px;color:#04221A;font-weight:800;
-  background:linear-gradient(120deg,var(--neon1),var(--neon2));box-shadow:0 8px 24px rgba(0,229,155,.35)}
+  padding:8px 14px;border-radius:999px;color:#03211A;font-weight:800;
+  background:linear-gradient(120deg,var(--n1),var(--n2));box-shadow:0 10px 26px rgba(26,120,194,.32)}
 #labTag a{color:inherit;text-decoration:none}
-@media (prefers-reduced-motion:reduce){ .gm.live{animation:none} }
-@media (max-width:900px){ #labTag{bottom:auto;top:10px;right:10px;padding:5px 10px} }
+
+@media (prefers-reduced-motion:reduce){
+  body{animation:none}.card::after{animation:none}.gm.live{animation:none}tr.winrow td{animation:none}
+}
+@media (max-width:900px){
+  #labTag{bottom:auto;top:9px;right:9px;padding:5px 10px;font-size:10px}
+  .card::after{display:none}
+  h1{font-size:24px}
+}
 
 </style>
 </head>
@@ -430,7 +461,7 @@ button.primary:hover{box-shadow:0 10px 26px rgba(54,200,255,.35)}
   <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
-    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">lab-19 · 2026-10-12 02:43 UTC</div>
+    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">lab-22 · 2026-10-12 02:43 UTC</div>
     <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
@@ -485,8 +516,6 @@ button.primary:hover{box-shadow:0 10px 26px rgba(54,200,255,.35)}
     <div class="kpis" id="h2hKpis"></div>
     <div class="card"><div class="hd"><h2>Week by Week</h2></div>
       <div class="bd flush scroll"><table id="h2hTbl"></table></div></div>
-    <div class="card"><div class="hd"><h2>Where They Split</h2><div class="r note" id="h2hSplitSub">Current week</div></div>
-      <div class="bd flush scroll"><table id="h2hGames"></table></div></div>
   </div>
 
   <!-- IMPORT -->
@@ -555,7 +584,7 @@ button.primary:hover{box-shadow:0 10px 26px rgba(54,200,255,.35)}
 </main>
 </div>
 
-<div id="labTag"><a href="/">Lab build · back to main</a></div>
+<div id="labTag"><a href="/">Lab · back to main</a></div>
 <canvas id="confetti" hidden></canvas>
 <div id="errBar" hidden></div>
 
@@ -571,7 +600,7 @@ button.primary:hover{box-shadow:0 10px 26px rgba(54,200,255,.35)}
 </div>
 
 <script>
-const BUILD = "lab-19 (2026-10-12 02:43 UTC)";
+const BUILD = "lab-22 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -584,6 +613,58 @@ async function getJSON(url) {
     const snippet = body.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 110);
     throw new Error(`${url} → HTTP ${r.status}: ${snippet || "empty response"}`);
   }
+}
+
+/* ── Live win probability ───────────────────────────────────────────
+   Final NFL margins scatter with a standard deviation near 13.5 points
+   over a full game. Shrink that with the clock: sd ≈ 1.74 * √(minutes
+   left). A lead of 8 with 2:30 left is then worth far more than the
+   same lead in the first quarter. Pre-game we lean on the betting line
+   when the feed has one, otherwise a small home-field nudge. */
+function normCdf(z) {
+  const t = 1 / (1 + 0.2316419 * Math.abs(z));
+  const d = 0.3989423 * Math.exp(-z * z / 2);
+  let p = d * t * (1.330274 * t ** 4 - 1.821256 * t ** 3 + 1.781478 * t * t - 0.356538 * t + 0.3193815);
+  return z > 0 ? 1 - p : p;
+}
+
+function minutesLeft(g) {
+  if (g.state === "pre") return 60;
+  if (g.final) return 0;
+  const per = g.period || 1;
+  const secs = g.clockSeconds == null ? 0 : g.clockSeconds;
+  if (per >= 5) return Math.max(secs / 60, 0.1);              // overtime
+  const quartersLeft = Math.max(0, 4 - per);
+  return quartersLeft * 15 + secs / 60;
+}
+
+// probability the HOME team wins, 0..1
+function homeWinProb(g) {
+  const w = winnerOf(g);
+  if (w) return w === "TIE" ? 0.5 : (w === g.home ? 1 : 0);
+  const mins = minutesLeft(g);
+  const margin = (g.homeScore || 0) - (g.awayScore || 0);
+  if (g.state === "pre") {
+    const line = typeof g.spread === "number" ? -g.spread : 1.6;   // home spread -3 → +3 edge
+    return normCdf(line / 13.5);
+  }
+  // variance from the clock, plus a floor: football scores in chunks, so even
+  // a two-score lead in the last minutes isn't settled (touchdown + two-point try).
+  const sd = Math.sqrt(1.74 ** 2 * Math.max(mins, 0) + 9);
+  let expected = margin + (mins / 60) * 1.6;                        // residual home edge
+  // Having the ball is worth little early and a lot late, when there may be
+  // only one possession left. Red zone adds to that.
+  if (g.possession) {
+    const late = Math.min(1, Math.max(0, 1 - mins / 15));
+    const bonus = (0.9 + 1.7 * late) + (g.redZone ? 1.6 : 0);
+    expected += g.possession === g.home ? bonus : -bonus;
+  }
+  return Math.min(0.98, Math.max(0.02, normCdf(expected / sd)));
+}
+
+function probFor(g, team) {
+  const p = homeWinProb(g);
+  return team === g.home ? p : team === g.away ? 1 - p : 0;
 }
 
 // which logo set suits the current background
@@ -865,21 +946,6 @@ function renderH2H() {
       return `<tr><td>Week ${w}</td><td class="n mono">${a ?? "·"}</td><td class="n mono">${b ?? "·"}</td><td>${edge}</td></tr>`;
     }).join("") + `</tbody>`;
 
-  // this week's disagreements, if that week is loaded
-  const ea = entries().find(e => e.name === A.name), eb = entries().find(e => e.name === B.name);
-  $("h2hSplitSub").textContent = `Week ${week}`;
-  if (!ea || !eb) { $("h2hGames").innerHTML = `<tbody><tr><td><div class="empty"><b>Not both entered</b>One of them has no sheet in week ${week}.</div></td></tr></tbody>`; return; }
-  const diffs = games().filter(g => ea.picks?.[g.id] && eb.picks?.[g.id] && ea.picks[g.id] !== eb.picks[g.id]);
-  $("h2hGames").innerHTML = diffs.length
-    ? `<thead><tr><th>Game</th><th>${esc(tc(A.name))}</th><th>${esc(tc(B.name))}</th><th>Result</th></tr></thead><tbody>` +
-      diffs.map(g => {
-        const w = winnerOf(g);
-        const mark = who => w ? (w === "TIE" ? '<span class="pill no">tie</span>' : who === w ? '<span class="pill ok">hit</span>' : '<span class="pill no">miss</span>') : '<span class="note">pending</span>';
-        return `<tr><td>${esc(g.away)} at ${esc(g.home)}</td><td>${esc(ea.picks[g.id])} ${mark(ea.picks[g.id])}</td>
-          <td>${esc(eb.picks[g.id])} ${mark(eb.picks[g.id])}</td>
-          <td>${w ? (w === "TIE" ? "Tie" : esc(w) + " won") : esc(g.detail)}</td></tr>`;
-      }).join("") + `</tbody>`
-    : `<tbody><tr><td><div class="empty"><b>Identical sheets</b>They picked every game the same way in week ${week}.</div></td></tr></tbody>`;
 }
 
 /* ---------- WEEK ---------- */
@@ -961,12 +1027,18 @@ function renderBoard() {
       const key = g.id + ":" + ab, changed = lastScores.has(key) && lastScores.get(key) !== pts;
       lastScores.set(key, pts);
       if (changed) bumped.add(key);
+      const hasBall = g.state === "in" && g.possession === ab;
       return `<div class="tm${w && w!=="TIE" && w!==ab ? " dim":""}">
         ${logo?`<img src="${esc(logo)}" alt="" loading="lazy">`:""}<span class="ab">${esc(ab)}</span>
+        ${hasBall ? `<span class="ball${g.redZone ? " rz" : ""}" title="${esc(g.downDistance || "Has the ball")}">&#9679;</span>` : ""}
         <span class="pts${bumped.has(key) ? " bumped" : ""}">${g.state==="pre"?"":pts}</span></div>`;
     };
+    const liveOdds = g.state === "in" ? (() => {
+      const ph = homeWinProb(g), fav = ph >= 0.5 ? g.home : g.away;
+      return `<span class="odds">${esc(fav)} ${Math.round(Math.max(ph, 1 - ph) * 100)}%</span>`;
+    })() : "";
     const st = g.state === "in"
-      ? `<span class="l"><span class="dot"></span>Q${g.period} ${esc(g.clock)}</span>`
+      ? `<span class="l"><span class="dot"></span>Q${g.period} ${esc(g.clock)}</span>${liveOdds}`
       : w === "TIE" ? `<span class="tiefinal">Final · Tie — No Credit</span>`
       : `<span>${g.final ? "Final · " + shortSlot(g.kickoff) : esc(g.detail)}</span>`;
     const flashed = bumped.has(g.id + ":" + g.away) || bumped.has(g.id + ":" + g.home);
@@ -1023,10 +1095,40 @@ function stillAlive(rows) {
   return alive;
 }
 
+// chance each player tops the week, weighting every outcome by live game odds
+function winChances(rows) {
+  const open = games().filter(g => !winnerOf(g));
+  const field = rows.filter(r => !pool.requirePaid || r.e.paid);
+  const out = new Map();
+  if (!field.length) return out;
+  if (open.length > 10) return out;                       // too many branches to enumerate
+  let combos = [{ picks: {}, p: 1 }];
+  for (const g of open) {
+    const ph = homeWinProb(g);
+    combos = combos.flatMap(c => [
+      { picks: { ...c.picks, [g.id]: g.home }, p: c.p * ph },
+      { picks: { ...c.picks, [g.id]: g.away }, p: c.p * (1 - ph) },
+    ]);
+  }
+  for (const c of combos) {
+    if (c.p <= 0) continue;
+    let best = -1; const sc = [];
+    for (const r of field) {
+      let n = r.s.correct;
+      for (const g of open) if (r.e.picks?.[g.id] === c.picks[g.id]) n++;
+      sc.push([r.e.name, n]); if (n > best) best = n;
+    }
+    const top = sc.filter(([, n]) => n === best);
+    for (const [nm] of top) out.set(nm, (out.get(nm) || 0) + c.p / top.length);
+  }
+  return out;
+}
+
 function renderStandings(rows) {
   if (!rows.length) { $("stTbl").innerHTML = `<tbody><tr><td><div class="empty"><b>No entries for this week</b>Use Import sheets to add them.</div></td></tr></tbody>`; return; }
   const top = Math.max(...rows.map(r => r.s.correct));
   const alive = stillAlive(rows);
+  const chance = winChances(rows);
   const o = weekOutcome(rows);
   let list = rows;
   if (o.complete && o.actual != null) {
@@ -1044,7 +1146,7 @@ function renderStandings(rows) {
     : `${aliveCount} still alive`;
 
   $("stTbl").innerHTML = `<thead><tr><th></th><th>Player</th><th class="n">Correct</th><th class="n">Open</th>
-    <th class="n">Max</th><th class="tbcol">Tie<br>breaker</th>${o.complete && o.actual != null ? '<th class="n">Off<br>by</th>' : ""}<th>Paid</th><th>Result</th></tr></thead><tbody>` +
+    <th class="n">Max</th><th class="n">Chance</th><th class="tbcol">Tie<br>breaker</th>${o.complete && o.actual != null ? '<th class="n">Off<br>by</th>' : ""}<th>Paid</th><th>Result</th></tr></thead><tbody>` +
     list.map((r,i) => {
       const isChamp = o.champs.has(r.e.name);
       const wasTied = o.complete && o.tied.some(t => t.e.name === r.e.name);
@@ -1056,7 +1158,11 @@ function renderStandings(rows) {
           : r.s.correct === top ? '<span class="pill ok">Lead</span>' : "");
       return `<tr class="${r.e.name===hl?"me":""}${isChamp?" winrow":""}"><td class="pos">${i+1}</td><td>${esc(tc(r.e.name))}</td>
       <td class="n num" style="font-size:17px">${r.s.correct}</td><td class="n mono">${r.s.remaining}</td>
-      <td class="n mono">${r.s.max}</td><td class="tbcol mono">${r.e.tiebreaker ?? "—"}</td>` +
+      <td class="n mono">${r.s.max}</td>
+      <td class="n mono">${(() => { const p = chance.get(r.e.name);
+        if (p == null || p < 0.0005) return '<span class="note">—</span>';
+        return p >= 0.995 ? "100%" : `${(p * 100).toFixed(p < 0.095 ? 1 : 0)}%`; })()}</td>
+      <td class="tbcol mono">${r.e.tiebreaker ?? "—"}</td>` +
       (o.complete && o.actual != null ? `<td class="n mono">${off != null && off < 9999 ? off : "—"}</td>` : "") +
       `<td><span class="pill ${r.e.paid?"ok":"no"}">${r.e.paid?"paid":"unpaid"}</span></td>
       <td>${status}</td></tr>`;

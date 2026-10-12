@@ -61,6 +61,35 @@ export default async function handler(req, res) {
         clock: comp.status?.displayClock || "",
         period: comp.status?.period || 0,
         winner,
+        // betting line (home-relative) when the feed carries it, for pre-game odds
+        spread: (() => {
+          const o = (comp.odds || [])[0];
+          if (!o) return null;
+          if (typeof o.spread === "number") {
+            // ESPN reports spread against the favourite; details names them
+            const d = String(o.details || "");
+            const fav = d.split(" ")[0];
+            if (fav && fav === away.team?.abbreviation) return Math.abs(o.spread);
+            if (fav && fav === home.team?.abbreviation) return -Math.abs(o.spread);
+            return o.spread;
+          }
+          return null;
+        })(),
+        // who has the ball, and where — only present while a game is live
+        possession: (() => {
+          const pid = comp.situation?.possession;
+          if (!pid) return null;
+          if (String(pid) === String(home.team?.id)) return home.team?.abbreviation || null;
+          if (String(pid) === String(away.team?.id)) return away.team?.abbreviation || null;
+          return null;
+        })(),
+        redZone: comp.situation?.isRedZone === true,
+        downDistance: comp.situation?.shortDownDistanceText || comp.situation?.downDistanceText || null,
+        clockSeconds: (() => {
+          const c = comp.status?.displayClock || "";
+          const m = /^(\d+):(\d+)$/.exec(c.trim());
+          return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+        })(),
         weather: comp.weather?.displayValue
           ? { text: comp.weather.displayValue, temp: comp.weather.temperature }
           : null,
