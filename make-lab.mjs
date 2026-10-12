@@ -107,9 +107,9 @@ tbody tr{transition:background .15s}
 tbody tr:hover td{background:var(--row-hover)}
 tbody tr:hover td:first-child{box-shadow:inset 2px 0 0 var(--n1)}
 .num,.big{color:var(--ink);background:none}
-td.num,td .num,td.big,td .big,td.mono,td .mono{
-  background:none!important;-webkit-text-fill-color:currentColor!important;color:inherit}
-tbody tr:hover td{color:var(--ink)}
+td .num,td .big,td .mono{background:none!important}
+td.num,td .num,td.big,td .big,td.mono,td .mono{-webkit-text-fill-color:currentColor!important;color:inherit}
+tbody tr:hover td{color:var(--ink);background:var(--row-hover)}
 .pos{color:var(--muted)}
 
 /* winner row: slow gold sweep */
