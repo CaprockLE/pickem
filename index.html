@@ -94,6 +94,54 @@ button.sm{padding:4px 9px;font-size:12.5px;border-radius:7px}
 .note{color:var(--muted);font-size:12.5px}
 .err{color:var(--hot);font-size:13px}
 
+/* hero strip */
+.hero{position:relative;overflow:hidden;border-radius:var(--r);border:1px solid var(--rule);
+  background:linear-gradient(135deg,var(--panel) 0%,var(--panel2) 55%,var(--brand2) 160%);
+  padding:20px 22px;margin-bottom:16px;box-shadow:var(--sh);display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+.hero::after{content:"";position:absolute;right:-70px;top:-70px;width:230px;height:230px;border-radius:50%;
+  background:radial-gradient(circle,var(--brand) 0%,transparent 68%);opacity:.14;pointer-events:none}
+.hero .lead-k{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.hero .lead-v{font-family:Oswald,Inter;font-size:36px;font-weight:600;line-height:1.1}
+.hero .big{font-family:Oswald,Inter;font-size:52px;font-weight:700;line-height:1;color:var(--brand)}
+.hero .right{margin-left:auto;text-align:right}
+.hero .meta{font-size:12.5px;color:var(--muted)}
+
+/* avatars */
+.av{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;
+  font-size:10.5px;font-weight:700;letter-spacing:.02em;margin-right:9px;vertical-align:middle;color:#fff;flex:none}
+
+/* win-probability bar behind the name */
+td.pname{position:relative}
+td.pname .prob{position:absolute;left:0;top:3px;bottom:3px;background:var(--brand);opacity:.13;border-radius:0 4px 4px 0;pointer-events:none}
+td.pname .inner{position:relative}
+
+/* live score bump */
+@keyframes bump{0%{transform:scale(1)}28%{transform:scale(1.32);color:var(--hot)}100%{transform:scale(1)}}
+.pts.bumped{animation:bump .75s ease-out}
+@keyframes cardflash{0%{box-shadow:0 0 0 0 var(--hot)}100%{box-shadow:0 0 0 14px rgba(0,0,0,0)}}
+.gm.flash{animation:cardflash 1.1s ease-out}
+
+/* card depth */
+.gm{transition:transform .12s ease, box-shadow .12s ease}
+.gm:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(5,10,18,.18);z-index:2}
+
+/* view transitions */
+@keyframes viewIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+main > div:not([hidden]){animation:viewIn .22s ease-out}
+@media (prefers-reduced-motion:reduce){
+  .pts.bumped,.gm.flash,main > div:not([hidden]){animation:none}
+  .gm:hover{transform:none}
+}
+
+/* logos in the pick grid */
+.pg td .lg{display:inline-flex;align-items:center;gap:0}
+.pg td img.pick{width:19px;height:19px;object-fit:contain;vertical-align:middle}
+.pg td.miss img.pick{filter:grayscale(1);opacity:.55}
+
+/* confetti layer */
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:70}
+#confetti[hidden]{display:none}
+
 /* kpis */
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--rule);
   border:1px solid var(--rule);border-radius:var(--r);overflow:hidden;margin-bottom:16px;box-shadow:var(--sh)}
@@ -241,6 +289,7 @@ ul.why b{color:var(--ink)}
   <div id="v-week" hidden>
     <div class="head"><div><h1 id="weekTitle">Week</h1><p class="sub" id="weekSub">Loading…</p></div>
       <div class="right"><select id="weekSel"></select><button id="shareBtn">Share Card</button><button id="refreshBtn">Refresh</button></div></div>
+    <div class="hero" id="hero" hidden></div>
     <div class="kpis" id="weekKpis"></div>
     <div class="card"><div class="hd"><h2>Scoreboard</h2><div class="r"><button id="boardView" class="sm">Ticker</button><span class="note" id="updTag"></span></div></div>
       <div class="bd flush"><div class="board" id="board"></div></div></div>
@@ -257,7 +306,7 @@ ul.why b{color:var(--ink)}
     <div class="head"><div><h1>All Picks</h1><p class="sub" id="picksSub">Every entry side by side.</p></div>
       <div class="right"><input type="text" id="picksFilter" placeholder="Filter player" style="width:150px">
         <select id="picksWeek"></select></div></div>
-    <div class="card"><div class="hd"><h2>Grid</h2><div class="r note">Green hit · red missed · ties count as a loss for everyone</div></div>
+    <div class="card"><div class="hd"><h2>Grid</h2><div class="r note">Green Hit · Red Missed · Ties Count as a Loss for Everyone</div></div>
       <div class="bd flush scroll"><table class="pg" id="pgTbl"></table></div></div>
   </div>
 
@@ -337,12 +386,13 @@ ul.why b{color:var(--ink)}
 </main>
 </div>
 
+<canvas id="confetti" hidden></canvas>
 <div id="errBar" hidden></div>
 
 <div id="shareWrap" hidden>
   <div class="card" id="shareBox" style="max-width:560px;width:100%;margin:0">
     <div class="hd"><h2>Share Card</h2><div class="r">
-      <select id="shareMode"><option value="open">Start of Week</option><option value="final">Results</option></select>
+      <select id="shareMode"><option value="grid">Picks Grid</option><option value="final">Standings</option></select>
       <button id="shareClose">Close</button></div></div>
     <div class="bd"><canvas id="shareCanvas" style="width:100%;border-radius:10px;border:1px solid var(--rule)"></canvas>
       <div class="bar" style="margin:12px -16px -16px"><button id="shareDl" class="primary">Download Image</button>
@@ -364,6 +414,14 @@ async function getJSON(url) {
   }
 }
 
+// stable colour per player, for avatars
+function avatar(name) {
+  const n = String(name || "?");
+  let h = 0; for (let i = 0; i < n.length; i++) h = (h * 31 + n.charCodeAt(i)) % 360;
+  const initials = n.trim().split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
+  return `<span class="av" style="background:hsl(${h} 42% 38%)">${esc(initials)}</span>`;
+}
+
 const tc = n => String(n ?? "").toLowerCase().replace(/\b[a-z]/g, m => m.toUpperCase());
 
 const qs = new URLSearchParams(location.search);
@@ -376,6 +434,8 @@ let pass = localStorage.getItem("pc.pass") || "";
 let buyin = Number(localStorage.getItem("pc.buyin") || 10);
 let roster = [];
 let boardMode = localStorage.getItem("pc.board") || "cards";
+const lastScores = new Map();            // game+team -> last score we drew
+const bumped = new Set();                // scores that just changed
 
 ["weekSel","impWeek","moneyWeek","picksWeek"].forEach(id => {
   for (let w = 1; w <= 18; w++) {
@@ -669,6 +729,7 @@ function render() {
     })(), ""],
   ].map(([k,v,c]) => `<div class="kpi"><div class="k">${k}</div><div class="v ${c}">${v}</div></div>`).join("");
 
+  step("hero", () => renderHero(rows));
   step("board", () => renderBoard());
   step("standings", () => renderStandings(rows));
   step("winner", () => renderWinner(rows));
@@ -677,6 +738,7 @@ function render() {
   step("entries", () => renderEntries());
   step("overrides", () => renderOverrides());
   step("payments", () => renderMoney(rows));
+  step("celebrate", () => maybeCelebrate(rows));
 }
 
 // run one render step; if it throws, say so instead of killing the page
@@ -713,20 +775,45 @@ function slotLabel(iso) {
   return `${day} · ${time}`;
 }
 
+function renderHero(rows) {
+  const h = $("hero");
+  if (!rows.length) { h.hidden = true; return; }
+  h.hidden = false;
+  const o = weekOutcome(rows);
+  const openN = games().filter(g => !winnerOf(g)).length;
+  const best = rows[0].s.correct;
+  const leaders = rows.filter(r => r.s.correct === best);
+  const label = o.complete && o.champs.size ? "Winner" : leaders.length > 1 ? "Leaders" : "Leader";
+  const who = o.complete && o.champs.size
+    ? [...o.champs].map(tc).join(" & ")
+    : leaders.length > 3 ? `${leaders.length} tied` : leaders.map(r => tc(r.e.name)).join(", ");
+  h.innerHTML = `<div><div class="lead-k">${label}</div><div class="lead-v">${esc(who)}</div>
+      <div class="meta">${o.complete && o.champs.size && o.tied.length > 1 ? `Settled on the tiebreaker (${o.actual})` : `${rows.length} entries`}</div></div>
+    <div class="right"><div class="big">${best}</div>
+      <div class="meta">${o.complete ? "Final" : `${openN} game${openN>1?"s":""} left · ${games().length - openN} of ${games().length} done`}</div></div>`;
+}
+
 function renderBoard() {
   $("board").className = boardMode === "ticker" ? "board ticker" : "board";
   $("boardView").textContent = boardMode === "ticker" ? "Cards" : "Ticker";
   if (!games().length) { $("board").innerHTML = '<div class="empty"><b>No games</b>Nothing scheduled for this week.</div>'; return; }
+  bumped.clear();
   $("board").innerHTML = games().map(g => {
     const w = winnerOf(g);
-    const tm = (ab, logo, pts) => `<div class="tm${w && w!=="TIE" && w!==ab ? " dim":""}">
-      ${logo?`<img src="${esc(logo)}" alt="" loading="lazy">`:""}<span class="ab">${esc(ab)}</span>
-      <span class="pts">${g.state==="pre"?"":pts}</span></div>`;
+    const tm = (ab, logo, pts) => {
+      const key = g.id + ":" + ab, changed = lastScores.has(key) && lastScores.get(key) !== pts;
+      lastScores.set(key, pts);
+      if (changed) bumped.add(key);
+      return `<div class="tm${w && w!=="TIE" && w!==ab ? " dim":""}">
+        ${logo?`<img src="${esc(logo)}" alt="" loading="lazy">`:""}<span class="ab">${esc(ab)}</span>
+        <span class="pts${bumped.has(key) ? " bumped" : ""}">${g.state==="pre"?"":pts}</span></div>`;
+    };
     const st = g.state === "in"
       ? `<span class="l"><span class="dot"></span>Q${g.period} ${esc(g.clock)}</span>`
       : w === "TIE" ? `<span class="tiefinal">Final · Tie — No Credit</span>`
       : `<span>${g.final ? "Final · " + shortSlot(g.kickoff) : esc(g.detail)}</span>`;
-    return `<div class="gm${g.state==="in"?" live":""}${w==="TIE"?" tiegame":""}">${tm(g.away,g.awayLogo,g.awayScore)}${tm(g.home,g.homeLogo,g.homeScore)}
+    const flashed = bumped.has(g.id + ":" + g.away) || bumped.has(g.id + ":" + g.home);
+    return `<div class="gm${g.state==="in"?" live":""}${w==="TIE"?" tiegame":""}${flashed?" flash":""}">${tm(g.away,g.awayLogo,g.awayScore)}${tm(g.home,g.homeLogo,g.homeScore)}
       <div class="st">${st}${!g.final && g.weather ? `<span>${esc(g.weather.text)} ${g.weather.temp}°</span>`:""}</div></div>`;
   }).join("");
 }
@@ -752,15 +839,67 @@ function weekOutcome(rows) {
   return { complete, champs, tied, top, actual, tbGame, open:open.length };
 }
 
+// Names that can still finish top in at least one combination of the open games.
+function stillAlive(rows) {
+  const open = games().filter(g => !winnerOf(g));
+  const field = rows.filter(r => !pool.requirePaid || r.e.paid);
+  if (!field.length) return new Set();
+  if (!open.length) {
+    const t = Math.max(...field.map(r => r.s.correct));
+    return new Set(field.filter(r => r.s.correct === t).map(r => r.e.name));
+  }
+  if (open.length > 12) return new Set(field.map(r => r.e.name));   // too many to enumerate
+  let combos = [[]];
+  for (const g of open) combos = combos.flatMap(c => [[...c, g.away], [...c, g.home]]);
+  const alive = new Set();
+  for (const combo of combos) {
+    const hypo = Object.fromEntries(open.map((g, i) => [g.id, combo[i]]));
+    let best = -1; const scores = [];
+    for (const r of field) {
+      let c = r.s.correct;
+      for (const g of open) if (r.e.picks?.[g.id] === hypo[g.id]) c++;
+      scores.push([r.e.name, c]);
+      if (c > best) best = c;
+    }
+    for (const [n, c] of scores) if (c === best) alive.add(n);
+  }
+  return alive;
+}
+
+// share of remaining outcomes in which each player finishes on top
+function winChances(rows) {
+  const open = games().filter(g => !winnerOf(g));
+  const field = rows.filter(r => !pool.requirePaid || r.e.paid);
+  const out = new Map();
+  if (!field.length || open.length > 12) return out;
+  let combos = [[]];
+  for (const g of open) combos = combos.flatMap(c => [[...c, g.away], [...c, g.home]]);
+  for (const combo of combos) {
+    const hypo = Object.fromEntries(open.map((g, i) => [g.id, combo[i]]));
+    let best = -1; const sc = [];
+    for (const r of field) {
+      let c = r.s.correct;
+      for (const g of open) if (r.e.picks?.[g.id] === hypo[g.id]) c++;
+      sc.push([r.e.name, c]); if (c > best) best = c;
+    }
+    const top = sc.filter(([, c]) => c === best);
+    for (const [n] of top) out.set(n, (out.get(n) || 0) + 1 / top.length / combos.length);
+  }
+  return out;
+}
+
 function renderStandings(rows) {
   if (!rows.length) { $("stTbl").innerHTML = `<tbody><tr><td><div class="empty"><b>No entries for this week</b>Use Import sheets to add them.</div></td></tr></tbody>`; return; }
   const top = Math.max(...rows.map(r => r.s.correct));
+  const alive = stillAlive(rows);
+  const chance = winChances(rows);
   const o = weekOutcome(rows);
   let list = rows;
   if (o.complete && o.actual != null) {
     const dist = r => Math.abs((r.e.tiebreaker ?? 9999) - o.actual);
     list = [...rows].sort((a,b) => b.s.correct - a.s.correct || dist(a) - dist(b) || a.e.name.localeCompare(b.e.name));
   }
+  const aliveCount = alive.size;
   $("stSub").innerHTML = o.complete
     ? (o.champs.size
         ? `Won by <b style="color:var(--ink)">${[...o.champs].map(n=>esc(tc(n))).join(" &amp; ")}</b>` +
@@ -768,7 +907,7 @@ function renderStandings(rows) {
             ? ` · tiebreaker ${o.actual}, closest of ${o.tied.length} tied at ${o.top}`
             : ` · outright at ${o.top}`)
         : "Final — tiebreaker game not scored yet")
-    : `${rows.filter(r => r.s.max >= top).length} still alive`;
+    : `${aliveCount} still alive`;
 
   $("stTbl").innerHTML = `<thead><tr><th></th><th>Player</th><th class="n">Correct</th><th class="n">Open</th>
     <th class="n">Max</th><th class="tbcol">Tie<br>breaker</th>${o.complete && o.actual != null ? '<th class="n">Off<br>by</th>' : ""}<th>Paid</th><th>Result</th></tr></thead><tbody>` +
@@ -779,10 +918,12 @@ function renderStandings(rows) {
       const status = o.complete
         ? (isChamp ? '<span class="pill gold">&#127942; winner</span>'
           : wasTied ? '<span class="pill">lost tiebreaker</span>' : "")
-        : (r.s.max < top ? '<span class="pill no">Out</span>'
-          : r.s.max === top && r.s.correct < top ? '<span class="pill">Tie Only</span>'
+        : (!alive.has(r.e.name) ? '<span class="pill no">Out</span>'
           : r.s.correct === top ? '<span class="pill ok">Lead</span>' : "");
-      return `<tr class="${r.e.name===hl?"me":""}${isChamp?" winrow":""}"><td class="pos">${i+1}</td><td>${esc(tc(r.e.name))}</td>
+      return `<tr class="${r.e.name===hl?"me":""}${isChamp?" winrow":""}"><td class="pos">${i+1}</td>
+      <td class="pname">${(() => { const p = chance.get(r.e.name) || 0;
+        return p > 0.001 ? `<span class="prob" style="width:${Math.min(100, p*100).toFixed(1)}%"></span>` : ""; })()}
+        <span class="inner" title="${((chance.get(r.e.name)||0)*100).toFixed(0)}% of remaining outcomes">${avatar(r.e.name)}${esc(tc(r.e.name))}</span></td>
       <td class="n num" style="font-size:17px">${r.s.correct}</td><td class="n mono">${r.s.remaining}</td>
       <td class="n mono">${r.s.max}</td><td class="tbcol mono">${r.e.tiebreaker ?? "—"}</td>` +
       (o.complete && o.actual != null ? `<td class="n mono">${off != null && off < 9999 ? off : "—"}</td>` : "") +
@@ -799,8 +940,10 @@ function renderWinner(rows) {
   $("winCard").hidden = false;
   const top = o0.top, tied = o0.tied;
   if (open.length) {
-    $("winner").innerHTML = `<p class="note">${open.length} game${open.length>1?"s":""} still open · leader${tied.length>1?"s":""}
-      <b style="color:var(--ink)">${tied.map(r=>esc(tc(r.e.name))).join(", ")}</b> at ${top}</p>`; return;
+    $("winner").innerHTML = `<div class="champ"><span class="cup">&#9203;</span><div>
+      <div class="nm" style="font-size:22px">To Be Decided</div>
+      <div class="note">${open.length} game${open.length>1?"s":""} still to play</div></div></div>`;
+    return;
   }
   if (tied.length === 1) {
     $("winner").innerHTML = `<div class="champ"><span class="cup">&#127942;</span><div><div class="nm">${esc(tc(tied[0].e.name))}</div>
@@ -895,7 +1038,11 @@ function renderPicks(rows) {
     shown.map(r => `<tr class="${r.e.name===hl?"me":""}"><td class="who">${esc(tc(r.e.name))}</td>` +
       gs.map(g => { const p = r.e.picks?.[g.id]||"", w = winnerOf(g);
         const c = !w||!p ? "" : (w==="TIE" ? "miss tied" : (p===w?"hit":"miss"));
-        return `<td class="${c}" ${w==="TIE"&&p?'title="Tie — counts as a loss"':""}>${esc(p)}</td>`; }).join("") +
+        const logo = !p ? "" : p === g.home ? g.homeLogo : p === g.away ? g.awayLogo : "";
+        const cell = logo
+          ? `<span class="lg"><img class="pick" src="${esc(logo)}" alt="${esc(p)}" loading="lazy"></span>`
+          : esc(p || "");
+        return `<td class="${c}" title="${esc(p)}${w==="TIE"&&p?" — tie, counts as a loss":""}">${cell}</td>`; }).join("") +
       `<td class="tbcol mono">${r.e.tiebreaker ?? "—"}</td></tr>`).join("") + `</tbody>`;
 }
 
@@ -980,70 +1127,164 @@ function renderMoney(rows) {
   }
 }
 
+function confetti() {
+  const cv = $("confetti"), x = cv.getContext("2d");
+  cv.hidden = false; cv.width = innerWidth; cv.height = innerHeight;
+  const cols = ["#39B28E", "#D4AC54", "#E88A4D", "#7FB4D6", "#E9EEF5"];
+  const bits = Array.from({ length: 140 }, () => ({
+    x: Math.random() * cv.width, y: -20 - Math.random() * cv.height * .5,
+    w: 5 + Math.random() * 7, h: 8 + Math.random() * 10,
+    vy: 2 + Math.random() * 3.4, vx: -1.2 + Math.random() * 2.4,
+    rot: Math.random() * 6.3, vr: -.16 + Math.random() * .32,
+    c: cols[(Math.random() * cols.length) | 0]
+  }));
+  const started = performance.now();
+  (function frame(t) {
+    const life = t - started;
+    x.clearRect(0, 0, cv.width, cv.height);
+    bits.forEach(b => {
+      b.x += b.vx; b.y += b.vy; b.rot += b.vr;
+      x.save(); x.translate(b.x, b.y); x.rotate(b.rot);
+      x.globalAlpha = life > 3200 ? Math.max(0, 1 - (life - 3200) / 900) : 1;
+      x.fillStyle = b.c; x.fillRect(-b.w / 2, -b.h / 2, b.w, b.h); x.restore();
+    });
+    if (life < 4200) requestAnimationFrame(frame);
+    else { cv.hidden = true; x.clearRect(0, 0, cv.width, cv.height); }
+  })(started);
+}
+
+function maybeCelebrate(rows) {
+  const o = weekOutcome(rows);
+  if (!o.complete || !o.champs.size) return;
+  const key = `pc.party.w${week}`;
+  try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, "1"); } catch (e) {}
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) confetti();
+}
+
 /* ---------- share card ---------- */
 function drawShare(mode) {
+  return mode === "grid" ? drawGridShare() : drawStandingsShare();
+}
+
+const SH = { ink:"#0A111B", panel:"#131F2D", alt:"#101A26", line:"#263445", text:"#E9EEF5",
+             muted:"#8696A8", brand:"#39B28E", brandBg:"#11322A", hot:"#E88A4D", hotBg:"#33200F",
+             gold:"#D4AC54" };
+
+function drawGridShare() {
+  const cv = $("shareCanvas"), x = cv.getContext("2d");
+  const rows = ranked(), gs = games();
+  const nameW = 190, colW = 58, tbW = 86, rowH = 38, headH = 148, colHead = 56;
+  const W = nameW + gs.length * colW + tbW + 56;
+  const H = headH + colHead + rows.length * rowH + 76;
+  cv.width = W; cv.height = H;
+
+  x.fillStyle = SH.ink; x.fillRect(0, 0, W, H);
+  x.fillStyle = SH.brand; x.fillRect(0, 0, W, 8);
+
+  const o = weekOutcome(rows);
+  x.fillStyle = SH.text; x.font = "700 46px Oswald, Inter, sans-serif";
+  x.fillText(`Week ${week} Picks`, 28, 74);
+  x.fillStyle = SH.muted; x.font = "400 22px Inter, sans-serif";
+  const finals = gs.filter(g => winnerOf(g)).length;
+  x.fillText(`${rows.length} entries · ${finals} of ${gs.length} games final` +
+             (o.complete && o.champs.size ? ` · Won by ${[...o.champs].map(tc).join(" & ")}` : ""), 29, 110);
+
+  // column headers: away over home
+  let cx = 28 + nameW;
+  x.textAlign = "center"; x.font = "600 17px Inter, sans-serif";
+  gs.forEach(g => {
+    x.fillStyle = SH.muted; x.fillText(g.away, cx + colW / 2, headH + 18);
+    x.fillStyle = SH.line; x.fillText("at", cx + colW / 2, headH + 33);
+    x.fillStyle = SH.muted; x.fillText(g.home, cx + colW / 2, headH + 48);
+    cx += colW;
+  });
+  x.fillStyle = SH.muted; x.font = "600 15px Inter, sans-serif";
+  x.fillText("Tie", cx + tbW / 2, headH + 25); x.fillText("Breaker", cx + tbW / 2, headH + 42);
+  x.textAlign = "left";
+
+  let y = headH + colHead;
+  rows.forEach((r, i) => {
+    const champ = o.champs.has(r.e.name);
+    x.fillStyle = champ ? "rgba(212,172,84,.12)" : (i % 2 ? SH.alt : SH.panel);
+    x.fillRect(28, y, W - 56, rowH - 3);
+    if (champ) { x.fillStyle = SH.gold; x.fillRect(28, y, 4, rowH - 3); }
+    x.fillStyle = champ ? SH.gold : SH.text; x.font = "600 20px Inter, sans-serif";
+    x.fillText(tc(r.e.name), 44, y + 25);
+
+    let c = 28 + nameW;
+    x.textAlign = "center"; x.font = "600 17px Inter, sans-serif";
+    gs.forEach(g => {
+      const p = r.e.picks?.[g.id] || "", w = winnerOf(g);
+      if (p && w) {
+        const good = w !== "TIE" && p === w;
+        x.fillStyle = good ? SH.brandBg : SH.hotBg;
+        x.fillRect(c + 3, y + 3, colW - 6, rowH - 9);
+        x.fillStyle = good ? SH.brand : SH.hot;
+      } else x.fillStyle = p ? SH.text : SH.line;
+      x.fillText(p || "·", c + colW / 2, y + 25);
+      c += colW;
+    });
+    x.fillStyle = champ ? SH.gold : SH.text; x.font = "700 19px Oswald, Inter, sans-serif";
+    x.fillText(String(r.e.tiebreaker ?? "—"), c + tbW / 2, y + 25);
+    x.textAlign = "left";
+    y += rowH;
+  });
+
+  const tb = tbGame();
+  x.fillStyle = SH.line; x.fillRect(28, y + 14, W - 56, 1);
+  x.fillStyle = SH.muted; x.font = "400 18px Inter, sans-serif";
+  x.fillText(tb ? `Tiebreaker: ${tb.away} at ${tb.home}` + (tb.final ? ` · final total ${tb.homeScore + tb.awayScore}` : "") : "",
+             28, y + 46);
+  x.textAlign = "right"; x.fillText(location.host, W - 28, y + 46); x.textAlign = "left";
+}
+
+function drawStandingsShare() {
   const cv = $("shareCanvas"), W = 1080, H = 1350, x = cv.getContext("2d");
   cv.width = W; cv.height = H;
-  const ink = "#0A111B", panel = "#131F2D", line = "#263445", text = "#E9EEF5",
-        muted = "#8696A8", brand = "#39B28E", gold = "#D4AC54";
-  x.fillStyle = ink; x.fillRect(0, 0, W, H);
-  x.fillStyle = brand; x.fillRect(0, 0, W, 10);
-
-  const rows = ranked();
+  x.fillStyle = SH.ink; x.fillRect(0, 0, W, H);
+  x.fillStyle = SH.brand; x.fillRect(0, 0, W, 10);
+  const rows = ranked(), o = weekOutcome(rows);
   const finals = games().filter(g => winnerOf(g)).length;
-  const o = weekOutcome(rows);
 
-  x.fillStyle = text; x.font = "700 62px Oswald, Inter, sans-serif";
-  x.fillText(mode === "final" ? "Week " + week + " Results" : "Week " + week, 56, 112);
-  x.fillStyle = muted; x.font = "400 28px Inter, sans-serif";
-  x.fillText(mode === "final"
-    ? `${rows.length} entries · ${games().length} games`
-    : `${rows.length} entries in · ${finals} of ${games().length} final`, 56, 156);
+  x.fillStyle = SH.text; x.font = "700 62px Oswald, Inter, sans-serif";
+  x.fillText(`Week ${week} Standings`, 56, 112);
+  x.fillStyle = SH.muted; x.font = "400 28px Inter, sans-serif";
+  x.fillText(`${rows.length} entries · ${finals} of ${games().length} games final`, 56, 156);
 
   let y = 210;
-  if (mode === "final" && o.champs.size) {
-    x.fillStyle = panel; x.fillRect(40, y, W - 80, 120);
-    x.fillStyle = gold; x.fillRect(40, y, 7, 120);
-    x.fillStyle = muted; x.font = "600 22px Inter, sans-serif";
-    x.fillText("WINNER", 76, y + 44);
-    x.fillStyle = text; x.font = "700 52px Oswald, Inter, sans-serif";
+  if (o.complete && o.champs.size) {
+    x.fillStyle = SH.panel; x.fillRect(40, y, W - 80, 120);
+    x.fillStyle = SH.gold; x.fillRect(40, y, 7, 120);
+    x.fillStyle = SH.muted; x.font = "600 22px Inter, sans-serif"; x.fillText("WINNER", 76, y + 44);
+    x.fillStyle = SH.text; x.font = "700 52px Oswald, Inter, sans-serif";
     x.fillText([...o.champs].map(tc).join(" & "), 76, y + 96);
-    x.fillStyle = gold; x.font = "700 46px Oswald, Inter, sans-serif";
+    x.fillStyle = SH.gold; x.font = "700 46px Oswald, Inter, sans-serif";
     x.textAlign = "right"; x.fillText(String(o.top), W - 76, y + 96); x.textAlign = "left";
     y += 160;
   }
-
-  const show = rows.slice(0, mode === "final" ? 12 : 14);
-  x.font = "600 22px Inter, sans-serif"; x.fillStyle = muted;
-  x.fillText("PLAYER", 76, y); x.textAlign = "right";
-  x.fillText(mode === "final" ? "CORRECT" : "TIEBREAK", W - 76, y); x.textAlign = "left";
-  y += 22;
-  show.forEach((r, i) => {
-    const isWin = o.champs.has(r.e.name);
-    x.fillStyle = i % 2 ? "#0F1926" : "#111C29"; x.fillRect(40, y, W - 80, 62);
-    if (isWin) { x.fillStyle = "rgba(212,172,84,.13)"; x.fillRect(40, y, W - 80, 62);
-                 x.fillStyle = gold; x.fillRect(40, y, 5, 62); }
-    x.fillStyle = isWin ? gold : muted; x.font = "600 26px Oswald, Inter, sans-serif";
+  rows.slice(0, 14).forEach((r, i) => {
+    const champ = o.champs.has(r.e.name);
+    x.fillStyle = i % 2 ? SH.alt : SH.panel; x.fillRect(40, y, W - 80, 62);
+    if (champ) { x.fillStyle = "rgba(212,172,84,.13)"; x.fillRect(40, y, W - 80, 62);
+                 x.fillStyle = SH.gold; x.fillRect(40, y, 5, 62); }
+    x.fillStyle = champ ? SH.gold : SH.muted; x.font = "600 26px Oswald, Inter, sans-serif";
     x.fillText(String(i + 1), 72, y + 40);
-    x.fillStyle = text; x.font = "500 30px Inter, sans-serif";
-    x.fillText(tc(r.e.name), 128, y + 40);
+    x.fillStyle = SH.text; x.font = "500 30px Inter, sans-serif"; x.fillText(tc(r.e.name), 128, y + 40);
     x.textAlign = "right"; x.font = "700 32px Oswald, Inter, sans-serif";
-    x.fillStyle = isWin ? gold : text;
-    x.fillText(mode === "final" ? String(r.s.correct) : String(r.e.tiebreaker ?? "—"), W - 76, y + 40);
+    x.fillStyle = champ ? SH.gold : SH.text; x.fillText(String(r.s.correct), W - 150, y + 40);
+    x.font = "400 24px Inter, sans-serif"; x.fillStyle = SH.muted;
+    x.fillText(String(r.e.tiebreaker ?? "—"), W - 76, y + 40);
     x.textAlign = "left";
     y += 66;
   });
-
-  x.fillStyle = muted; x.font = "400 24px Inter, sans-serif";
-  const foot = mode === "final" && o.champs.size && o.tied.length > 1
-    ? `Tiebreaker ${o.actual} · ${o.tied.length} tied at ${o.top}`
-    : location.host;
-  x.fillText(foot, 56, H - 48);
-  x.fillStyle = line; x.fillRect(56, H - 86, W - 112, 1);
+  x.fillStyle = SH.line; x.fillRect(56, H - 86, W - 112, 1);
+  x.fillStyle = SH.muted; x.font = "400 24px Inter, sans-serif";
+  x.fillText("Correct · Tiebreaker", 56, H - 48);
+  x.textAlign = "right"; x.fillText(location.host, W - 56, H - 48); x.textAlign = "left";
 }
 
 $("shareBtn").onclick = () => { if (!pool) return; $("shareWrap").hidden = false;
-  $("shareMode").value = games().every(g => winnerOf(g)) ? "final" : "open"; drawShare($("shareMode").value); };
+  $("shareMode").value = "grid"; drawShare("grid"); };
 function closeShare() { $("shareWrap").hidden = true; $("shareMsg").textContent = ""; }
 $("shareClose").onclick = closeShare;
 $("shareWrap").addEventListener("click", e => { if (e.target === $("shareWrap")) closeShare(); });
@@ -1051,7 +1292,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("shareW
 $("shareMode").onchange = e => drawShare(e.target.value);
 $("shareDl").onclick = () => {
   const a = document.createElement("a");
-  a.download = `week-${week}-${$("shareMode").value}.png`;
+  a.download = `week-${week}-${$("shareMode").value === "grid" ? "picks" : "standings"}.png`;
   a.href = $("shareCanvas").toDataURL("image/png"); a.click();
 };
 $("shareCopy").onclick = async () => {
