@@ -139,7 +139,9 @@ th{font-size:11.5px;color:var(--muted);font-weight:600;
   text-align:left;padding:10px;background:var(--panel2);border-bottom:1px solid var(--rule);white-space:nowrap;position:sticky;top:0;z-index:3}
 td{padding:9px 10px;border-bottom:1px solid var(--rule);white-space:nowrap}
 tbody tr:last-child td{border-bottom:0}
+tbody tr{transition:background .13s}
 tbody tr:hover td{background:var(--panel2)}
+tbody tr:hover td:first-child{box-shadow:inset 2px 0 0 var(--brand)}
 td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 tr.me td{background:var(--brand2)!important}
 tr.winrow td{background:rgba(154,115,24,.10)}
@@ -192,9 +194,9 @@ th.tbcol{vertical-align:bottom}
 td.tbcol{font-weight:600}
 th.tbcol .vs{font-size:8.5px;color:var(--muted);letter-spacing:.02em;margin-top:2px;display:block}
 .pg td.tbcol{font-size:12.5px}
-.pg th.c{text-align:center;padding:7px 3px}
-.pg th.c img{width:16px;height:16px;object-fit:contain;display:block;margin:0 auto}
-.pg th.c .vs{font-size:8.5px;color:var(--muted);line-height:1.3}
+.pg th.c{text-align:center;padding:9px 4px}
+.pg th.c img{width:26px;height:26px;object-fit:contain;display:block;margin:0 auto}
+.pg th.c .vs{font-size:9px;color:var(--muted);line-height:1.5}
 .pg td{text-align:center;font-size:11.5px;font-weight:600;padding:5px 4px}
 .pg td.hit{color:var(--brand)}
 .pg td.miss{color:var(--hot);font-weight:400}
@@ -300,7 +302,7 @@ ul.why b{color:var(--ink)}
   <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
-    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">build-22 · 2026-10-12 02:43 UTC</div>
+    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">build-23 · 2026-10-12 02:43 UTC</div>
     <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
@@ -438,7 +440,7 @@ ul.why b{color:var(--ink)}
 </div>
 
 <script>
-const BUILD = "build-22 (2026-10-12 02:43 UTC)";
+const BUILD = "build-23 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -984,7 +986,7 @@ function renderStandings(rows) {
     : `${aliveCount} still alive`;
 
   $("stTbl").innerHTML = `<thead><tr><th></th><th>Player</th><th class="n">Correct</th><th class="n">Open</th>
-    <th class="n">Max</th><th class="n">Chance</th><th class="tbcol">Tie<br>breaker</th>${o.complete && o.actual != null ? '<th class="n">Off<br>by</th>' : ""}<th>Paid</th><th>Result</th></tr></thead><tbody>` +
+    <th class="n">Max</th><th class="n" title="Chance of winning the week, from live game odds">Win %</th><th class="tbcol">Tie<br>breaker</th>${o.complete && o.actual != null ? '<th class="n">Off<br>by</th>' : ""}<th>Paid</th><th>Result</th></tr></thead><tbody>` +
     list.map((r,i) => {
       const isChamp = o.champs.has(r.e.name);
       const wasTied = o.complete && o.tied.some(t => t.e.name === r.e.name);

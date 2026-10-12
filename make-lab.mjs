@@ -18,7 +18,6 @@ const LAB_CSS = `
   --row-hover:rgba(26,120,194,.10);
   --aurora-1:rgba(0,164,114,.13); --aurora-2:rgba(26,120,194,.12); --aurora-3:rgba(111,68,204,.10);
   --noise:.028; --mark-glow:0 6px 20px rgba(0,164,114,.30);
-  --sheen:rgba(255,255,255,.55);
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){
   --n1:#00E59B; --n2:#36C8FF; --n3:#A96BFF; --amber:#FFC14D;
@@ -30,7 +29,6 @@ const LAB_CSS = `
   --row-hover:rgba(54,200,255,.12);
   --aurora-1:rgba(0,229,155,.17); --aurora-2:rgba(54,200,255,.15); --aurora-3:rgba(169,107,255,.14);
   --noise:.038; --mark-glow:0 6px 22px rgba(0,229,155,.38);
-  --sheen:rgba(255,255,255,.10);
 }}
 :root[data-theme=dark]{
   --n1:#00E59B; --n2:#36C8FF; --n3:#A96BFF; --amber:#FFC14D;
@@ -42,7 +40,6 @@ const LAB_CSS = `
   --row-hover:rgba(54,200,255,.12);
   --aurora-1:rgba(0,229,155,.17); --aurora-2:rgba(54,200,255,.15); --aurora-3:rgba(169,107,255,.14);
   --noise:.038; --mark-glow:0 6px 22px rgba(0,229,155,.38);
-  --sheen:rgba(255,255,255,.10);
 }
 
 /* slow-drifting aurora field */
@@ -70,16 +67,13 @@ nav button.tab:hover{transform:translateX(3px);background:rgba(255,255,255,.07);
 nav button.tab.on{background:linear-gradient(90deg, rgba(0,229,155,.26), rgba(54,200,255,.10) 70%, transparent);
   color:#fff;box-shadow:inset 3px 0 0 #00E59B, 0 0 24px rgba(0,229,155,.14)}
 
-/* glass cards with a lit edge and an occasional sheen */
+/* glass cards with a lit top edge */
 .card,.kpis{background:linear-gradient(180deg,var(--glass),var(--glass-2));
   backdrop-filter:blur(15px) saturate(135%); border:1px solid var(--brd);
   box-shadow:var(--lab-shadow); position:relative; overflow:hidden}
 .card::before{content:"";position:absolute;left:0;right:0;top:0;height:1.5px;z-index:1;
   background:linear-gradient(90deg,transparent,var(--n1),var(--n2),transparent);opacity:.85}
-.card::after{content:"";position:absolute;top:-60%;left:-35%;width:38%;height:220%;pointer-events:none;
-  background:linear-gradient(100deg,transparent,var(--sheen),transparent);
-  transform:rotate(8deg);animation:sheen 11s ease-in-out infinite}
-@keyframes sheen{0%,76%{left:-38%}100%{left:128%}}
+100%{left:128%}}
 .card>.hd{border-bottom:1px solid var(--brd);background:transparent;position:relative;z-index:2}
 .card>.hd h2{background:linear-gradient(90deg,var(--n1),var(--n2));-webkit-background-clip:text;background-clip:text;
   color:transparent;letter-spacing:.03em}
@@ -110,16 +104,9 @@ h1{font-size:35px;letter-spacing:.01em;background:var(--head-grad);
 th{background:transparent;border-bottom:1px solid var(--brd-lit);letter-spacing:.11em;text-transform:uppercase;font-size:10px}
 td{border-bottom:1px solid var(--brd)}
 tbody tr{transition:background .15s}
-tbody tr:hover td{background:linear-gradient(90deg,var(--row-hover),transparent 72%)}
+tbody tr:hover td{background:var(--row-hover)}
+tbody tr:hover td:first-child{box-shadow:inset 2px 0 0 var(--n1)}
 .num,.big{background:var(--num-grad);-webkit-background-clip:text;background-clip:text;color:transparent}
-/* podium medallions */
-#stTbl tbody tr:nth-child(-n+3) .pos,#seasonTbl tbody tr:nth-child(-n+3) .pos{
-  -webkit-text-fill-color:#fff;color:#fff;display:inline-grid;place-items:center;
-  width:25px;height:25px;border-radius:50%;font-size:13px;line-height:1}
-#stTbl tbody tr:nth-child(1) .pos,#seasonTbl tbody tr:nth-child(1) .pos{
-  background:linear-gradient(140deg,#F7D794,#C9962C);box-shadow:0 3px 12px rgba(201,150,44,.45)}
-#stTbl tbody tr:nth-child(2) .pos,#seasonTbl tbody tr:nth-child(2) .pos{background:linear-gradient(140deg,#DCE3EA,#8D9BA9)}
-#stTbl tbody tr:nth-child(3) .pos,#seasonTbl tbody tr:nth-child(3) .pos{background:linear-gradient(140deg,#E3B289,#9C6837)}
 
 /* winner row: slow gold sweep */
 tr.winrow td{background:linear-gradient(90deg, rgba(201,150,44,.26), rgba(201,150,44,.06) 55%, transparent)!important;
@@ -156,11 +143,10 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
 #labTag a{color:inherit;text-decoration:none}
 
 @media (prefers-reduced-motion:reduce){
-  body{animation:none}.card::after{animation:none}.gm.live{animation:none}tr.winrow td{animation:none}
+  body{animation:none}.gm.live{animation:none}tr.winrow td{animation:none}
 }
 @media (max-width:900px){
   #labTag{bottom:auto;top:9px;right:9px;padding:5px 10px;font-size:10px}
-  .card::after{display:none}
   h1{font-size:24px}
 }
 `;
