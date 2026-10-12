@@ -93,6 +93,8 @@ tbody tr:last-child td{border-bottom:0}
 tbody tr:hover td{background:var(--panel2)}
 td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 tr.me td{background:var(--brand2)!important}
+tr.champ td{background:rgba(154,115,24,.09)}
+tr.champ td:first-child{box-shadow:inset 3px 0 0 var(--gold)}
 .pos{font-family:Oswald;font-size:16px;font-weight:600;color:var(--muted);width:30px}
 tbody tr:first-child .pos{color:var(--gold)}
 .pill{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;padding:2px 8px;border-radius:5px;
@@ -430,26 +432,72 @@ function renderBoard() {
   }).join("");
 }
 
+function weekOutcome(rows) {
+  const open = games().filter(g => !winnerOf(g));
+  const field = rows.filter(r => !pool.requirePaid || r.e.paid);
+  const complete = games().length > 0 && open.length === 0 && field.length > 0;
+  if (!field.length) return { complete:false, champs:new Set(), tied:[], top:0, actual:null, tbGame:null };
+  const top = Math.max(...field.map(r => r.s.correct));
+  const tied = field.filter(r => r.s.correct === top);
+  const tbGame = games().find(g => g.id === pool.tiebreakerGameId) ||
+    [...games()].sort((a,b) => new Date(b.kickoff) - new Date(a.kickoff))[0];
+  const actual = complete && tbGame && tbGame.final ? tbGame.homeScore + tbGame.awayScore : null;
+  let champs = new Set();
+  if (complete) {
+    if (tied.length === 1) champs.add(tied[0].e.name);
+    else if (actual != null) {
+      const d = tied.map(r => ({ n:r.e.name, d:Math.abs((r.e.tiebreaker ?? 9999) - actual) })).sort((a,b)=>a.d-b.d);
+      d.filter(x => x.d === d[0].d).forEach(x => champs.add(x.n));
+    }
+  }
+  return { complete, champs, tied, top, actual, tbGame, open:open.length };
+}
+
 function renderStandings(rows) {
   if (!rows.length) { $("stTbl").innerHTML = `<tbody><tr><td><div class="empty"><b>No entries for this week</b>Use Import sheets to add them.</div></td></tr></tbody>`; return; }
   const top = Math.max(...rows.map(r => r.s.correct));
-  $("stSub").textContent = `${rows.filter(r => r.s.max >= top).length} still alive`;
+  const o = weekOutcome(rows);
+  let list = rows;
+  if (o.complete && o.actual != null) {
+    const dist = r => Math.abs((r.e.tiebreaker ?? 9999) - o.actual);
+    list = [...rows].sort((a,b) => b.s.correct - a.s.correct || dist(a) - dist(b) || a.e.name.localeCompare(b.e.name));
+  }
+  $("stSub").innerHTML = o.complete
+    ? (o.champs.size
+        ? `Won by <b style="color:var(--ink)">${[...o.champs].map(esc).join(" &amp; ")}</b>` +
+          (o.tied.length > 1 && o.actual != null
+            ? ` · tiebreaker ${o.actual}, closest of ${o.tied.length} tied at ${o.top}`
+            : ` · outright at ${o.top}`)
+        : "Final — tiebreaker game not scored yet")
+    : `${rows.filter(r => r.s.max >= top).length} still alive`;
+
   $("stTbl").innerHTML = `<thead><tr><th></th><th>Player</th><th class="n">Correct</th><th class="n">Open</th>
-    <th class="n">Max</th><th class="n">TB</th><th>Paid</th><th>Status</th></tr></thead><tbody>` +
-    rows.map((r,i) => `<tr class="${r.e.name===hl?"me":""}"><td class="pos">${i+1}</td><td>${esc(r.e.name)}</td>
+    <th class="n">Max</th><th class="n">TB</th>${o.complete && o.actual != null ? '<th class="n">Off by</th>' : ""}<th>Paid</th><th>Result</th></tr></thead><tbody>` +
+    list.map((r,i) => {
+      const isChamp = o.champs.has(r.e.name);
+      const wasTied = o.complete && o.tied.some(t => t.e.name === r.e.name);
+      const off = o.actual != null ? Math.abs((r.e.tiebreaker ?? 9999) - o.actual) : null;
+      const status = o.complete
+        ? (isChamp ? '<span class="pill gold">&#127942; winner</span>'
+          : wasTied ? '<span class="pill">lost tiebreaker</span>' : "")
+        : (r.s.max < top ? '<span class="pill no">out</span>'
+          : (i === 0 ? '<span class="pill ok">lead</span>' : ""));
+      return `<tr class="${r.e.name===hl?"me":""}${isChamp?" champ":""}"><td class="pos">${i+1}</td><td>${esc(r.e.name)}</td>
       <td class="n num" style="font-size:17px">${r.s.correct}</td><td class="n mono">${r.s.remaining}</td>
-      <td class="n mono">${r.s.max}</td><td class="n mono">${r.e.tiebreaker ?? "—"}</td>
-      <td><span class="pill ${r.e.paid?"ok":"no"}">${r.e.paid?"paid":"unpaid"}</span></td>
-      <td>${r.s.max<top?'<span class="pill no">out</span>':(i===0?'<span class="pill ok">lead</span>':"")}</td></tr>`).join("") + `</tbody>`;
+      <td class="n mono">${r.s.max}</td><td class="n mono">${r.e.tiebreaker ?? "—"}</td>` +
+      (o.complete && o.actual != null ? `<td class="n mono">${off != null && off < 9999 ? off : "—"}</td>` : "") +
+      `<td><span class="pill ${r.e.paid?"ok":"no"}">${r.e.paid?"paid":"unpaid"}</span></td>
+      <td>${status}</td></tr>`;
+    }).join("") + `</tbody>`;
 }
 
 function renderWinner(rows) {
+  const o0 = weekOutcome(rows);
   const open = games().filter(g => !winnerOf(g));
   const field = rows.filter(r => !pool.requirePaid || r.e.paid);
   if (!field.length) { $("winCard").hidden = true; return; }
   $("winCard").hidden = false;
-  const top = Math.max(...field.map(r => r.s.correct));
-  const tied = field.filter(r => r.s.correct === top);
+  const top = o0.top, tied = o0.tied;
   if (open.length) {
     $("winner").innerHTML = `<p class="note">${open.length} game${open.length>1?"s":""} still open · leader${tied.length>1?"s":""}
       <b style="color:var(--ink)">${tied.map(r=>esc(r.e.name)).join(", ")}</b> at ${top}</p>`; return;
