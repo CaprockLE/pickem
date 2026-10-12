@@ -2,5 +2,6 @@
   "name": "pickem-pool",
   "version": "1.0.0",
   "private": true,
-  "description": "NFL pick'em pool tracker with live scores and photo sheet import"
+  "description": "NFL pick'em pool tracker with live scores and photo sheet import",
+  "type": "module"
 }

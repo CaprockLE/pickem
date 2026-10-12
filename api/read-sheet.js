@@ -2,7 +2,7 @@
 // body: { images: [{media_type, data}], games: [{id, away, home}] }
 // returns: { entries: [{name, picks:{gameId:TEAM}, tiebreaker}] }
 
-export const config = { api: { bodyParser: { sizeLimit: "12mb" } } };
+export const config = { maxDuration: 60 };
 
 const MODEL = process.env.CLAUDE_MODEL || "claude-sonnet-5-5";
 

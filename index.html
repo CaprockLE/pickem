@@ -358,6 +358,16 @@ ul.why b{color:var(--ink)}
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
 const slug = n => String(n).toLowerCase().trim().replace(/[^a-z0-9]+/g,"-");
+async function getJSON(url) {
+  const r = await fetch(url, { headers: { accept: "application/json" } });
+  const body = await r.text();
+  try { return JSON.parse(body); }
+  catch (e) {
+    const snippet = body.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 110);
+    throw new Error(`${url} → HTTP ${r.status}: ${snippet || "empty response"}`);
+  }
+}
+
 const tc = n => String(n ?? "").toLowerCase().replace(/\b[a-z]/g, m => m.toUpperCase());
 
 const qs = new URLSearchParams(location.search);
@@ -441,8 +451,8 @@ const ranked = () => entries().map(e => ({ e, s: scoreOf(e) }))
 async function loadWeek() {
   try {
     const [s, p] = await Promise.all([
-      fetch(week ? `/api/scores?week=${week}` : `/api/scores`).then(r => r.json()),
-      fetch(`/api/pool?week=${week || 1}`).then(r => r.json())
+      getJSON(week ? `/api/scores?week=${week}` : `/api/scores`),
+      getJSON(`/api/pool?week=${week || 1}`)
     ]);
     if (!s.error) {
       scores = s;
@@ -451,12 +461,12 @@ async function loadWeek() {
       if (!week && s.week) {                       // first load: adopt the live week
         week = Number(s.week);
         if (s.rolledForward) {                     // feed still on last week — pull the new one
-          const s2 = await fetch(`/api/scores?week=${week}`).then(r => r.json());
+          const s2 = await getJSON(`/api/scores?week=${week}`);
           if (!s2.error) scores = s2;
         }
         ["weekSel","impWeek","moneyWeek","picksWeek"].forEach(id => $(id).value = week);
         history.replaceState(null, "", `?v=${view}&week=${week}`);
-        const p2 = await fetch(`/api/pool?week=${week}`).then(r => r.json());
+        const p2 = await getJSON(`/api/pool?week=${week}`);
         if (!p2.error) { pool = p2; $("updTag").textContent = "updated " + new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}); render(); return; }
       }
     }
@@ -469,7 +479,7 @@ async function loadWeek() {
 }
 async function loadRoster() {
   try {
-    const r = await fetch("/api/pool?roster=1").then(x => x.json());
+    const r = await getJSON("/api/pool?roster=1");
     roster = r.names || [];
   } catch (e) { roster = []; }
   renderRoster();
@@ -503,7 +513,7 @@ function matchRoster(raw) {
 
 async function loadSeason() {
   try {
-    const s = await fetch("/api/season").then(r => r.json());
+    const s = await getJSON("/api/season");
     season = s.error ? null : s;
     renderSeason();
   } catch (e) { $("seasonSub").innerHTML = '<span class="err">Could not load season data.</span>'; showError("loadSeason: " + (e?.message || e)); }
