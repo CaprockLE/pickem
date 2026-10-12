@@ -130,6 +130,8 @@ tbody tr:first-child .pos{color:var(--gold)}
 .tm .pts{margin-left:auto;font-family:Oswald;font-weight:600;font-size:16px}
 .tm.dim{opacity:.45}
 .gm .st{margin-top:6px;font-size:11px;color:var(--muted);display:flex;justify-content:space-between}
+#shareWrap{position:fixed;inset:0;background:rgba(5,9,14,.72);z-index:60;display:grid;place-items:center;padding:20px}
+#shareWrap[hidden]{display:none}
 .board.ticker{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
 .board.ticker .gm{display:flex;align-items:center;gap:10px;padding:7px 12px}
 .board.ticker .tm{padding:0;gap:5px}
@@ -330,8 +332,8 @@ ul.why b{color:var(--ink)}
 </main>
 </div>
 
-<div id="shareWrap" hidden style="position:fixed;inset:0;background:rgba(5,9,14,.72);z-index:60;display:grid;place-items:center;padding:20px">
-  <div class="card" style="max-width:560px;width:100%;margin:0">
+<div id="shareWrap" hidden>
+  <div class="card" id="shareBox" style="max-width:560px;width:100%;margin:0">
     <div class="hd"><h2>Share card</h2><div class="r">
       <select id="shareMode"><option value="open">Start of week</option><option value="final">Results</option></select>
       <button id="shareClose">Close</button></div></div>
@@ -1063,7 +1065,10 @@ function drawShare(mode) {
 
 $("shareBtn").onclick = () => { if (!pool) return; $("shareWrap").hidden = false;
   $("shareMode").value = games().every(g => winnerOf(g)) ? "final" : "open"; drawShare($("shareMode").value); };
-$("shareClose").onclick = () => { $("shareWrap").hidden = true; };
+function closeShare() { $("shareWrap").hidden = true; $("shareMsg").textContent = ""; }
+$("shareClose").onclick = closeShare;
+$("shareWrap").addEventListener("click", e => { if (e.target === $("shareWrap")) closeShare(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("shareWrap").hidden) closeShare(); });
 $("shareMode").onchange = e => drawShare(e.target.value);
 $("shareDl").onclick = () => {
   const a = document.createElement("a");
