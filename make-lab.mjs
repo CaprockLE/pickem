@@ -117,10 +117,10 @@ tr.winrow td{background:rgba(201,150,44,.13)!important}
 tr.winrow td:first-child{box-shadow:inset 3px 0 0 var(--amber)}
 
 /* pills + buttons */
-.pill{border-radius:999px;border:1px solid var(--brd-lit);backdrop-filter:blur(6px)}
-.pill.ok{background:linear-gradient(90deg,rgba(0,164,114,.26),rgba(0,164,114,.08));border-color:transparent}
-.pill.no{background:linear-gradient(90deg,rgba(201,84,46,.24),rgba(201,84,46,.07));border-color:transparent}
-.pill.gold{background:linear-gradient(90deg,rgba(201,150,44,.30),rgba(201,150,44,.08));border-color:transparent}
+.pill{border:0;background:none;padding:0;backdrop-filter:none;font-weight:600}
+.pill.ok{color:var(--n1)}
+.pill.no{color:#D62C28}
+.pill.gold{color:var(--amber)}
 button{border-radius:11px;transition:.16s}
 button:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(26,120,194,.18)}
 button.primary{background:linear-gradient(120deg,var(--n1),var(--n2));border-color:transparent;color:#03211A;font-weight:700}
