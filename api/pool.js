@@ -11,6 +11,7 @@ const SEASON = process.env.SEASON || "2026";
 
 const key = (week) => `pickem:${SEASON}:w${week}`;
 const INDEX = `pickem:${SEASON}:weeks`;
+const ROSTER = `pickem:${SEASON}:roster`;
 
 async function redis(path, init = {}) {
   const r = await fetch(`${URL_BASE}/${path}`, {
@@ -38,6 +39,27 @@ export default async function handler(req, res) {
   }
 
   try {
+    // season roster: the canonical list of player names
+    if (req.query.roster) {
+      if (req.method === "GET") {
+        const out = await redis(`get/${ROSTER}`);
+        return res.status(200).json({ names: out.result ? JSON.parse(out.result) : [] });
+      }
+      if (req.method === "POST") {
+        const sent = req.headers["x-admin-key"];
+        if (!process.env.ADMIN_PASSCODE || sent !== process.env.ADMIN_PASSCODE) {
+          return res.status(401).json({ error: "Wrong or missing manager passcode." });
+        }
+        const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
+        const names = [...new Set((body.names || []).map((n) => String(n).trim()).filter(Boolean))]
+          .sort((a, b) => a.localeCompare(b));
+        await redis(`set/${ROSTER}`, {
+          method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(names),
+        });
+        return res.status(200).json({ names });
+      }
+    }
+
     if (req.method === "GET" && req.query.list) {
       const out = await redis(`smembers/${INDEX}`);
       return res.status(200).json({ weeks: (out.result || []).map(Number).sort((a, b) => a - b) });

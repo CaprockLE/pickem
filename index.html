@@ -136,6 +136,10 @@ tbody tr:first-child .pos{color:var(--gold)}
 .pg td{text-align:center;font-size:11.5px;font-weight:600;padding:5px 4px}
 .pg td.hit{background:var(--brand2);color:var(--brand)}
 .pg td.miss{background:var(--hot2);color:var(--hot);font-weight:400}
+.pg td.tied{background:var(--hot2);color:var(--hot);font-weight:400;position:relative}
+.pg td.tied::after{content:"=";position:absolute;top:1px;right:3px;font-size:8px;opacity:.75}
+.gm.tiegame{box-shadow:inset 0 0 0 1px var(--hot)}
+.gm .st .tiefinal{color:var(--hot);font-weight:700}
 .pg td.who,.pg th.who{text-align:left;position:sticky;left:0;background:var(--panel);z-index:2;font-size:13px;font-weight:600}
 .pg th.who{z-index:4;background:var(--panel2)}
 .pg tr:hover td.who{background:var(--panel2)}
@@ -215,7 +219,7 @@ ul.why b{color:var(--ink)}
     <div class="head"><div><h1>All picks</h1><p class="sub" id="picksSub">Every entry side by side.</p></div>
       <div class="right"><input type="text" id="picksFilter" placeholder="Filter player" style="width:150px">
         <select id="picksWeek"></select></div></div>
-    <div class="card"><div class="hd"><h2>Grid</h2><div class="r note">Green hit · red missed · top row is how the pool split</div></div>
+    <div class="card"><div class="hd"><h2>Grid</h2><div class="r note">Green hit · red missed · ties count as a loss for everyone</div></div>
       <div class="bd flush scroll"><table class="pg" id="pgTbl"></table></div></div>
   </div>
 
@@ -246,6 +250,18 @@ ul.why b{color:var(--ink)}
         <div style="margin-top:8px"><button id="parseBtn">Parse rows</button></div>
       </details></div></div>
     <div id="review"></div>
+    <div class="card"><div class="hd"><h2>Roster</h2><div class="r note" id="rosterCount"></div></div>
+      <div class="bd">
+        <p class="note" style="margin:0 0 10px">The master list of players. Every uploaded sheet gets assigned to one of these names,
+          so "George" on paper lands on George A in the standings.</p>
+        <div id="rosterList" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
+        <div class="ctl" style="display:flex;gap:8px;flex-wrap:wrap">
+          <input type="text" id="rosterNew" placeholder="Add a player" style="width:170px">
+          <button id="rosterAdd">Add</button>
+          <button id="rosterFromWeek">Pull names from this week</button>
+          <button id="rosterSave" class="primary">Save roster</button>
+          <span class="note" id="rosterMsg"></span>
+        </div></div></div>
     <div class="card"><div class="hd"><h2>Entries on file</h2><div class="r note" id="entCount"></div></div>
       <div class="bd flush scroll"><table id="entTbl"></table></div>
       <div class="bar"><button id="addRow">Add entry manually</button>
@@ -285,6 +301,7 @@ let sortBy = localStorage.getItem("pc.sort") || "total";
 let minWeeks = Number(localStorage.getItem("pc.minw") || 1);
 let pass = localStorage.getItem("pc.pass") || "";
 let buyin = Number(localStorage.getItem("pc.buyin") || 10);
+let roster = [];
 
 ["weekSel","impWeek","moneyWeek","picksWeek"].forEach(id => {
   for (let w = 1; w <= 18; w++) {
@@ -353,6 +370,40 @@ async function loadWeek() {
     render();
   } catch (e) { $("weekSub").innerHTML = '<span class="err">Connection problem — retrying.</span>'; }
 }
+async function loadRoster() {
+  try {
+    const r = await fetch("/api/pool?roster=1").then(x => x.json());
+    roster = r.names || [];
+  } catch (e) { roster = []; }
+  renderRoster();
+}
+
+function renderRoster() {
+  $("rosterCount").textContent = `${roster.length} player${roster.length === 1 ? "" : "s"}`;
+  $("rosterList").innerHTML = roster.length
+    ? roster.map((n, i) => `<span class="pill" style="display:inline-flex;gap:6px;align-items:center">${esc(n)}
+        <button data-rm="${i}" style="all:unset;cursor:pointer;color:var(--hot);font-weight:700">&times;</button></span>`).join("")
+    : '<span class="note">Empty — add names, or pull them from a published week.</span>';
+  $("rosterList").querySelectorAll("button[data-rm]").forEach(b => b.onclick = () => {
+    roster.splice(+b.dataset.rm, 1); renderRoster();
+  });
+}
+
+// match a scribbled name to the roster
+function matchRoster(raw) {
+  const norm = x => String(x).toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
+  const n = norm(raw);
+  if (!n) return null;
+  const exact = roster.find(r => norm(r) === n);
+  if (exact) return exact;
+  const starts = roster.filter(r => norm(r).startsWith(n) || n.startsWith(norm(r)));
+  if (starts.length === 1) return starts[0];
+  const first = n.split(" ")[0];
+  const sameFirst = roster.filter(r => norm(r).split(" ")[0] === first);
+  if (sameFirst.length === 1) return sameFirst[0];
+  return null;                     // ambiguous or unknown — manager chooses
+}
+
 async function loadSeason() {
   try {
     const s = await fetch("/api/season").then(r => r.json());
@@ -458,8 +509,9 @@ function renderBoard() {
       <span class="pts">${g.state==="pre"?"":pts}</span></div>`;
     const st = g.state === "in"
       ? `<span class="l"><span class="dot"></span>Q${g.period} ${esc(g.clock)}</span>`
-      : `<span>${g.final ? (w==="TIE"?"Final · tie":"Final") : esc(g.detail)}</span>`;
-    return `<div class="gm${g.state==="in"?" live":""}">${tm(g.away,g.awayLogo,g.awayScore)}${tm(g.home,g.homeLogo,g.homeScore)}
+      : w === "TIE" ? `<span class="tiefinal">Final · tie — no credit</span>`
+      : `<span>${g.final ? "Final" : esc(g.detail)}</span>`;
+    return `<div class="gm${g.state==="in"?" live":""}${w==="TIE"?" tiegame":""}">${tm(g.away,g.awayLogo,g.awayScore)}${tm(g.home,g.homeLogo,g.homeScore)}
       <div class="st">${st}${!g.final && g.weather ? `<span>${esc(g.weather.text)} ${g.weather.temp}°</span>`:""}</div></div>`;
   }).join("");
 }
@@ -572,8 +624,8 @@ function renderPicks(rows) {
       gs.map(g => `<td>${split(g)}</td>`).join("") + `<td></td></tr>` +
     shown.map(r => `<tr class="${r.e.name===hl?"me":""}"><td class="who">${esc(r.e.name)}</td>` +
       gs.map(g => { const p = r.e.picks?.[g.id]||"", w = winnerOf(g);
-        const c = !w||!p||w==="TIE" ? "" : (p===w?"hit":"miss");
-        return `<td class="${c}">${esc(p)}</td>`; }).join("") +
+        const c = !w||!p ? "" : (w==="TIE" ? "miss tied" : (p===w?"hit":"miss"));
+        return `<td class="${c}" ${w==="TIE"&&p?'title="Tie — counts as a loss"':""}>${esc(p)}</td>`; }).join("") +
       `<td class="n mono">${r.e.tiebreaker ?? ""}</td></tr>`).join("") + `</tbody>`;
 }
 
@@ -680,22 +732,46 @@ function renderReview() {
     <div class="bd flush scroll"><table class="pg"><thead><tr><th class="who">Player</th>` +
     gs.map(g => `<th class="c">${esc(g.away)}<div class="vs">at</div>${esc(g.home)}</th>`).join("") +
     `<th class="n">TB</th></tr></thead><tbody>` +
-    pending.map((p,i) => `<tr><td class="who"><input type="text" data-i="${i}" value="${esc(p.name)}" style="width:128px;padding:4px 7px"></td>` +
+    pending.map((p,i) => {
+      const guess = p.assigned !== undefined ? p.assigned : (p.assigned = matchRoster(p.name));
+      const opts = roster.map(n => `<option value="${esc(n)}" ${guess === n ? "selected" : ""}>${esc(n)}</option>`).join("");
+      return `<tr><td class="who">
+        <select data-pick="${i}" style="width:128px;padding:4px 6px">
+          <option value="">— choose player —</option>${opts}
+          <option value="__new__" ${guess === null ? "selected" : ""}>+ new player</option></select>
+        <input type="text" data-newname="${i}" value="${esc(p.name)}" placeholder="name on sheet"
+          style="width:128px;padding:4px 7px;margin-top:4px;${guess === null ? "" : "display:none"}">
+        <div class="note" style="font-size:10.5px;margin-top:2px">read: ${esc(p.name) || "—"}</div></td>` +
       gs.map(g => { const v = p.picks?.[g.id]; return `<td class="${v?"":"miss"}">${esc(v||"?")}</td>`; }).join("") +
-      `<td class="n mono">${p.tiebreaker ?? "?"}</td></tr>`).join("") + `</tbody></table></div>
+      `<td class="n mono">${p.tiebreaker ?? "?"}</td></tr>`;
+    }).join("") + `</tbody></table></div>
     <div class="bar"><button class="primary" id="merge">Accept ${pending.length} entries</button>
       <button id="toss">Discard</button><span class="note">Nothing is published until you hit Publish below.</span></div></div>`;
-  $("review").querySelectorAll("input[data-i]").forEach(inp => inp.oninput = () => { pending[+inp.dataset.i].name = inp.value; });
+  $("review").querySelectorAll("select[data-pick]").forEach(sel => sel.onchange = () => {
+    const i = +sel.dataset.pick;
+    const box = $("review").querySelector(`input[data-newname="${i}"]`);
+    if (sel.value === "__new__") { pending[i].assigned = null; box.style.display = ""; box.focus(); }
+    else { pending[i].assigned = sel.value || null; box.style.display = "none"; }
+  });
+  $("review").querySelectorAll("input[data-newname]").forEach(inp => inp.oninput = () => {
+    pending[+inp.dataset.newname].name = inp.value;
+  });
   $("merge").onclick = () => {
     pool.entries = pool.entries || [];
+    const unassigned = pending.filter(p => !(p.assigned || p.name.trim()));
+    if (unassigned.length) { $("readMsg").innerHTML = `<span class="err">${unassigned.length} sheet(s) still need a player.</span>`; return; }
     for (const p of pending) {
-      if (!p.name.trim()) continue;
+      const finalName = (p.assigned || p.name).trim();
+      if (!finalName) continue;
+      if (!roster.some(r => slug(r) === slug(finalName))) roster.push(finalName);
+      p.name = finalName;
       const i = pool.entries.findIndex(e => slug(e.name) === slug(p.name));
       if (i >= 0) pool.entries[i] = {...pool.entries[i], picks:p.picks, tiebreaker:p.tiebreaker};
       else pool.entries.push(p);
     }
     pending = null; $("review").innerHTML = ""; $("readMsg").textContent = "Merged. Publish to make it live.";
-    render();
+    roster = [...new Set(roster)].sort((a,b) => a.localeCompare(b));
+    renderRoster(); saveRoster(); render();
   };
   $("toss").onclick = () => { pending = null; $("review").innerHTML = ""; $("readMsg").textContent = ""; };
 }
@@ -763,6 +839,28 @@ $("parseBtn").onclick = () => {
   renderReview();
 };
 
+async function saveRoster() {
+  if (!pass) { $("rosterMsg").innerHTML = '<span class="err">Passcode required.</span>'; return; }
+  try {
+    const r = await fetch("/api/pool?roster=1", { method:"POST",
+      headers:{"content-type":"application/json","x-admin-key":pass}, body: JSON.stringify({names: roster}) });
+    const out = await r.json();
+    if (r.ok) { roster = out.names || roster; renderRoster(); $("rosterMsg").textContent = "Roster saved."; }
+    else $("rosterMsg").innerHTML = `<span class="err">${esc(out.error)}</span>`;
+  } catch (e) { $("rosterMsg").innerHTML = '<span class="err">Save failed.</span>'; }
+}
+$("rosterAdd").onclick = () => {
+  const v = $("rosterNew").value.trim(); if (!v) return;
+  if (!roster.some(r => slug(r) === slug(v))) roster.push(v);
+  roster.sort((a,b) => a.localeCompare(b)); $("rosterNew").value = ""; renderRoster();
+};
+$("rosterNew").onkeydown = e => { if (e.key === "Enter") $("rosterAdd").click(); };
+$("rosterFromWeek").onclick = () => {
+  entries().forEach(e => { if (!roster.some(r => slug(r) === slug(e.name))) roster.push(e.name); });
+  roster.sort((a,b) => a.localeCompare(b)); renderRoster();
+};
+$("rosterSave").onclick = saveRoster;
+
 $("addRow").onclick = () => {
   pool.entries = pool.entries || [];
   pool.entries.push({name:"New entry", picks:{}, tiebreaker:null, paid:false});
@@ -800,7 +898,7 @@ $("refreshBtn").onclick = loadWeek;
 
 applyRole();
 setView(view);
-loadWeek(); loadSeason();
+loadWeek(); loadSeason(); loadRoster();
 setInterval(() => { if (!document.hidden) loadWeek(); }, 30000);
 </script>
 </body>
