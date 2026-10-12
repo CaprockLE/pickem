@@ -584,7 +584,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
   <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
-    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">lab-59 · 2026-10-12 02:43 UTC</div>
+    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">lab-62 · 2026-10-12 02:43 UTC</div>
     <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
@@ -731,7 +731,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
 </div>
 
 <script>
-const BUILD = "lab-59 (2026-10-12 02:43 UTC)";
+const BUILD = "lab-62 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -1860,23 +1860,31 @@ function renderMoney(rows) {
 
 /* ---------- share card ---------- */
 function drawShare(mode) {
+  shareTheme();
   return mode === "grid" ? drawGridShare() : drawStandingsShare();
 }
 
-const SH = { ink:"#0A111B", panel:"#131F2D", alt:"#101A26", line:"#263445", text:"#E9EEF5",
-             muted:"#8696A8", brand:"#39B28E", brandBg:"#11322A", hot:"#E88A4D", hotBg:"#33200F",
-             gold:"#D4AC54" };
+const SHARE_DARK = { ink:"#0A111B", panel:"#131F2D", alt:"#101A26", line:"#263445", text:"#E9EEF5",
+                     muted:"#8696A8", brand:"#39B28E", brandBg:"#11322A", miss:"#FF5A52", missBg:"#331614",
+                     gold:"#D4AC54" };
+const SHARE_LIGHT = { ink:"#FFFFFF", panel:"#F6F8FB", alt:"#FFFFFF", line:"#D9E0E9", text:"#101A27",
+                      muted:"#64748B", brand:"#0B6B57", brandBg:"#E3F1EC", miss:"#C0231F", missBg:"#FBE9E8",
+                      gold:"#9A7318" };
+// resolved per draw so the image matches whatever theme is on screen
+let SH = SHARE_DARK;
+function shareTheme() { SH = darkMode() ? SHARE_DARK : SHARE_LIGHT; }
 
 function drawGridShare() {
   const cv = $("shareCanvas"), x = cv.getContext("2d");
   const rows = ranked(), gs = games();
-  const nameW = 190, colW = 58, tbW = 86, rowH = 38, headH = 148, colHead = 56;
-  const W = nameW + gs.length * colW + tbW + 56;
+  const nameW = 190, colW = 58, tbW = 86, corW = 72, rowH = 38, headH = 148, colHead = 56;
+  const W = nameW + gs.length * colW + tbW + corW + 56;
   const H = headH + colHead + rows.length * rowH + 76;
   cv.width = W; cv.height = H;
 
   x.fillStyle = SH.ink; x.fillRect(0, 0, W, H);
   x.fillStyle = SH.brand; x.fillRect(0, 0, W, 8);
+  x.strokeStyle = SH.line; x.lineWidth = 1; x.strokeRect(.5, .5, W - 1, H - 1);
 
   const o = weekOutcome(rows);
   x.fillStyle = SH.text; x.font = "700 46px Oswald, Inter, sans-serif";
@@ -1897,12 +1905,14 @@ function drawGridShare() {
   });
   x.fillStyle = SH.muted; x.font = "600 15px Inter, sans-serif";
   x.fillText("Tie", cx + tbW / 2, headH + 25); x.fillText("Breaker", cx + tbW / 2, headH + 42);
+  x.fillText("Correct", cx + tbW + corW / 2, headH + 34);
   x.textAlign = "left";
 
   let y = headH + colHead;
   rows.forEach((r, i) => {
     const champ = o.champs.has(r.e.name);
-    x.fillStyle = champ ? "rgba(212,172,84,.12)" : (i % 2 ? SH.alt : SH.panel);
+    x.fillStyle = champ ? (darkMode() ? "rgba(212,172,84,.12)" : "rgba(154,115,24,.14)")
+                        : (i % 2 ? SH.alt : SH.panel);
     x.fillRect(28, y, W - 56, rowH - 3);
     if (champ) { x.fillStyle = SH.gold; x.fillRect(28, y, 4, rowH - 3); }
     x.fillStyle = champ ? SH.gold : SH.text; x.font = "600 20px Inter, sans-serif";
@@ -1914,15 +1924,17 @@ function drawGridShare() {
       const p = r.e.picks?.[g.id] || "", w = winnerOf(g);
       if (p && w) {
         const good = w !== "TIE" && p === w;
-        x.fillStyle = good ? SH.brandBg : SH.hotBg;
+        x.fillStyle = good ? SH.brandBg : SH.missBg;
         x.fillRect(c + 3, y + 3, colW - 6, rowH - 9);
-        x.fillStyle = good ? SH.brand : SH.hot;
+        x.fillStyle = good ? SH.brand : SH.miss;
       } else x.fillStyle = p ? SH.text : SH.line;
       x.fillText(p || "·", c + colW / 2, y + 25);
       c += colW;
     });
     x.fillStyle = champ ? SH.gold : SH.text; x.font = "700 19px Oswald, Inter, sans-serif";
     x.fillText(String(r.e.tiebreaker ?? "—"), c + tbW / 2, y + 25);
+    x.fillStyle = champ ? SH.gold : SH.brand; x.font = "700 21px Oswald, Inter, sans-serif";
+    x.fillText(String(r.s.correct), c + tbW + corW / 2, y + 25);
     x.textAlign = "left";
     y += rowH;
   });
@@ -1962,7 +1974,7 @@ function drawStandingsShare() {
   rows.slice(0, 14).forEach((r, i) => {
     const champ = o.champs.has(r.e.name);
     x.fillStyle = i % 2 ? SH.alt : SH.panel; x.fillRect(40, y, W - 80, 62);
-    if (champ) { x.fillStyle = "rgba(212,172,84,.13)"; x.fillRect(40, y, W - 80, 62);
+    if (champ) { x.fillStyle = darkMode() ? "rgba(212,172,84,.13)" : "rgba(154,115,24,.15)"; x.fillRect(40, y, W - 80, 62);
                  x.fillStyle = SH.gold; x.fillRect(40, y, 5, 62); }
     x.fillStyle = champ ? SH.gold : SH.muted; x.font = "600 26px Oswald, Inter, sans-serif";
     x.fillText(String(i + 1), 72, y + 40);
@@ -2086,6 +2098,12 @@ function renderReview() {
   if (!pending?.length) { $("review").innerHTML = ""; return; }
   const gs = games();
   const missing = pending.filter(p => Object.keys(p.picks||{}).length < gs.length).length;
+  const gapDetail = pending
+    .filter(p => Object.keys(p.picks || {}).length < gs.length)
+    .map(p => {
+      const absent = gs.filter(g => !p.picks?.[g.id]).map(g => `${g.away}/${g.home}`);
+      return `${tc(p.assigned || p.name || "unnamed")}: ${absent.slice(0, 4).join(", ")}${absent.length > 4 ? "…" : ""}`;
+    });
   const tbBad = pending.filter(p => tbIssue(p.tiebreaker));
   const wrongWeek = pendingWeek && pendingWeek !== week;
   const clash = pending.filter(p => (pool.entries || []).some(e => slug(e.name) === slug(p.assigned || p.name)));
@@ -2107,18 +2125,18 @@ function renderReview() {
       const opts = roster.map(n => `<option value="${esc(n)}" ${guess === n ? "selected" : ""}>${esc(tc(n))}</option>`).join("");
       return `<tr><td class="who">
         <select data-pick="${i}" style="width:128px;padding:4px 6px">
-          <option value="">— choose player —</option>${opts}
-          <option value="__new__" ${guess === null ? "selected" : ""}>+ new player</option></select>
+          <option value="" ${guess === null && !p.name ? "selected" : ""}>— choose player —</option>${opts}
+          <option value="__new__" ${guess === null && p.name ? "selected" : ""}>+ new player</option></select>
         <input type="text" data-newname="${i}" value="${esc(p.name)}" placeholder="name on sheet"
-          style="width:128px;padding:4px 7px;margin-top:4px;${guess === null ? "" : "display:none"}">
-        <div class="note" style="font-size:10.5px;margin-top:2px">read: ${esc(p.name) || "—"}</div></td>` +
+          style="width:128px;padding:4px 7px;margin-top:4px;${guess === null && p.name ? "" : "display:none"}">
+        <div class="note" style="font-size:10.5px;margin-top:2px">read: ${p.name ? esc(p.name) : "<i>no name on this one</i>"}</div></td>` +
       gs.map(g => { const v = p.picks?.[g.id]; return `<td class="${v?"":"miss"}">${esc(v||"?")}</td>`; }).join("") +
       `<td class="tbcol mono${tbIssue(p.tiebreaker) ? " tbbad" : ""}"
           title="${esc(tbIssue(p.tiebreaker) || "")}">${p.tiebreaker ?? "?"}</td></tr>`;
     }).join("") + `</tbody></table></div>
     <div class="bar"><button class="primary" id="merge">Accept ${pending.length} entries</button>
       <button id="toss">Discard</button>
-      <span class="note">${tbBad.length
+      <span class="note">${gapDetail.length ? `Missing — ${gapDetail.join(" · ")}` : tbBad.length
         ? `Check: ${tbBad.map(p => `${esc(tc(p.assigned || p.name || "?"))} (${p.tiebreaker ?? "blank"})`).join(", ")}`
         : "Nothing is published until you hit Publish below."}</span></div></div>`;
   makeFoldable();

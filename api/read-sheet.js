@@ -33,17 +33,31 @@ export default async function handler(req, res) {
     {
       type: "text",
       text:
-        `These images show pick sheets for an NFL pick'em pool. Each row is one person: their name, ` +
-        `one picked team per game, and a tiebreaker number.\n\n` +
-        `Games by id: ${legend}\n\n` +
+        `These images show NFL pick'em entries. They may be either a printed pool sheet ` +
+        `(a grid with one row per person) or a screenshot of a text message where someone ` +
+        `listed their picks one per line.\n\n` +
+        `Games this week, in order: ${legend}\n\n` +
         `Most sheets print the week at the top ("Week 6 Picks", "WEEK 6 PICK SHEET"). Report it if you can read it.\n\n` +
         `Return ONLY JSON, no prose and no markdown fences:\n` +
-        `{"week":<number or null>,"entries":[{"name":"...",` +
+        `{"week":<number or null>,"entries":[{"name":"<name or null>",` +
         `"picks":{"<gameId>":"<team abbreviation exactly as listed above>"},` +
         `"tiebreaker":<number or null>}]}\n\n` +
-        `Rules: use the exact abbreviations from the legend; if a cell is unreadable omit that game ` +
-        `rather than guessing; preserve the order of rows; if a column header shows two teams, the ` +
-        `cell names which of the two was picked.`,
+        `Rules:\n` +
+        `- Always output the abbreviations from the legend, never nicknames or city names.\n` +
+        `- Teams may be written as nicknames ("Cowboys", "Bengals"), cities ("Houston", "Denver"), ` +
+        `or with typos and missing plurals ("Brown" means the Browns). Map them to the right abbreviation.\n` +
+        `- Every team plays exactly once this week, so a named team identifies its game on its own. ` +
+        `Match each line to the game containing that team, whatever order the lines are in — a list ` +
+        `that starts with the Monday game and ends with the Thursday game is still valid.\n` +
+        `- Only fall back to line order if a line is too unclear to name a team.\n` +
+        `- If a line could be two teams ("NY", "LA"), omit that game rather than guessing.\n` +
+        `- Never put two picks on the same game. If a list names both teams from one game, keep neither.\n` +
+        `- Emoji, reactions and commentary are not picks; ignore them.\n` +
+        `- A bare number on its own line, or in a separate message bubble, is the tiebreaker.\n` +
+        `- A texted list usually has no name on it. Set "name" to null rather than guessing ` +
+        `from a contact label or phone number.\n` +
+        `- If a cell or line is unreadable, omit that game rather than guessing.\n` +
+        `- One entry per person. A grid sheet yields one entry per row; a texted list yields one entry.`,
     },
   ];
 
@@ -86,14 +100,14 @@ export default async function handler(req, res) {
     const valid = new Set(games.map((g) => g.id));
     const teams = new Set(games.flatMap((g) => [g.away, g.home]));
     const entries = (parsed.entries || [])
-      .filter((e) => e && e.name)
+      .filter((e) => e && (e.name || Object.keys(e.picks || {}).length))
       .map((e) => {
         const picks = {};
         for (const [gid, team] of Object.entries(e.picks || {})) {
           if (valid.has(gid) && teams.has(team)) picks[gid] = team;
         }
         return {
-          name: String(e.name).trim(),
+          name: e.name ? String(e.name).trim() : "",
           picks,
           tiebreaker: Number.isFinite(Number(e.tiebreaker)) ? Number(e.tiebreaker) : null,
           paid: false,
