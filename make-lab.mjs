@@ -128,7 +128,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
 
 /* pick grid */
 .pg td.hit{background:rgba(0,164,114,.13);box-shadow:inset 0 -2px 0 rgba(0,164,114,.75)}
-.pg td.miss{background:rgba(201,84,46,.10);box-shadow:inset 0 -2px 0 rgba(201,84,46,.65)}
+.pg td.miss{background:rgba(214,44,40,.11);box-shadow:inset 0 -2px 0 rgba(214,44,40,.75);color:#D62C28}
 .pg td.hit img.pick{filter:none}
 .pg tr.split td{background:var(--panel2)}
 .pg td.who,.pg th.who{background:var(--panel)}

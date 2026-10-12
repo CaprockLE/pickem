@@ -12,6 +12,7 @@
   --bg:#EDEFF3; --panel:#FFFFFF; --panel2:#F6F8FB; --rule:#E3E7EE; --rule2:#CBD3DF;
   --ink:#0C1420; --ink2:#36414F; --muted:#6B7889;
   --brand:#0B6B57; --brand2:#E3F1EC; --hot:#B5460F; --hot2:#FBEBE1;
+  --miss:#C0231F; --miss-bg:rgba(192,35,31,.10);
   --gold:#9A7318; --nav:#0C1420; --navink:#AEB9C7; --navink2:#FFFFFF;
   --r:12px; --sh:0 1px 2px rgba(12,20,32,.06), 0 4px 14px rgba(12,20,32,.05);
   box-sizing:border-box;
@@ -21,11 +22,13 @@
   --bg:#080C12; --panel:#101823; --panel2:#15202D; --rule:#1F2A38; --rule2:#2B3A4B;
   --ink:#E9EEF5; --ink2:#C2CCD9; --muted:#8696A8;
   --brand:#39B28E; --brand2:#0E2A22; --hot:#E88A4D; --hot2:#2E1C0F;
+  --miss:#FF5A52; --miss-bg:rgba(255,90,82,.13);
   --gold:#D4AC54; --nav:#0A1019; --navink:#8696A8; --navink2:#FFFFFF; --sh:none;}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){
   --bg:#080C12; --panel:#101823; --panel2:#15202D; --rule:#1F2A38; 
   --rule2:#2B3A4B; --ink:#E9EEF5; --ink2:#C2CCD9; --muted:#8696A8;
   --brand:#39B28E; --brand2:#0E2A22; --hot:#E88A4D; --hot2:#2E1C0F;
+  --miss:#FF5A52; --miss-bg:rgba(255,90,82,.13);
   --gold:#D4AC54; --nav:#0A1019; --navink:#8696A8; --navink2:#FFFFFF; --sh:none;}}
 *,*::before,*::after{box-sizing:inherit}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;font-size:14.5px;line-height:1.55;-webkit-font-smoothing:antialiased}
@@ -195,6 +198,7 @@ tbody tr:first-child .pos{color:var(--gold)}
 /* tiebreaker column: identical box in header and body so the label sits over its numbers */
 th.totcol,td.totcol{border-left:1px solid var(--rule2);width:72px;min-width:72px;text-align:center;
   padding:8px 10px;font-weight:700}
+.pg th.tbcol,th.tbcol{text-align:center!important}
 th.tbcol, td.tbcol{
   text-align:center; white-space:normal; line-height:1.15;
   border-left:1px solid var(--rule2);
@@ -209,11 +213,11 @@ th.tbcol .vs{font-size:8.5px;color:var(--muted);letter-spacing:.02em;margin-top:
 .pg th.c .vs{font-size:9px;color:var(--muted);line-height:1.5}
 .pg td{text-align:center;font-size:11.5px;font-weight:600;padding:5px 4px}
 .pg td.hit{color:var(--brand)}
-.pg td.miss{color:var(--hot);font-weight:400}
+.pg td.miss{color:var(--miss);font-weight:400}
 /* result shown as a hairline under the logo, so the mark itself stays clean */
 .pg td.hit{box-shadow:inset 0 -2px 0 var(--brand);background:color-mix(in srgb, var(--brand) 9%, transparent)}
 .pg td.miss{box-shadow:inset 0 -2px 0 var(--hot);background:color-mix(in srgb, var(--hot) 9%, transparent)}
-.pg td.tied{color:var(--hot);font-weight:400;position:relative;box-shadow:inset 0 -2px 0 var(--hot)}
+.pg td.tied{color:var(--miss);font-weight:400;position:relative;box-shadow:inset 0 -2px 0 var(--miss);background:var(--miss-bg)}
 .pg td.tied::after{content:"=";position:absolute;top:1px;right:3px;font-size:8px;opacity:.75}
 .slot{grid-column:1/-1;background:var(--panel2);padding:7px 12px;font-size:10.5px;font-weight:700;
   letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
@@ -311,7 +315,7 @@ ul.why b{color:var(--ink)}
   <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
-    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">build-32 · 2026-10-12 02:43 UTC</div>
+    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">build-33 · 2026-10-12 02:43 UTC</div>
     <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
@@ -353,7 +357,7 @@ ul.why b{color:var(--ink)}
   <div id="v-picks" hidden>
     <div class="head"><div><h1>All Picks</h1><p class="sub" id="picksSub">Every entry side by side.</p></div>
       <div class="right"><input type="text" id="picksFilter" placeholder="Filter player" style="width:150px">
-        <select id="picksOrder" title="Row order"><option value="az">A → Z</option><option value="rank">By rank</option></select>
+        <select id="picksOrder" title="Row order"><option value="az">A → Z</option><option value="rank">By Rank</option></select>
         <select id="picksWeek"></select></div></div>
     <div class="card"><div class="hd"><h2>Grid</h2><div class="r note">Green Hit · Red Missed · Ties Count as a Loss for Everyone</div></div>
       <div class="swipe">Swipe sideways to see every game →</div>
@@ -441,7 +445,7 @@ ul.why b{color:var(--ink)}
 </div>
 
 <script>
-const BUILD = "build-32 (2026-10-12 02:43 UTC)";
+const BUILD = "build-33 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -1045,7 +1049,11 @@ function winChances(rows) {
 }
 
 function renderStandings(rows) {
-  if (!rows.length) { $("stTbl").innerHTML = `<tbody><tr><td><div class="empty"><b>No entries for this week</b>Use Import sheets to add them.</div></td></tr></tbody>`; return; }
+  if (!rows.length) {
+    $("stSub").textContent = `No entries published for week ${week}`;
+    $("stTbl").innerHTML = `<tbody><tr><td><div class="empty"><b>No entries for this week</b>Use Import Sheets to add them.</div></td></tr></tbody>`;
+    return;
+  }
   const top = Math.max(...rows.map(r => r.s.correct));
   const alive = stillAlive(rows);
   const chance = winChances(rows);
