@@ -156,17 +156,24 @@ ul.why b{color:var(--ink)}
   <div class="sec">Overview</div>
   <button class="tab on" data-v="season">Season standings</button>
   <button class="tab" data-v="week">Week results</button>
-  <div class="sec">Manage</div>
-  <button class="tab" data-v="import">Import sheets</button>
-  <button class="tab" data-v="money">Payments</button>
-  <div class="foot" id="navFoot">—</div>
+  <div class="sec" id="mgrSec" hidden>Manage</div>
+  <button class="tab" data-v="import" id="tabImport" hidden>Import sheets</button>
+  <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
+  <div class="foot"><div id="navFoot">—</div>
+    <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager sign-in</button></div>
 </nav>
 
 <main>
   <!-- SEASON -->
   <div id="v-season">
     <div class="head"><div><h1>Season standings</h1><p class="sub" id="seasonSub">Loading…</p></div>
-      <div class="right"><select id="hlSel" title="Highlight a row"><option value="">Highlight…</option></select></div></div>
+      <div class="right">
+        <select id="sortSel" title="Rank by">
+          <option value="total">Rank by total</option>
+          <option value="avg">Rank by average</option>
+          <option value="wins">Rank by weeks won</option>
+        </select>
+        <select id="hlSel" title="Highlight a row"><option value="">Highlight…</option></select></div></div>
     <div class="kpis" id="seasonKpis"></div>
     <div class="card"><div class="hd"><h2>Cumulative</h2><div class="r note" id="seasonNote"></div></div>
       <div class="bd flush scroll"><table id="seasonTbl"></table></div></div>
@@ -205,21 +212,25 @@ ul.why b{color:var(--ink)}
       <div id="drop"><b>Drop pick-sheet photos here</b>or click to browse · up to 6 at once
         <input type="file" id="file" accept="image/*" multiple hidden></div>
       <p class="note" id="readMsg" style="margin:10px 0 0"></p>
-      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--rule)">
-        <p class="note" style="margin:0 0 7px"><b style="color:var(--ink)">Or paste rows</b> — one player per line:
+      <details style="margin-top:16px;padding-top:14px;border-top:1px solid var(--rule)">
+        <summary class="note" style="cursor:pointer">Advanced: paste rows as text instead</summary>
+        <p class="note" style="margin:8px 0 7px"><b style="color:var(--ink)">One player per line</b> — one player per line:
           name, then one team code per game in sheet order, then the tiebreaker.
           Tabs, commas or spaces all work, so a copied spreadsheet block pastes straight in.</p>
         <textarea id="paste" rows="5" placeholder="RYAN DAL JAX HOU CIN NE MIN NYJ PIT WAS DEN CHI DET SEA ATL LAR 51"
           style="width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;padding:9px 11px;border:1px solid var(--rule2);border-radius:9px;background:var(--panel);color:inherit"></textarea>
         <div style="margin-top:8px"><button id="parseBtn">Parse rows</button></div>
-      </div></div></div>
+      </details></div></div>
     <div id="review"></div>
     <div class="card"><div class="hd"><h2>Entries on file</h2><div class="r note" id="entCount"></div></div>
       <div class="bd flush scroll"><table id="entTbl"></table></div>
       <div class="bar"><button id="addRow">Add entry manually</button>
         <button id="saveImport" class="primary">Publish to league</button><span class="note" id="saveMsg"></span></div></div>
-    <div class="card"><div class="hd"><h2>Result overrides</h2><div class="r note">Only if the live feed is wrong</div></div>
-      <div class="bd" id="overrides"></div></div>
+    <div class="card"><div class="hd"><h2>Result overrides</h2><div class="r note">Rarely needed</div></div>
+      <div class="bd"><p class="note" style="margin:0 0 10px">Winners come from the live feed automatically. Set an override only when the
+        league scores a game differently than the scoreboard does &mdash; a suspended or postponed game your pool rules a certain way,
+        a tie your pool awards to one side, or a feed error. An override replaces the feed result for everyone.</p>
+      <details><summary class="note" style="cursor:pointer">Show game-by-game overrides</summary><div id="overrides" style="margin-top:8px"></div></details></div></div>
   </div>
 
   <!-- MONEY -->
@@ -246,6 +257,7 @@ let view = qs.get("v") || "season";
 let week = Number(qs.get("week") || 5);
 let scores = {games:[]}, pool = null, season = null, pending = null;
 let hl = localStorage.getItem("pc.hl") || "";
+let sortBy = localStorage.getItem("pc.sort") || "total";
 let pass = localStorage.getItem("pc.pass") || "";
 let buyin = Number(localStorage.getItem("pc.buyin") || 10);
 
@@ -257,6 +269,27 @@ let buyin = Number(localStorage.getItem("pc.buyin") || 10);
 });
 $("buyin").value = buyin;
 $("pass").value = pass;
+
+function applyRole() {
+  const on = !!pass;
+  ["mgrSec","tabImport","tabMoney"].forEach(id => $(id).hidden = !on);
+  $("unlockBtn").textContent = on ? "Sign out of manager" : "Manager sign-in";
+  $("lockPill") && ($("lockPill").textContent = on ? "unlocked" : "locked",
+                    $("lockPill").className = "pill " + (on ? "ok" : "no"));
+  if (!on && (view === "import" || view === "money")) setView("season");
+}
+$("unlockBtn").onclick = () => {
+  if (pass) {
+    if (!confirm("Sign out of manager mode on this device?")) return;
+    pass = ""; localStorage.removeItem("pc.pass"); $("pass").value = "";
+    applyRole(); setView("season"); return;
+  }
+  const v = prompt("Manager passcode");
+  if (v == null) return;
+  pass = v.trim(); localStorage.setItem("pc.pass", pass);
+  $("pass").value = pass; applyRole();
+  if (pass) setView("import");
+};
 
 document.querySelectorAll("nav button.tab").forEach(b => b.onclick = () => setView(b.dataset.v));
 function setView(v) {
@@ -329,13 +362,20 @@ function renderSeason() {
     ["Unpaid entries", `${unpaid}`, unpaid ? "hot" : ""],
   ].map(([k,v,c]) => `<div class="kpi"><div class="k">${k}</div><div class="v ${c}">${v}</div></div>`).join("");
 
+  $("sortSel").value = sortBy;
+  const avg = p => p.total / Math.max(p.weeks, 1);
+  const players = [...season.players].sort((a, b) =>
+    sortBy === "avg" ? avg(b) - avg(a) || b.total - a.total
+    : sortBy === "wins" ? b.wins - a.wins || avg(b) - avg(a)
+    : b.total - a.total || avg(b) - avg(a));
   const ws = season.weeks.map(w => w.week);
   $("seasonTbl").innerHTML =
-    `<thead><tr><th></th><th>Player</th><th class="n">Total</th><th class="n">Avg</th><th class="n">Weeks won</th>` +
+    `<thead><tr><th></th><th>Player</th><th class="n">Total</th><th class="n">Avg</th><th class="n">Weeks</th><th class="n">Won</th>` +
     ws.map(w => `<th class="n">W${w}</th>`).join("") + `</tr></thead><tbody>` +
-    season.players.map((p,i) => `<tr class="${p.name===hl?"me":""}"><td class="pos">${i+1}</td>
+    players.map((p,i) => `<tr class="${p.name===hl?"me":""}"><td class="pos">${i+1}</td>
       <td>${esc(p.name)}</td><td class="n num" style="font-size:16px">${p.total}</td>
-      <td class="n mono">${(p.total/Math.max(p.weeks,1)).toFixed(1)}</td>
+      <td class="n mono">${avg(p).toFixed(1)}</td>
+      <td class="n mono">${p.weeks}/${season.weeks.length}</td>
       <td class="n">${p.wins ? `<span class="pill gold">${p.wins}</span>` : '<span class="note">—</span>'}</td>` +
       ws.map(w => `<td class="n mono">${p.byWeek[w] ?? "·"}</td>`).join("") + `</tr>`).join("") + `</tbody>`;
 
@@ -570,26 +610,38 @@ function renderReview() {
   $("toss").onclick = () => { pending = null; $("review").innerHTML = ""; $("readMsg").textContent = ""; };
 }
 
+// every NFL team, with every spelling anyone might type or any feed might use
+const TEAMS = [
+  ["ARI","ARZ","CARDINALS","ARIZONA"],["ATL","ATLANTA","FALCONS"],["BAL","BLT","BALTIMORE","RAVENS"],
+  ["BUF","BUFFALO","BILLS"],["CAR","CAROLINA","PANTHERS"],["CHI","CHICAGO","BEARS"],
+  ["CIN","CINCINNATI","BENGALS"],["CLE","CLV","CLEVELAND","BROWNS"],["DAL","DALLAS","COWBOYS"],
+  ["DEN","DENVER","BRONCOS"],["DET","DETROIT","LIONS"],["GB","GNB","GREENBAY","PACKERS"],
+  ["HOU","HST","HOUSTON","TEXANS"],["IND","INDIANAPOLIS","COLTS"],["JAX","JAC","JACKSONVILLE","JAGUARS"],
+  ["KC","KAN","KANSASCITY","CHIEFS"],["LV","LVR","OAK","LASVEGAS","RAIDERS"],
+  ["LAC","SD","SDG","CHARGERS"],["LAR","LA","RAMS"],["MIA","MIAMI","DOLPHINS"],
+  ["MIN","MINNESOTA","VIKINGS"],["NE","NWE","NEWENGLAND","PATRIOTS"],["NO","NOR","NEWORLEANS","SAINTS"],
+  ["NYG","GIANTS"],["NYJ","JETS"],["PHI","PHILADELPHIA","EAGLES"],["PIT","PITTSBURGH","STEELERS"],
+  ["SF","SFO","SANFRANCISCO","49ERS","NINERS"],["SEA","SEATTLE","SEAHAWKS"],["TB","TAM","TBB","TAMPA","TAMPABAY","BUCCANEERS","BUCS"],
+  ["TEN","TENNESSEE","TITANS"],["WAS","WSH","WFT","WASHINGTON","COMMANDERS"]
+];
+const TEAM_OF = new Map();
+TEAMS.forEach((list, i) => list.forEach(code => TEAM_OF.set(code, i)));
+
 $("parseBtn").onclick = () => {
   const text = $("paste").value.trim();
   if (!text) { $("readMsg").innerHTML = '<span class="err">Nothing pasted.</span>'; return; }
   const gs = games();
   if (!gs.length) { $("readMsg").innerHTML = '<span class="err">Load a week with games first.</span>'; return; }
 
-  // every spelling a team might appear under, in either direction
-  const VARIANTS = {
-    WAS:["WSH","WFT"], WSH:["WAS","WFT"], LAR:["LA","RAMS"], LA:["LAR","RAMS"],
-    JAX:["JAC"], JAC:["JAX"], NO:["NOR","NOS"], NOR:["NO"], TB:["TAM","TBB"], TAM:["TB"],
-    KC:["KAN","KCC"], KAN:["KC"], SF:["SFO"], SFO:["SF"], GB:["GNB"], GNB:["GB"],
-    NE:["NWE"], NWE:["NE"], ARI:["ARZ"], ARZ:["ARI"], LAC:["SD","SDG"], CLE:["CLV"], CLV:["CLE"],
-    BAL:["BLT"], BLT:["BAL"], HOU:["HST"], HST:["HOU"], NYG:["NYG"], NYJ:["NYJ"]
-  };
-  const lookup = new Map();                     // any spelling -> {gameId, team}
+  // map every known spelling of each team playing this week to its game + the feed's own code
+  const lookup = new Map();
+  const unknownFeed = [];
   for (const g of gs) {
     for (const side of [g.away, g.home]) {
-      const canon = String(side).toUpperCase();
-      const keys = new Set([canon, ...(VARIANTS[canon] || [])]);
-      for (const k of keys) lookup.set(k, { gameId: g.id, team: side });
+      const feedCode = String(side).toUpperCase();
+      const idx = TEAM_OF.get(feedCode);
+      if (idx === undefined) { unknownFeed.push(feedCode); lookup.set(feedCode, { gameId: g.id, team: side }); continue; }
+      for (const spelling of TEAMS[idx]) lookup.set(spelling, { gameId: g.id, team: side });
     }
   }
 
@@ -605,7 +657,7 @@ $("parseBtn").onclick = () => {
       const code = tok.toUpperCase().replace(/[^A-Z0-9]/g, "");
       const hit = lookup.get(code);
       if (hit) picks[hit.gameId] = hit.team;
-      else { nameBits.push(tok); if (code.length <= 4 && nameBits.length > 1) unmatched.add(code); }
+      else { nameBits.push(tok); if (TEAM_OF.has(code)) unmatched.add(code); }
     }
     const name = nameBits.join(" ").replace(/[-_]+/g, " ").trim();
     if (!name) continue;
@@ -614,9 +666,10 @@ $("parseBtn").onclick = () => {
   if (!out.length) { $("readMsg").innerHTML = '<span class="err">Couldn\'t read any rows.</span>'; return; }
   pending = out;
   const gaps = out.filter(p => Object.keys(p.picks).length < gs.length).length;
-  $("readMsg").innerHTML = `Parsed ${out.length} rows` +
-    (gaps ? ` · <b>${gaps} with gaps</b>` : " · all complete") +
-    (unmatched.size ? ` · unrecognised: ${[...unmatched].join(", ")}` : "");
+  const bits = [`Parsed ${out.length} rows`, gaps ? `<b>${gaps} with gaps</b>` : "all complete"];
+  if (unmatched.size) bits.push(`not playing this week: ${[...unmatched].join(", ")}`);
+  if (unknownFeed.length) bits.push(`unknown feed codes: ${unknownFeed.join(", ")}`);
+  $("readMsg").innerHTML = bits.join(" · ");
   renderReview();
 };
 
@@ -641,7 +694,8 @@ async function save(msgEl) {
 $("saveImport").onclick = () => save("saveMsg");
 $("savePay").onclick = () => save("payMsg");
 
-$("pass").oninput = e => { pass = e.target.value; localStorage.setItem("pc.pass", pass); renderEntries(); };
+$("pass").oninput = e => { pass = e.target.value; localStorage.setItem("pc.pass", pass); applyRole(); renderEntries(); };
+$("sortSel").onchange = e => { sortBy = e.target.value; localStorage.setItem("pc.sort", sortBy); renderSeason(); };
 $("hlSel").onchange = e => { hl = e.target.value; localStorage.setItem("pc.hl", hl); renderSeason(); render(); };
 $("buyin").oninput = e => { buyin = Number(e.target.value||0); localStorage.setItem("pc.buyin", buyin); render(); };
 $("refreshBtn").onclick = loadWeek;
@@ -652,6 +706,7 @@ $("refreshBtn").onclick = loadWeek;
   loadWeek();
 });
 
+applyRole();
 setView(view);
 loadWeek(); loadSeason();
 setInterval(() => { if (!document.hidden) loadWeek(); }, 30000);
