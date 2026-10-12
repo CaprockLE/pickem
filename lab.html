@@ -449,7 +449,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
   <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
-    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">lab-23 · 2026-10-12 02:43 UTC</div>
+    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">lab-24 · 2026-10-12 02:43 UTC</div>
     <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
@@ -588,7 +588,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
 </div>
 
 <script>
-const BUILD = "lab-23 (2026-10-12 02:43 UTC)";
+const BUILD = "lab-24 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -653,6 +653,62 @@ function homeWinProb(g) {
 function probFor(g, team) {
   const p = homeWinProb(g);
   return team === g.home ? p : team === g.away ? 1 - p : 0;
+}
+
+/* ── Projected final total for the tiebreaker game ──────────────────
+   Pre-game we take the market over/under. Once it's running we blend
+   the market's scoring rate with the rate actually being produced,
+   trusting the observed pace more as the game goes on — 28 points in
+   the first quarter nudges the projection up, it doesn't quadruple it.
+   Uncertainty shrinks with the clock.                                */
+function projectedTotal(g) {
+  if (!g) return null;
+  const market = typeof g.overUnder === "number" ? g.overUnder : 44;
+  if (g.final) return { mean: g.homeScore + g.awayScore, sd: 0 };
+  if (g.state === "pre") return { mean: market, sd: 13.2 };
+  const mins = minutesLeft(g);
+  const elapsed = Math.max(60 - mins, 0.1);
+  const scored = (g.homeScore || 0) + (g.awayScore || 0);
+  const marketRate = market / 60;
+  const seenRate = scored / elapsed;
+  const trustSeen = Math.min(0.75, elapsed / 60);        // never fully abandon the market
+  const rate = marketRate * (1 - trustSeen) + seenRate * trustSeen;
+  return { mean: scored + rate * mins, sd: Math.max(13.2 * Math.sqrt(mins / 60), 0.8) };
+}
+
+// chance each tied player's guess ends up closest to the real total
+function tiebreakerShares(entries, g) {
+  const proj = projectedTotal(g);
+  const out = new Map();
+  if (!entries.length) return out;
+  if (!proj || proj.sd < 0.5) {                           // total already known
+    const actual = proj ? proj.mean : null;
+    if (actual == null) { entries.forEach(e => out.set(e.name, 1 / entries.length)); return out; }
+    let best = Infinity, winners = [];
+    entries.forEach(e => {
+      const d = Math.abs((e.tiebreaker ?? 9999) - actual);
+      if (d < best) { best = d; winners = [e.name]; } else if (d === best) winners.push(e.name);
+    });
+    winners.forEach(n => out.set(n, 1 / winners.length));
+    return out;
+  }
+  // walk plausible totals, hand each one to whoever guessed closest
+  const lo = Math.max(0, Math.round(proj.mean - 4 * proj.sd));
+  const hi = Math.round(proj.mean + 4 * proj.sd);
+  let mass = 0;
+  for (let t = lo; t <= hi; t++) {
+    const z = (t - proj.mean) / proj.sd;
+    const w = Math.exp(-z * z / 2);
+    let best = Infinity, winners = [];
+    for (const e of entries) {
+      const d = Math.abs((e.tiebreaker ?? 9999) - t);
+      if (d < best) { best = d; winners = [e.name]; } else if (d === best) winners.push(e.name);
+    }
+    winners.forEach(n => out.set(n, (out.get(n) || 0) + w / winners.length));
+    mass += w;
+  }
+  if (mass > 0) for (const [k, v] of out) out.set(k, v / mass);
+  return out;
 }
 
 // which logo set suits the current background
@@ -1107,7 +1163,12 @@ function winChances(rows) {
       sc.push([r.e.name, n]); if (n > best) best = n;
     }
     const top = sc.filter(([, n]) => n === best);
-    for (const [nm] of top) out.set(nm, (out.get(nm) || 0) + c.p / top.length);
+    if (top.length === 1) out.set(top[0][0], (out.get(top[0][0]) || 0) + c.p);
+    else {
+      const tiedEntries = top.map(([nm]) => field.find(r => r.e.name === nm).e);
+      const shares = tiebreakerShares(tiedEntries, tbGame());
+      for (const [nm] of top) out.set(nm, (out.get(nm) || 0) + c.p * (shares.get(nm) ?? 1 / top.length));
+    }
   }
   return out;
 }
@@ -1131,7 +1192,13 @@ function renderStandings(rows) {
             ? ` · tiebreaker ${o.actual}, closest of ${o.tied.length} tied at ${o.top}`
             : ` · outright at ${o.top}`)
         : "Final — tiebreaker game not scored yet")
-    : `${aliveCount} still alive`;
+    : (() => {
+        const tb = tbGame(), pr = projectedTotal(tb);
+        const tail = pr && pr.sd > 0.5 && tb
+          ? ` · tiebreaker projection ${Math.round(pr.mean)} ±${Math.round(pr.sd)}`
+          : "";
+        return `${aliveCount} still alive${tail}`;
+      })();
 
   $("stTbl").innerHTML = `<thead><tr><th></th><th>Player</th><th class="n">Correct</th><th class="n">Open</th>
     <th class="n">Max</th><th class="n" title="Chance of winning the week, from live game odds">Win %</th><th class="tbcol">Tie<br>breaker</th>${o.complete && o.actual != null ? '<th class="n">Off<br>by</th>' : ""}<th>Paid</th><th>Result</th></tr></thead><tbody>` +

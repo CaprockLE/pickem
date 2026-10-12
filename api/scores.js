@@ -85,6 +85,7 @@ export default async function handler(req, res) {
         })(),
         redZone: comp.situation?.isRedZone === true,
         downDistance: comp.situation?.shortDownDistanceText || comp.situation?.downDistanceText || null,
+        overUnder: (() => { const o = (comp.odds || [])[0]; return typeof o?.overUnder === "number" ? o.overUnder : null; })(),
         clockSeconds: (() => {
           const c = comp.status?.displayClock || "";
           const m = /^(\d+):(\d+)$/.exec(c.trim());
