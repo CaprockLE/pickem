@@ -45,6 +45,10 @@ td, button, select, .pill{letter-spacing:0}
 .pg tr.split td{background:var(--panel2);color:var(--muted);font-size:10.5px;font-weight:700;letter-spacing:.06em}
 .pg tr.split td.who{background:var(--panel2)}
 .num{font-family:Oswald,Inter,sans-serif;font-weight:600;font-variant-numeric:tabular-nums}
+td.num,td .num,td.big,td .big,td.mono,td .mono{
+  background:none!important;-webkit-background-clip:border-box!important;background-clip:border-box!important;
+  -webkit-text-fill-color:currentColor!important;color:inherit;position:relative;z-index:1}
+tbody tr:hover td{background:var(--panel2);color:var(--ink)}
 
 /* shell */
 .app{display:grid;grid-template-columns:232px 1fr;min-height:100vh}
@@ -122,7 +126,8 @@ main > div:not([hidden]){animation:viewIn .22s ease-out}
 /* collapsible manager sections */
 .card.foldable>.hd{cursor:pointer;user-select:none}
 .card.foldable>.hd:hover h2{opacity:.85}
-.card .chev{margin-left:10px;color:var(--muted);font-size:11px;transition:transform .18s ease;flex:none}
+.card .chev{margin-left:auto;padding-left:12px;color:var(--muted);font-size:11px;transition:transform .18s ease;flex:none}
+.card>.hd .r+.chev{margin-left:12px}
 .card.folded .chev{transform:rotate(-90deg)}
 .card.folded>.bd,.card.folded>.bar,.card.folded>#missingBox{display:none}
 
@@ -304,7 +309,7 @@ ul.why b{color:var(--ink)}
   <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
-    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">build-28 · 2026-10-12 02:43 UTC</div>
+    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">build-31 · 2026-10-12 02:43 UTC</div>
     <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
@@ -379,16 +384,7 @@ ul.why b{color:var(--ink)}
       <div id="drop"><b>Drop pick-sheet photos here</b>or click to browse · up to 6 at once
         <input type="file" id="file" accept="image/*" multiple hidden>
         <div class="swipe" style="padding:10px 0 0">On a phone this opens your camera or photo library.</div></div>
-      <p class="note" id="readMsg" style="margin:10px 0 0"></p>
-      <details style="margin-top:16px;padding-top:14px;border-top:1px solid var(--rule)">
-        <summary class="note" style="cursor:pointer">Advanced: paste rows as text instead</summary>
-        <p class="note" style="margin:8px 0 7px"><b style="color:var(--ink)">One player per line</b> — one player per line:
-          name, then one team code per game in sheet order, then the tiebreaker.
-          Tabs, commas or spaces all work, so a copied spreadsheet block pastes straight in.</p>
-        <textarea id="paste" rows="5" placeholder="RYAN DAL JAX HOU CIN NE MIN NYJ PIT WAS DEN CHI DET SEA ATL LAR 51"
-          style="width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;padding:9px 11px;border:1px solid var(--rule2);border-radius:9px;background:var(--panel);color:inherit"></textarea>
-        <div style="margin-top:8px"><button id="parseBtn">Parse rows</button></div>
-      </details></div></div>
+      <p class="note" id="readMsg" style="margin:10px 0 0"></p></div></div>
     <div id="review"></div>
     <div class="card"><div class="hd"><h2>Roster</h2><div class="r note" id="rosterCount"></div></div>
       <div class="bd">
@@ -443,7 +439,7 @@ ul.why b{color:var(--ink)}
 </div>
 
 <script>
-const BUILD = "build-28 (2026-10-12 02:43 UTC)";
+const BUILD = "build-31 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -585,6 +581,7 @@ let scores = {games:[]}, pool = null, season = null, pending = null;
 let hl = localStorage.getItem("pc.hl") || "";
 let sortBy = localStorage.getItem("pc.sort") || "total";
 let pass = localStorage.getItem("pc.pass") || "";
+let authed = false;                       // verified against the server, not just "a passcode exists"
 let buyin = Number(localStorage.getItem("pc.buyin") || 10);
 let roster = [];
 let boardMode = localStorage.getItem("pc.board") || "cards";
@@ -601,11 +598,19 @@ const bumped = new Set();                // scores that just changed
 $("buyin").value = buyin;
 $("pass").value = pass;
 
+async function verifyPass(candidate) {
+  if (!candidate) return false;
+  try {
+    const r = await fetch("/api/pool?auth=1", { method: "POST", headers: { "x-admin-key": candidate } });
+    return r.ok;
+  } catch (e) { return false; }
+}
+
 function applyRole() {
-  const on = !!pass;
+  const on = authed;
   ["mgrSec","tabImport","tabMoney"].forEach(id => $(id).hidden = !on);
   $("unlockBtn").textContent = on ? "Sign Out of Manager" : "Manager Sign-In";
-  $("lockPill") && ($("lockPill").textContent = on ? "unlocked" : "locked",
+  $("lockPill") && ($("lockPill").textContent = on ? "Unlocked" : "Locked",
                     $("lockPill").className = "pill " + (on ? "ok" : "no"));
   if (!on && (view === "import" || view === "money")) setView("season");
 }
@@ -623,17 +628,19 @@ function applyRole() {
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { if (pool) render(); });
 })();
 
-$("unlockBtn").onclick = () => {
-  if (pass) {
+$("unlockBtn").onclick = async () => {
+  if (authed) {
     if (!confirm("Sign Out of Manager mode on this device?")) return;
-    pass = ""; localStorage.removeItem("pc.pass"); $("pass").value = "";
+    pass = ""; authed = false; localStorage.removeItem("pc.pass"); $("pass").value = "";
     applyRole(); setView("season"); return;
   }
   const v = prompt("Manager passcode");
   if (v == null) return;
-  pass = v.trim(); localStorage.setItem("pc.pass", pass);
-  $("pass").value = pass; applyRole();
-  if (pass) setView("import");
+  const candidate = v.trim();
+  authed = await verifyPass(candidate);
+  if (!authed) { alert("That passcode didn't work."); return; }
+  pass = candidate; localStorage.setItem("pc.pass", pass);
+  $("pass").value = pass; applyRole(); setView("import");
 };
 
 document.querySelectorAll("nav button.tab").forEach(b => b.onclick = () => setView(b.dataset.v));
@@ -646,6 +653,7 @@ function syncUrl() {
 }
 
 function setView(v) {
+  if ((v === "import" || v === "money") && !authed) v = "season";   // not just hidden — blocked
   view = v;
   document.querySelectorAll("nav button.tab").forEach(b => b.classList.toggle("on", b.dataset.v === v));
   ["season","week","picks","h2h","import","money"].forEach(k => $("v-" + k).hidden = k !== v);
@@ -687,7 +695,7 @@ async function loadWeek() {
         ["weekSel","impWeek","moneyWeek","picksWeek"].forEach(id => $(id).value = week);
         syncUrl();
         const p2 = await getJSON(`/api/pool?week=${week}`);
-        if (!p2.error) { pool = p2; $("updTag").textContent = "updated " + new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}); render(); return; }
+        if (!p2.error) { pool = p2; $("updTag").textContent = "Updated " + new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}); render(); return; }
       }
     }
     if (s.error) showError("scores: " + (typeof s.error === "object" ? JSON.stringify(s.error) : s.error));
@@ -696,7 +704,7 @@ async function loadWeek() {
       $("weekSub").innerHTML = `<span class="err">${esc(txt)}</span>`; showError("pool: " + txt); return;
     }
     pool = p;
-    $("updTag").textContent = "updated " + new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});
+    $("updTag").textContent = "Updated " + new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});
     render();
   } catch (e) { $("weekSub").innerHTML = '<span class="err">Connection problem — retrying.</span>'; showError("loadWeek: " + (e?.message || e)); }
 }
@@ -799,7 +807,7 @@ function renderSeason() {
     `<thead><tr><th>Week</th><th class="n">Entries</th><th class="n">Games</th><th>Status</th><th>Winner</th><th class="n">Paid</th><th></th></tr></thead><tbody>` +
     season.weeks.map(w => `<tr><td><b>${esc(w.label)}</b></td><td class="n mono">${w.entries}</td>
       <td class="n mono">${w.finals}/${w.games}</td>
-      <td>${w.complete ? '<span class="pill ok">complete</span>' : '<span class="pill">in progress</span>'}</td>
+      <td>${w.complete ? '<span class="pill ok">Complete</span>' : '<span class="pill">In Progress</span>'}</td>
       <td>${w.winners.length ? esc(w.winners.map(tc).join(" & ")) : '<span class="note">—</span>'}</td>
       <td class="n mono">${w.paidCount}/${w.entries}</td>
       <td class="n"><button class="sm" data-goweek="${w.week}">Open</button></td></tr>`).join("") + `</tbody>`;
@@ -842,7 +850,7 @@ function renderH2H() {
       const a = A.byWeek[w], b = B.byWeek[w];
       const edge = a == null || b == null ? '<span class="note">—</span>'
         : a > b ? `<span class="pill ok">${esc(tc(A.name))}</span>`
-        : b > a ? `<span class="pill ok">${esc(tc(B.name))}</span>` : '<span class="pill">tied</span>';
+        : b > a ? `<span class="pill ok">${esc(tc(B.name))}</span>` : '<span class="pill">Tied</span>';
       return `<tr><td>Week ${w}</td><td class="n mono">${a ?? "·"}</td><td class="n mono">${b ?? "·"}</td><td>${edge}</td></tr>`;
     }).join("") + `</tbody>`;
 
@@ -855,14 +863,19 @@ function render() {
   const finals = games().filter(g => winnerOf(g)).length;
   const live = games().filter(g => g.state === "in").length;
   $("weekTitle").textContent = pool.label || ("Week " + week);
-  $("weekSub").textContent = `${entries().length} entries · ${finals} of ${games().length} games final`;
+  $("weekSub").textContent = `${entries().length} Entries · ${finals} of ${games().length} Games Final`;
   $("weekKpis").innerHTML = [
     ["Games final", `${finals}<small>/${games().length}</small>`, ""],
     ["In progress", `${live}`, live ? "hot" : ""],
     ["Entries", `${entries().length}`, ""],
     ["Top score", rows.length ? `${rows[0].s.correct}` : "—", ""],
-    ["Leader", (() => {
+    [(() => { const o = weekOutcome(rows); return o.complete && o.champs.size ? "Winner" : "Leader"; })(), (() => {
       if (!rows.length) return "—";
+      const oc = weekOutcome(rows);
+      if (oc.complete && oc.champs.size) {
+        const names = [...oc.champs].map(n => esc(tc(n)));
+        return names.length === 1 ? names[0] : `<span style="font-size:19px">${names.join(", ")}</span>`;
+      }
       const best = rows[0].s.correct;
       const tiedTop = rows.filter(r => r.s.correct === best);
       if (tiedTop.length === 1) return esc(tc(tiedTop[0].e.name));
@@ -1045,15 +1058,15 @@ function renderStandings(rows) {
     ? (o.champs.size
         ? `Won by <b style="color:var(--ink)">${[...o.champs].map(n=>esc(tc(n))).join(" &amp; ")}</b>` +
           (o.tied.length > 1 && o.actual != null
-            ? ` · tiebreaker ${o.actual}, closest of ${o.tied.length} tied at ${o.top}`
-            : ` · outright at ${o.top}`)
-        : "Final — tiebreaker game not scored yet")
+            ? ` · Tiebreaker ${o.actual}, Closest of ${o.tied.length} Tied at ${o.top}`
+            : ` · Outright at ${o.top}`)
+        : "Final — Tiebreaker Game Not Scored Yet")
     : (() => {
         const tb = tbGame(), pr = projectedTotal(tb);
         const tail = pr && pr.sd > 0.5 && tb
-          ? ` · tiebreaker projection ${Math.round(pr.mean)} ±${Math.round(pr.sd)}`
+          ? ` · Tiebreaker Projection ${Math.round(pr.mean)} ±${Math.round(pr.sd)}`
           : "";
-        return `${aliveCount} still alive${tail}`;
+        return `${aliveCount} Still Alive${tail}`;
       })();
 
   $("stTbl").innerHTML = `<thead><tr><th></th><th>Player</th><th class="n">Correct</th><th class="n">Open</th>
@@ -1063,8 +1076,8 @@ function renderStandings(rows) {
       const wasTied = o.complete && o.tied.some(t => t.e.name === r.e.name);
       const off = o.actual != null ? Math.abs((r.e.tiebreaker ?? 9999) - o.actual) : null;
       const status = o.complete
-        ? (isChamp ? '<span class="pill gold">&#127942; winner</span>'
-          : wasTied ? '<span class="pill">lost tiebreaker</span>' : "")
+        ? (isChamp ? '<span class="pill gold">&#127942; Winner</span>'
+          : wasTied ? '<span class="pill">Lost Tiebreaker</span>' : "")
         : (!alive.has(r.e.name) ? '<span class="pill no">Out</span>'
           : r.s.correct === top ? '<span class="pill ok">Lead</span>' : "");
       return `<tr class="${r.e.name===hl?"me":""}${isChamp?" winrow":""}"><td class="pos">${i+1}</td><td>${esc(tc(r.e.name))}</td>
@@ -1075,7 +1088,7 @@ function renderStandings(rows) {
         return p >= 0.995 ? "100%" : `${(p * 100).toFixed(p < 0.095 ? 1 : 0)}%`; })()}</td>
       <td class="tbcol mono">${r.e.tiebreaker ?? "—"}</td>` +
       (o.complete && o.actual != null ? `<td class="n mono">${off != null && off < 9999 ? off : "—"}</td>` : "") +
-      `<td><span class="pill ${r.e.paid?"ok":"no"}">${r.e.paid?"paid":"unpaid"}</span></td>
+      `<td><span class="pill ${r.e.paid?"ok":"no"}">${r.e.paid?"Paid":"Unpaid"}</span></td>
       <td>${status}</td></tr>`;
     }).join("") + `</tbody>`;
 }
@@ -1090,25 +1103,25 @@ function renderWinner(rows) {
   if (open.length) {
     $("winner").innerHTML = `<div class="champ"><span class="cup">&#9203;</span><div>
       <div class="nm" style="font-size:22px">To Be Decided</div>
-      <div class="note">${open.length} game${open.length>1?"s":""} still to play</div></div></div>`;
+      <div class="note">${open.length} Game${open.length>1?"s":""} Still to Play</div></div></div>`;
     return;
   }
   if (tied.length === 1) {
     $("winner").innerHTML = `<div class="champ"><span class="cup">&#127942;</span><div><div class="nm">${esc(tc(tied[0].e.name))}</div>
-      <div class="note">${top}-${games().length-top} · outright, no tiebreaker</div></div></div>`; return;
+      <div class="note">${top}-${games().length-top} · Outright, No Tiebreaker</div></div></div>`; return;
   }
   const tb = games().find(g => g.id === pool.tiebreakerGameId) ||
     [...games()].sort((a,b) => new Date(b.kickoff)-new Date(a.kickoff))[0];
   const actual = tb && tb.final ? tb.homeScore + tb.awayScore : null;
   if (actual == null) {
     $("winner").innerHTML = `<div class="champ"><span class="cup">&#9203;</span><div><div class="nm">${tied.length}-way tie at ${top}</div>
-      <div class="note">Settles on ${esc(tb?tb.away+" at "+tb.home:"the last game")}</div></div></div>`; return;
+      <div class="note">Settles on ${esc(tb?tb.away+" at "+tb.home:"the Last Game")}</div></div></div>`; return;
   }
   const sc = tied.map(r => ({r, d: Math.abs((r.e.tiebreaker ?? 9999) - actual)})).sort((a,b)=>a.d-b.d);
   const champs = sc.filter(x => x.d === sc[0].d);
   $("winner").innerHTML = `<div class="champ"><span class="cup">&#127942;</span><div>
     <div class="nm">${champs.map(c=>esc(tc(c.r.e.name))).join(" &amp; ")}</div>
-    <div class="note">${champs.length>1?"Split":"Wins"} at ${top}-${games().length-top} · tiebreaker game totalled ${actual}</div></div></div>
+    <div class="note">${champs.length>1?"Split":"Wins"} at ${top}-${games().length-top} · Tiebreaker Game Totaled ${actual}</div></div></div>
     <ul class="why">${sc.map(x=>`<li><b>${esc(tc(x.r.e.name))}</b> guessed ${x.r.e.tiebreaker ?? "—"} · off by ${x.d}</li>`).join("")}</ul>`;
 }
 
@@ -1184,7 +1197,7 @@ function renderPicks(rows) {
       <div class="vs">at</div>${g.homeLogo?`<img src="${esc(logoFor(g,"home"))}" alt="${esc(g.home)}">`:esc(g.home)}</th>`).join("") +
     `<th class="tbcol">Tie<br>breaker${tbGameLabel() ? `<div class="vs">${esc(tbGameLabel())}</div>` : ""}</th></tr></thead><tbody>` +
     `<tr class="split"><td class="who">Pool Split</td>` +
-      gs.map(g => `<td>${split(g)}</td>`).join("") + `<td class="tbcol">${tbActualLabel()}</td></tr>` +
+      gs.map(g => `<td>${split(g)}</td>`).join("") + `<td class="tbcol"></td></tr>` +
     shown.map(r => `<tr class="${r.e.name===hl?"me":""}"><td class="who">${esc(tc(r.e.name))}</td>` +
       gs.map(g => { const p = r.e.picks?.[g.id]||"", w = winnerOf(g);
         const c = !w||!p ? "" : (w==="TIE" ? "miss tied" : (p===w?"hit":"miss"));
@@ -1218,14 +1231,14 @@ function renderEntries() {
          <span style="opacity:.7">— sitting out, or still to upload.</span></p>`
       : `<p class="note" style="margin:0 0 10px">Every roster player has a sheet in for week ${week}.</p>`;
   }
-  $("lockPill").textContent = pass ? "unlocked" : "locked";
+  $("lockPill").textContent = authed ? "Unlocked" : "Locked";
   $("lockPill").className = "pill " + (pass ? "ok" : "no");
   if (!es.length) { $("entTbl").innerHTML = `<tbody><tr><td><div class="empty"><b>No entries yet</b>Drop in sheet photos above, or add rows by hand.</div></td></tr></tbody>`; return; }
   $("entTbl").innerHTML = `<thead><tr><th>Player</th><th class="n">Picks read</th><th class="tbcol">Tie<br>breaker</th><th>Paid</th><th></th></tr></thead><tbody>` +
     es.map((e,i) => `<tr><td><input type="text" data-ei="${i}" data-f="name" value="${esc(e.name)}" style="width:150px;padding:4px 8px"></td>
       <td class="n mono">${Object.keys(e.picks||{}).length}/${games().length}</td>
       <td class="tbcol"><input type="number" data-ei="${i}" data-f="tiebreaker" value="${e.tiebreaker ?? ""}" style="width:76px;padding:4px 6px"></td>
-      <td><button class="sm ${e.paid?"on":""}" data-paid="${i}">${e.paid?"paid":"unpaid"}</button></td>
+      <td><button class="sm ${e.paid?"on":""}" data-paid="${i}">${e.paid?"Paid":"Unpaid"}</button></td>
       <td class="n"><button class="sm" data-del="${i}">Remove</button></td></tr>`).join("") + `</tbody>`;
   $("entTbl").querySelectorAll("input[data-ei]").forEach(inp => inp.oninput = () => {
     const e = entries()[+inp.dataset.ei];
@@ -1266,7 +1279,7 @@ function renderMoney(rows) {
   const byName = [...rows].sort((a, b) => a.e.name.localeCompare(b.e.name, undefined, { sensitivity: "base" }));
   $("moneyTbl").innerHTML = n ? `<thead><tr><th>Player</th><th>Status</th><th class="n">Owes</th></tr></thead><tbody>` +
     byName.map(r => `<tr data-pay="${esc(r.e.name)}" style="cursor:pointer"><td>${esc(tc(r.e.name))}</td>
-      <td><span class="pill ${r.e.paid?"ok":"no"}">${r.e.paid?"paid":"unpaid"}</span></td>
+      <td><span class="pill ${r.e.paid?"ok":"no"}">${r.e.paid?"Paid":"Unpaid"}</span></td>
       <td class="n mono">${r.e.paid ? "—" : "$"+buyin}</td></tr>`).join("") + `</tbody>`
     : `<tbody><tr><td><div class="empty"><b>No entries</b>Import this week's sheets first.</div></td></tr></tbody>`;
   $("moneyTbl").querySelectorAll("tr[data-pay]").forEach(tr => tr.onclick = () => {
@@ -1466,7 +1479,7 @@ function makeFoldable() {
     const key = "pc.fold." + slug(h2.textContent || "section");
     const chev = document.createElement("span");
     chev.className = "chev"; chev.textContent = "\u25BC";
-    (hd.querySelector(".r") || hd).appendChild(chev);
+    hd.appendChild(chev);                       // always last, hard right
     let folded = false;
     try { folded = localStorage.getItem(key) === "1"; } catch (e) {}
     card.classList.toggle("folded", folded);
@@ -1579,7 +1592,7 @@ const TEAMS = [
 const TEAM_OF = new Map();
 TEAMS.forEach((list, i) => list.forEach(code => TEAM_OF.set(code, i)));
 
-$("parseBtn").onclick = () => {
+if ($("parseBtn")) $("parseBtn").onclick = () => {
   const text = $("paste").value.trim();
   if (!text) { $("readMsg").innerHTML = '<span class="err">Nothing pasted.</span>'; return; }
   const gs = games();
@@ -1668,7 +1681,16 @@ async function save(msgEl) {
 $("saveImport").onclick = () => save("saveMsg");
 $("savePay").onclick = () => save("payMsg");
 
-$("pass").oninput = e => { pass = e.target.value; localStorage.setItem("pc.pass", pass); applyRole(); renderEntries(); };
+let passCheckTimer = null;
+$("pass").oninput = e => {
+  pass = e.target.value;
+  localStorage.setItem("pc.pass", pass);
+  clearTimeout(passCheckTimer);
+  passCheckTimer = setTimeout(async () => {
+    authed = await verifyPass(pass);
+    applyRole(); renderEntries();
+  }, 450);
+};
 $("picksFilter").oninput = () => { if (pool) renderPicks(ranked()); };
 $("picksOrder").onchange = e => { picksOrder = e.target.value; localStorage.setItem("pc.picksOrder", picksOrder); if (pool) renderPicks(ranked()); };
 $("h2hA").onchange = renderH2H; $("h2hB").onchange = renderH2H;
@@ -1690,6 +1712,13 @@ $("refreshBtn").onclick = loadWeek;
 applyRole();
 makeFoldable();
 setView(view);
+verifyPass(pass).then(ok => {
+  authed = ok;
+  if (!ok && pass) { pass = ""; localStorage.removeItem("pc.pass"); }
+  applyRole();
+  const wanted = new URLSearchParams(location.search).get("v");
+  if (ok && (wanted === "import" || wanted === "money")) setView(wanted);
+});
 loadWeek(); loadSeason(); loadRoster();
 setInterval(() => { if (!document.hidden) loadWeek(); }, 30000);
 </script>

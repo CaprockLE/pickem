@@ -39,6 +39,13 @@ export default async function handler(req, res) {
   }
 
   try {
+    // passcode check — lets the UI know whether to show manager tools
+    if (req.query.auth) {
+      const sent = req.headers["x-admin-key"];
+      const ok = !!process.env.ADMIN_PASSCODE && sent === process.env.ADMIN_PASSCODE;
+      return res.status(ok ? 200 : 401).json({ ok });
+    }
+
     // season roster: the canonical list of player names
     if (req.query.roster) {
       if (req.method === "GET") {

@@ -20,25 +20,25 @@ const LAB_CSS = `
   --noise:.028; --mark-glow:0 6px 20px rgba(0,164,114,.30);
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){
-  --n1:#00E59B; --n2:#36C8FF; --n3:#A96BFF; --amber:#FFC14D;
+  --n1:#36C193; --n2:#5AA9DE; --n3:#9B86D8; --amber:#D7B165;
   --glass:rgba(255,255,255,.055); --glass-2:rgba(255,255,255,.02);
   --brd:rgba(255,255,255,.10); --brd-lit:rgba(255,255,255,.20);
   --lab-shadow:0 16px 42px rgba(2,8,16,.46), inset 0 1px 0 rgba(255,255,255,.07);
   --head-grad:linear-gradient(100deg,#FFFFFF 8%, #9FE9D2 48%, #8FD4FF 82%);
   --num-grad:linear-gradient(180deg,#FFFFFF,#A9DFFF);
   --row-hover:rgba(54,200,255,.12);
-  --aurora-1:rgba(0,229,155,.17); --aurora-2:rgba(54,200,255,.15); --aurora-3:rgba(169,107,255,.14);
+  --aurora-1:rgba(0,229,155,.11); --aurora-2:rgba(54,200,255,.10); --aurora-3:rgba(169,107,255,.09);
   --noise:.038; --mark-glow:0 6px 22px rgba(0,229,155,.38);
 }}
 :root[data-theme=dark]{
-  --n1:#00E59B; --n2:#36C8FF; --n3:#A96BFF; --amber:#FFC14D;
+  --n1:#36C193; --n2:#5AA9DE; --n3:#9B86D8; --amber:#D7B165;
   --glass:rgba(255,255,255,.055); --glass-2:rgba(255,255,255,.02);
   --brd:rgba(255,255,255,.10); --brd-lit:rgba(255,255,255,.20);
   --lab-shadow:0 16px 42px rgba(2,8,16,.46), inset 0 1px 0 rgba(255,255,255,.07);
   --head-grad:linear-gradient(100deg,#FFFFFF 8%, #9FE9D2 48%, #8FD4FF 82%);
   --num-grad:linear-gradient(180deg,#FFFFFF,#A9DFFF);
   --row-hover:rgba(54,200,255,.12);
-  --aurora-1:rgba(0,229,155,.17); --aurora-2:rgba(54,200,255,.15); --aurora-3:rgba(169,107,255,.14);
+  --aurora-1:rgba(0,229,155,.11); --aurora-2:rgba(54,200,255,.10); --aurora-3:rgba(169,107,255,.09);
   --noise:.038; --mark-glow:0 6px 22px rgba(0,229,155,.38);
 }
 
@@ -85,6 +85,7 @@ h1{font-size:35px;letter-spacing:.01em;background:var(--head-grad);
 /* stat tiles */
 .kpi{background:transparent;position:relative}
 .kpi .v{background:var(--num-grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.kpi .v.hot{background:none;color:var(--hot)}
 .kpi .k{letter-spacing:.16em}
 
 /* game cards */
@@ -96,8 +97,7 @@ h1{font-size:35px;letter-spacing:.01em;background:var(--head-grad);
              linear-gradient(120deg,var(--amber),#FF5E5B,var(--n2),var(--amber)) border-box;
   background-size:auto,300% 300%; border:1.5px solid transparent; animation:ring 5s linear infinite}
 @keyframes ring{0%{background-position:0 0,0% 50%}100%{background-position:0 0,300% 50%}}
-.tm .pts{font-family:Oswald,Inter;font-size:19px;background:var(--num-grad);
-  -webkit-background-clip:text;background-clip:text;color:transparent}
+.tm .pts{font-family:Oswald,Inter;font-size:19px;color:var(--ink)}
 .gm .st .odds{font-weight:700;color:var(--n2)}
 
 /* tables */
@@ -106,12 +106,14 @@ td{border-bottom:1px solid var(--brd)}
 tbody tr{transition:background .15s}
 tbody tr:hover td{background:var(--row-hover)}
 tbody tr:hover td:first-child{box-shadow:inset 2px 0 0 var(--n1)}
-.num,.big{background:var(--num-grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.num,.big{color:var(--ink);background:none}
+td.num,td .num,td.big,td .big,td.mono,td .mono{
+  background:none!important;-webkit-text-fill-color:currentColor!important;color:inherit}
+tbody tr:hover td{color:var(--ink)}
+.pos{color:var(--muted)}
 
 /* winner row: slow gold sweep */
-tr.winrow td{background:linear-gradient(90deg, rgba(201,150,44,.26), rgba(201,150,44,.06) 55%, transparent)!important;
-  background-size:220% 100%;animation:gold 6s ease-in-out infinite}
-@keyframes gold{0%,100%{background-position:0 0}50%{background-position:60% 0}}
+tr.winrow td{background:rgba(201,150,44,.13)!important}
 tr.winrow td:first-child{box-shadow:inset 3px 0 0 var(--amber)}
 
 /* pills + buttons */
@@ -125,9 +127,9 @@ button.primary{background:linear-gradient(120deg,var(--n1),var(--n2));border-col
 button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
 
 /* pick grid */
-.pg td.hit{background:linear-gradient(180deg,rgba(0,164,114,.20),rgba(0,164,114,.05));box-shadow:inset 0 -2px 0 var(--n1)}
-.pg td.miss{background:linear-gradient(180deg,rgba(201,84,46,.16),rgba(201,84,46,.04));box-shadow:inset 0 -2px 0 #C9542E}
-.pg td.hit img.pick{filter:drop-shadow(0 0 7px rgba(0,164,114,.45))}
+.pg td.hit{background:rgba(0,164,114,.13);box-shadow:inset 0 -2px 0 rgba(0,164,114,.75)}
+.pg td.miss{background:rgba(201,84,46,.10);box-shadow:inset 0 -2px 0 rgba(201,84,46,.65)}
+.pg td.hit img.pick{filter:none}
 .pg tr.split td{background:var(--panel2)}
 .pg td.who,.pg th.who{background:var(--panel)}
 
@@ -143,7 +145,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
 #labTag a{color:inherit;text-decoration:none}
 
 @media (prefers-reduced-motion:reduce){
-  body{animation:none}.gm.live{animation:none}tr.winrow td{animation:none}
+  body{animation:none}.gm.live{animation:none}
 }
 @media (max-width:900px){
   #labTag{bottom:auto;top:9px;right:9px;padding:5px 10px;font-size:10px}
