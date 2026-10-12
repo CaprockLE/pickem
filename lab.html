@@ -584,7 +584,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
   <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
-    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">lab-62 · 2026-10-12 02:43 UTC</div>
+    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">lab-65 · 2026-10-12 02:43 UTC</div>
     <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
@@ -723,6 +723,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
   <div class="card" id="shareBox" style="max-width:560px;width:100%;margin:0">
     <div class="hd"><h2>Share Card</h2><div class="r">
       <select id="shareMode"><option value="grid">Picks Grid</option><option value="final">Standings</option></select>
+      <select id="shareOrder"><option value="az">A → Z</option><option value="correct">By Correct</option><option value="rank">As Standings</option></select>
       <button id="shareClose">Close</button></div></div>
     <div class="bd"><canvas id="shareCanvas" style="width:100%;border-radius:10px;border:1px solid var(--rule)"></canvas>
       <div class="bar" style="margin:12px -16px -16px"><button id="shareDl" class="primary">Download Image</button>
@@ -731,7 +732,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
 </div>
 
 <script>
-const BUILD = "lab-62 (2026-10-12 02:43 UTC)";
+const BUILD = "lab-65 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -1865,10 +1866,10 @@ function drawShare(mode) {
 }
 
 const SHARE_DARK = { ink:"#0A111B", panel:"#131F2D", alt:"#101A26", line:"#263445", text:"#E9EEF5",
-                     muted:"#8696A8", brand:"#39B28E", brandBg:"#11322A", miss:"#FF5A52", missBg:"#331614",
+                     muted:"#8696A8", brand:"#39B28E", brandBg:"#11322A", miss:"#FF4D4D", missBg:"#3B1012",
                      gold:"#D4AC54" };
 const SHARE_LIGHT = { ink:"#FFFFFF", panel:"#F6F8FB", alt:"#FFFFFF", line:"#D9E0E9", text:"#101A27",
-                      muted:"#64748B", brand:"#0B6B57", brandBg:"#E3F1EC", miss:"#C0231F", missBg:"#FBE9E8",
+                      muted:"#64748B", brand:"#0B6B57", brandBg:"#E3F1EC", miss:"#C01616", missBg:"#FCE7E7",
                       gold:"#9A7318" };
 // resolved per draw so the image matches whatever theme is on screen
 let SH = SHARE_DARK;
@@ -1876,9 +1877,16 @@ function shareTheme() { SH = darkMode() ? SHARE_DARK : SHARE_LIGHT; }
 
 function drawGridShare() {
   const cv = $("shareCanvas"), x = cv.getContext("2d");
-  const rows = ranked(), gs = games();
-  const nameW = 190, colW = 58, tbW = 86, corW = 72, rowH = 38, headH = 148, colHead = 56;
-  const W = nameW + gs.length * colW + tbW + corW + 56;
+  const gs = games();
+  const finals = gs.filter(g => winnerOf(g)).length;
+  const showCorrect = finals > 0;                     // nothing to show before kickoff
+  const order = ($("shareOrder") && $("shareOrder").value) || "az";
+  let rows = ranked();
+  if (order === "az") rows = [...rows].sort((a, b) => a.e.name.localeCompare(b.e.name, undefined, { sensitivity: "base" }));
+  else if (order === "correct") rows = [...rows].sort((a, b) => b.s.correct - a.s.correct || a.e.name.localeCompare(b.e.name));
+  const paidW = 68;
+  const nameW = 190, colW = 58, tbW = 86, corW = showCorrect ? 72 : 0, rowH = 38, headH = 148, colHead = 56;
+  const W = nameW + gs.length * colW + tbW + corW + paidW + 56;
   const H = headH + colHead + rows.length * rowH + 76;
   cv.width = W; cv.height = H;
 
@@ -1890,7 +1898,6 @@ function drawGridShare() {
   x.fillStyle = SH.text; x.font = "700 46px Oswald, Inter, sans-serif";
   x.fillText(`Week ${week} Picks`, 28, 74);
   x.fillStyle = SH.muted; x.font = "400 22px Inter, sans-serif";
-  const finals = gs.filter(g => winnerOf(g)).length;
   x.fillText(`${rows.length} entries · ${finals} of ${gs.length} games final` +
              (o.complete && o.champs.size ? ` · Won by ${[...o.champs].map(tc).join(" & ")}` : ""), 29, 110);
 
@@ -1905,7 +1912,8 @@ function drawGridShare() {
   });
   x.fillStyle = SH.muted; x.font = "600 15px Inter, sans-serif";
   x.fillText("Tie", cx + tbW / 2, headH + 25); x.fillText("Breaker", cx + tbW / 2, headH + 42);
-  x.fillText("Correct", cx + tbW + corW / 2, headH + 34);
+  if (showCorrect) x.fillText("Correct", cx + tbW + corW / 2, headH + 34);
+  x.fillText("Paid", cx + tbW + corW + paidW / 2, headH + 34);
   x.textAlign = "left";
 
   let y = headH + colHead;
@@ -1933,8 +1941,12 @@ function drawGridShare() {
     });
     x.fillStyle = champ ? SH.gold : SH.text; x.font = "700 19px Oswald, Inter, sans-serif";
     x.fillText(String(r.e.tiebreaker ?? "—"), c + tbW / 2, y + 25);
-    x.fillStyle = champ ? SH.gold : SH.brand; x.font = "700 21px Oswald, Inter, sans-serif";
-    x.fillText(String(r.s.correct), c + tbW + corW / 2, y + 25);
+    if (showCorrect) {
+      x.fillStyle = champ ? SH.gold : SH.brand; x.font = "700 21px Oswald, Inter, sans-serif";
+      x.fillText(String(r.s.correct), c + tbW + corW / 2, y + 25);
+    }
+    x.fillStyle = r.e.paid ? SH.brand : SH.miss; x.font = "600 17px Inter, sans-serif";
+    x.fillText(r.e.paid ? "Paid" : "Unpaid", c + tbW + corW + paidW / 2, y + 25);
     x.textAlign = "left";
     y += rowH;
   });
@@ -1942,8 +1954,9 @@ function drawGridShare() {
   const tb = tbGame();
   x.fillStyle = SH.line; x.fillRect(28, y + 14, W - 56, 1);
   x.fillStyle = SH.muted; x.font = "400 18px Inter, sans-serif";
-  x.fillText(tb ? `Tiebreaker: ${tb.away} at ${tb.home}` + (tb.final ? ` · final total ${tb.homeScore + tb.awayScore}` : "") : "",
-             28, y + 46);
+  const unpaid = rows.filter(r => !r.e.paid).length;
+  x.fillText((tb ? `Tiebreaker: ${tb.away} at ${tb.home}` + (tb.final ? ` · final total ${tb.homeScore + tb.awayScore}` : "") : "") +
+             (unpaid ? ` · ${unpaid} unpaid` : " · all paid"), 28, y + 46);
   x.textAlign = "right"; x.fillText(location.host, W - 28, y + 46); x.textAlign = "left";
 }
 
@@ -1952,7 +1965,11 @@ function drawStandingsShare() {
   cv.width = W; cv.height = H;
   x.fillStyle = SH.ink; x.fillRect(0, 0, W, H);
   x.fillStyle = SH.brand; x.fillRect(0, 0, W, 10);
-  const rows = ranked(), o = weekOutcome(rows);
+  const base = ranked(), o = weekOutcome(base);
+  const ord = ($("shareOrder") && $("shareOrder").value) || "rank";
+  const rows = ord === "az"
+    ? [...base].sort((a, b) => a.e.name.localeCompare(b.e.name, undefined, { sensitivity: "base" }))
+    : base;
   const finals = games().filter(g => winnerOf(g)).length;
 
   x.fillStyle = SH.text; x.font = "700 62px Oswald, Inter, sans-serif";
@@ -1983,17 +2000,21 @@ function drawStandingsShare() {
     x.fillStyle = champ ? SH.gold : SH.text; x.fillText(String(r.s.correct), W - 150, y + 40);
     x.font = "400 24px Inter, sans-serif"; x.fillStyle = SH.muted;
     x.fillText(String(r.e.tiebreaker ?? "—"), W - 76, y + 40);
+    x.font = "600 20px Inter, sans-serif"; x.fillStyle = r.e.paid ? SH.brand : SH.miss;
+    x.fillText(r.e.paid ? "Paid" : "Unpaid", W - 230, y + 40);
     x.textAlign = "left";
     y += 66;
   });
   x.fillStyle = SH.line; x.fillRect(56, H - 86, W - 112, 1);
   x.fillStyle = SH.muted; x.font = "400 24px Inter, sans-serif";
-  x.fillText("Correct · Tiebreaker", 56, H - 48);
+  x.fillText("Paid · Correct · Tiebreaker", 56, H - 48);
   x.textAlign = "right"; x.fillText(location.host, W - 56, H - 48); x.textAlign = "left";
 }
 
 $("shareBtn").onclick = () => { if (!pool) return; $("shareWrap").hidden = false;
-  $("shareMode").value = "grid"; drawShare("grid"); };
+  $("shareMode").value = "grid";
+  $("shareOrder").value = games().some(g => winnerOf(g)) ? "correct" : "az";
+  drawShare("grid"); };
 function closeShare() { $("shareWrap").hidden = true; $("shareMsg").textContent = ""; }
 $("shareClose").onclick = closeShare;
 $("shareWrap").addEventListener("click", e => { if (e.target === $("shareWrap")) closeShare(); });
@@ -2005,9 +2026,10 @@ document.addEventListener("keydown", e => {
 $("lbClose").onclick = () => { $("lightbox").hidden = true; };
 $("lightbox").addEventListener("click", e => { if (e.target === $("lightbox")) $("lightbox").hidden = true; });
 $("shareMode").onchange = e => drawShare(e.target.value);
+$("shareOrder").onchange = () => drawShare($("shareMode").value);
 $("shareDl").onclick = () => {
   const a = document.createElement("a");
-  a.download = `week-${week}-${$("shareMode").value === "grid" ? "picks" : "standings"}.png`;
+  a.download = `week-${week}-${$("shareMode").value === "grid" ? "picks" : "standings"}-${$("shareOrder").value}.png`;
   a.href = $("shareCanvas").toDataURL("image/png"); a.click();
 };
 $("shareCopy").onclick = async () => {
