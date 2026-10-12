@@ -111,15 +111,16 @@ button.sm{padding:2px 5px;font-size:12px;border-radius:6px;line-height:1.5;min-h
 .gm.flash{animation:cardflash 1.1s ease-out}
 
 /* card depth */
-.gm{transition:transform .12s ease, box-shadow .12s ease}
-.gm:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(5,10,18,.16);z-index:2}
+.gm{transition:box-shadow .14s ease, background .14s ease}
+.gm:hover{box-shadow:0 8px 22px rgba(5,10,18,.16), inset 0 0 0 1px var(--rule2);z-index:2}
+.gm:active,.gm:focus{transform:none}
 
 /* view transitions */
 @keyframes viewIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
 main > div:not([hidden]){animation:viewIn .22s ease-out}
 @media (prefers-reduced-motion:reduce){
   .pts.bumped,.gm.flash,main > div:not([hidden]){animation:none}
-  .gm:hover{transform:none}
+  .gm:hover{box-shadow:none}
 }
 
 /* logos in the pick grid */
@@ -290,7 +291,7 @@ th.tbcol .vs{font-size:8.5px;color:var(--muted);letter-spacing:.02em;margin-top:
 .pg td.miss{color:var(--miss);font-weight:400}
 /* result shown as a hairline under the logo, so the mark itself stays clean */
 .pg td.hit{box-shadow:inset 0 -2px 0 var(--brand);background:color-mix(in srgb, var(--brand) 9%, transparent)}
-.pg td.miss{box-shadow:inset 0 -2px 0 var(--hot);background:color-mix(in srgb, var(--hot) 9%, transparent)}
+.pg td.miss{box-shadow:inset 0 -2px 0 var(--miss);background:var(--miss-bg)}
 .pg td.tied{color:var(--miss);font-weight:400;position:relative;box-shadow:inset 0 -2px 0 var(--miss);background:var(--miss-bg)}
 .pg td.tied::after{content:"=";position:absolute;top:1px;right:3px;font-size:8px;opacity:.75}
 .slot{grid-column:1/-1;background:var(--panel2);padding:7px 12px;font-size:10.5px;font-weight:700;
@@ -426,7 +427,7 @@ ul.why b{color:var(--ink)}
   <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
-    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">build-52 · 2026-10-12 02:43 UTC</div>
+    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">build-54 · 2026-10-12 02:43 UTC</div>
     <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
@@ -567,7 +568,7 @@ ul.why b{color:var(--ink)}
 </div>
 
 <script>
-const BUILD = "build-52 (2026-10-12 02:43 UTC)";
+const BUILD = "build-54 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));

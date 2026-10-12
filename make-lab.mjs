@@ -91,7 +91,7 @@ h1{font-size:35px;letter-spacing:.01em;background:var(--head-grad);
 /* game cards */
 .gm{border:1px solid var(--brd);border-radius:14px;
   background:linear-gradient(180deg,var(--glass),var(--glass-2));transition:.16s cubic-bezier(.2,.8,.2,1)}
-.gm:hover{transform:translateY(-3px) scale(1.015);box-shadow:0 16px 34px rgba(2,8,16,.20), 0 0 0 1px var(--brd-lit)}
+.gm:hover{box-shadow:0 12px 28px rgba(2,8,16,.20), inset 0 0 0 1px var(--brd-lit)}
 .gm.live{border-color:transparent;
   background:linear-gradient(var(--panel),var(--panel)) padding-box,
              linear-gradient(120deg,var(--amber),#FF5E5B,var(--n2),var(--amber)) border-box;
