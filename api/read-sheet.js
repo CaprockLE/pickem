@@ -36,8 +36,10 @@ export default async function handler(req, res) {
         `These images show pick sheets for an NFL pick'em pool. Each row is one person: their name, ` +
         `one picked team per game, and a tiebreaker number.\n\n` +
         `Games by id: ${legend}\n\n` +
+        `Most sheets print the week at the top ("Week 6 Picks", "WEEK 6 PICK SHEET"). Report it if you can read it.\n\n` +
         `Return ONLY JSON, no prose and no markdown fences:\n` +
-        `{"entries":[{"name":"...","picks":{"<gameId>":"<team abbreviation exactly as listed above>"},` +
+        `{"week":<number or null>,"entries":[{"name":"...",` +
+        `"picks":{"<gameId>":"<team abbreviation exactly as listed above>"},` +
         `"tiebreaker":<number or null>}]}\n\n` +
         `Rules: use the exact abbreviations from the legend; if a cell is unreadable omit that game ` +
         `rather than guessing; preserve the order of rows; if a column header shows two teams, the ` +
@@ -98,7 +100,9 @@ export default async function handler(req, res) {
         };
       });
 
-    return res.status(200).json({ entries });
+    const detectedWeek = Number.isInteger(Number(parsed.week)) && Number(parsed.week) >= 1 && Number(parsed.week) <= 22
+      ? Number(parsed.week) : null;
+    return res.status(200).json({ entries, week: detectedWeek });
   } catch (err) {
     return res.status(500).json({ error: "Sheet reading failed." });
   }

@@ -12,6 +12,7 @@ const SEASON = process.env.SEASON || "2026";
 const key = (week) => `pickem:${SEASON}:w${week}`;
 const INDEX = `pickem:${SEASON}:weeks`;
 const ROSTER = `pickem:${SEASON}:roster`;
+const prevKey = (week) => `pickem:${SEASON}:w${week}:prev`;
 
 async function redis(path, init = {}) {
   const r = await fetch(`${URL_BASE}/${path}`, {
@@ -81,12 +82,28 @@ export default async function handler(req, res) {
       return res.status(200).json(doc);
     }
 
+    // the version before the last publish, for undo
+    if (req.method === "GET" && req.query.prev) {
+      const out = await redis(`get/${prevKey(week)}`);
+      return res.status(200).json(out.result ? JSON.parse(out.result) : null);
+    }
+
     if (req.method === "POST") {
       const sent = req.headers["x-admin-key"];
       if (!process.env.ADMIN_PASSCODE || sent !== process.env.ADMIN_PASSCODE) {
         return res.status(401).json({ error: "Wrong or missing manager passcode." });
       }
       const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
+
+      // snapshot what's there now before overwriting it
+      if (!req.query.restore) {
+        const current = await redis(`get/${key(week)}`);
+        if (current.result) {
+          await redis(`set/${prevKey(week)}`, {
+            method: "POST", headers: { "Content-Type": "text/plain" }, body: current.result,
+          });
+        }
+      }
       const doc = {
         ...emptyWeek(week),
         ...body,

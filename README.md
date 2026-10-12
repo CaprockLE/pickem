@@ -29,6 +29,8 @@ Project -> Settings -> Environment Variables:
 Drop this folder into a Git repo and import it on Vercel, or run `vercel` from here.
 No build step: static `index.html` plus three functions in `/api`.
 
+See `CHANGELOG.md` for what changed in each build.
+
 ## Two builds
 `/` is the main site. `/lab` is an experimental skin (clean URLs are enabled in
 `vercel.json`; without it the path is `/lab.html`) with the same data and logic —

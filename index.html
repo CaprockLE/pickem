@@ -294,6 +294,13 @@ th.tbcol .vs{font-size:8.5px;color:var(--muted);letter-spacing:.02em;margin-top:
 .pg td.hit{box-shadow:inset 0 -2px 0 var(--brand);background:color-mix(in srgb, var(--brand) 9%, transparent)}
 .pg td.miss{box-shadow:inset 0 -2px 0 var(--miss);background:var(--miss-bg)}
 .pg td.tied{color:var(--miss);font-weight:400;position:relative;box-shadow:inset 0 -2px 0 var(--miss);background:var(--miss-bg)}
+.warnbar{border:1px solid var(--miss);background:var(--miss-bg);color:var(--ink);
+  border-radius:9px;padding:10px 13px;font-size:13px;margin-bottom:12px}
+.warnbar b{display:block;color:var(--miss);margin-bottom:2px}
+.warnbar.soft{border-color:var(--live);background:var(--live-soft)}
+.warnbar.soft b{color:var(--live)}
+.tbbad{color:var(--miss)!important;border-color:var(--miss)!important}
+input.tbbad{background:var(--miss-bg)}
 .pg td.tied::after{content:"=";position:absolute;top:1px;right:3px;font-size:8px;opacity:.75}
 .slot{grid-column:1/-1;background:var(--panel2);padding:7px 12px;font-size:10.5px;font-weight:700;
   letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
@@ -428,7 +435,7 @@ ul.why b{color:var(--ink)}
   <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
-    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">build-55 · 2026-10-12 02:43 UTC</div>
+    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">build-59 · 2026-10-12 02:43 UTC</div>
     <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
@@ -472,6 +479,11 @@ ul.why b{color:var(--ink)}
       <div class="right"><input type="text" id="picksFilter" placeholder="Filter player" style="width:150px">
         <select id="picksOrder" title="Row order"><option value="az">A → Z</option><option value="rank">By Rank</option></select>
         <select id="picksWeek"></select></div></div>
+    <div class="card"><div class="hd"><h2>Your Sheet</h2><div class="r note">Status only — never shows picks</div></div>
+      <div class="bd"><div class="ctl" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <select id="meSel"><option value="">Who are you?</option></select>
+        <span id="meStatus" class="note"></span>
+      </div></div></div>
     <div class="card"><div class="hd"><h2>Grid</h2><div class="r note">Green Hit · Red Missed · Ties Count as a Loss for Everyone</div></div>
       <div class="swipe">Swipe sideways to see every game →</div>
       <div class="bd flush scroll"><table class="pg" id="pgTbl"></table></div></div>
@@ -488,7 +500,7 @@ ul.why b{color:var(--ink)}
 
   <!-- IMPORT -->
   <div id="v-import" hidden>
-    <div class="head"><div><h1>Import Sheets</h1><p class="sub">Photograph the pool sheet, drop it in, confirm what it read.</p></div>
+    <div class="head"><div><h1>Import Sheets</h1><p class="sub" id="impSub">Photograph the pool sheet, drop it in, confirm what it read.</p></div>
       <div class="right"><select id="impWeek"></select></div></div>
     <div class="steps">
       <div class="step"><div class="n">STEP 1</div><b>Unlock</b><p>Enter the manager passcode once per device.</p></div>
@@ -521,6 +533,7 @@ ul.why b{color:var(--ink)}
       <div class="bd" id="missingBox" hidden style="padding-bottom:0"></div>
       <div class="bd flush scroll"><table id="entTbl"></table></div>
       <div class="bar"><button id="addRow">Add Entry Manually</button>
+        <button id="undoBtn">Undo Last Publish</button>
         <button id="saveImport" class="primary">Publish to League</button><span class="note" id="saveMsg"></span></div></div>
     <div class="card"><div class="hd"><h2>Sheet Archive</h2><div class="r note" id="archCount"></div></div>
       <div class="bd">
@@ -569,7 +582,7 @@ ul.why b{color:var(--ink)}
 </div>
 
 <script>
-const BUILD = "build-55 (2026-10-12 02:43 UTC)";
+const BUILD = "build-59 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -733,6 +746,19 @@ function shrinkImage(file, maxEdge = 1100, quality = 0.62) {
   });
 }
 
+// Tiebreaker sanity. NFL finals land roughly 20-80 combined; outside that is
+// almost always a misread or a typo, and a blank is worse than a bad guess —
+// it silently loses every tie.
+const TB_MIN = 20, TB_MAX = 100;
+function tbIssue(v) {
+  if (v == null || v === "" || Number.isNaN(Number(v))) return "missing";
+  const n = Number(v);
+  if (!Number.isInteger(n)) return "not a whole number";
+  if (n < TB_MIN) return `unusually low (under ${TB_MIN})`;
+  if (n > TB_MAX) return `unusually high (over ${TB_MAX})`;
+  return null;
+}
+
 const tc = n => String(n ?? "").toLowerCase().replace(/\b[a-z]/g, m => m.toUpperCase());
 
 const qs = new URLSearchParams(location.search);
@@ -747,6 +773,10 @@ let buyin = Number(localStorage.getItem("pc.buyin") || 10);
 let roster = [];
 let archive = [];            // {id,label,uploadedAt,data}
 let pendingShots = [];       // photos from the current import, saved on publish
+let pendingWeek = null;      // week number read off the sheet itself
+let mePlayer = localStorage.getItem("pc.me") || "";
+let liveWeek = null;         // the week the league is actually in right now
+let liveFirstKick = null;    // its first kickoff — the import window closes here
 let boardMode = localStorage.getItem("pc.board") || "cards";
 let picksOrder = localStorage.getItem("pc.picksOrder") || "az";
 const lastScores = new Map();            // game+team -> last score we drew
@@ -843,6 +873,16 @@ function toggleNav(){ document.body.classList.toggle("navopen"); }
 
 function setView(v) {
   if ((v === "import" || v === "money") && !authed) v = "season";   // not just hidden — blocked
+  // Between Tuesday's rollover and the first kickoff, importing almost always
+  // means "this week". Snap to it rather than letting sheets land in Week 5.
+  if (v === "import" && liveWeek && week !== liveWeek &&
+      (!liveFirstKick || Date.now() < liveFirstKick) && !pending && !pendingShots.length) {
+    const from = week;
+    week = liveWeek;
+    ["weekSel","impWeek","moneyWeek","picksWeek"].forEach(id => { if ($(id)) $(id).value = week; });
+    loadWeek(); loadArchive();
+    toast(`Switched to Week ${week} for import (was Week ${from})`, "ok");
+  }
   view = v;
   document.querySelectorAll("nav button.tab").forEach(b => b.classList.toggle("on", b.dataset.v === v));
   ["season","week","picks","h2h","import","money"].forEach(k => $("v-" + k).hidden = k !== v);
@@ -901,6 +941,17 @@ async function loadWeek() {
 }
 let archiveError = "";
 let archiveDirty = false;
+// Learn the live week independently of whatever week is being browsed.
+async function detectLiveWeek() {
+  try {
+    const s = await getJSON("/api/scores");
+    if (s.error) return;
+    liveWeek = Number(s.week) || null;
+    const kicks = (s.games || []).map(g => new Date(g.kickoff).getTime()).filter(t => !isNaN(t));
+    liveFirstKick = kicks.length ? Math.min(...kicks) : null;
+  } catch (e) { /* leave it unknown */ }
+}
+
 async function loadArchive() {
   archiveError = "";
   try {
@@ -1486,7 +1537,29 @@ function untilText(ms) {
   return d ? `${d}d ${h}h ${mm}m` : h ? `${h}h ${mm}m` : `${mm}m`;
 }
 
+function renderMine(rows) {
+  const sel = $("meSel"); if (!sel) return;
+  const names = rows.map(r => r.e.name).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+  const roster2 = [...new Set([...names, ...roster])].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+  if (sel.options.length !== roster2.length + 1)
+    sel.innerHTML = '<option value="">Who are you?</option>' +
+      roster2.map(n => `<option value="${esc(n)}">${esc(tc(n))}</option>`).join("");
+  sel.value = mePlayer;
+  if (!mePlayer) { $("meStatus").textContent = "Pick your name to check whether your sheet is in."; return; }
+  const mine = rows.find(r => slug(r.e.name) === slug(mePlayer));
+  if (!mine) {
+    $("meStatus").innerHTML = `<span class="err">No sheet on file for Week ${week}.</span> Get it to your manager.`;
+    return;
+  }
+  const picked = Object.keys(mine.e.picks || {}).length, total = games().length;
+  const tb = mine.e.tiebreaker != null;
+  $("meStatus").innerHTML = picked >= total && tb
+    ? `<span style="color:var(--brand);font-weight:600">Sheet received for Week ${week}</span> · all ${total} games and a tiebreaker.`
+    : `<span style="color:var(--live);font-weight:600">Sheet received, incomplete</span> · ${picked} of ${total} games${tb ? "" : ", no tiebreaker"}. Tell your manager.`;
+}
+
 function renderPicks(rows) {
+  renderMine(rows);
   const gs = games();
   if (picksLocked()) {
     const first = gs.map(g => new Date(g.kickoff).getTime()).sort((a, b) => a - b)[0];
@@ -1550,7 +1623,16 @@ function tbActualLabel() { const g = tbGame(); return g && g.final ? (g.homeScor
 /* ---------- IMPORT ---------- */
 function renderEntries() {
   const es = entries();
-  $("entCount").textContent = `${es.length} on File for Week ${week}`;
+  $("entCount").textContent = `${es.length} on File for Week ${week}` +
+    (pool?.updatedAt ? ` · published ${new Date(pool.updatedAt).toLocaleString([], {weekday:"short", hour:"numeric", minute:"2-digit"})}` : "");
+  if ($("impSub")) {
+    const open = !liveFirstKick || Date.now() < liveFirstKick;
+    $("impSub").innerHTML = liveWeek && week === liveWeek && open
+      ? `Filling <b>Week ${week}</b> — the current week. Photograph the sheet, drop it in, confirm what it read.`
+      : liveWeek && week !== liveWeek
+        ? `Filling <b>Week ${week}</b> <span class="err">(not the current week — that's Week ${liveWeek})</span>.`
+        : `Filling <b>Week ${week}</b>. Photograph the sheet, drop it in, confirm what it read.`;
+  }
   // who's on the roster but has no sheet in yet — sitting out, or a sheet still to upload
   const missing = roster.filter(n => !es.some(e => slug(e.name) === slug(n)));
   $("missingBox").hidden = !roster.length;
@@ -1566,13 +1648,19 @@ function renderEntries() {
   $("entTbl").innerHTML = `<thead><tr><th>Player</th><th class="n">Picks read</th><th class="tbcol">Tie<br>breaker</th><th>Paid</th><th></th></tr></thead><tbody>` +
     es.map((e,i) => `<tr><td><input type="text" data-ei="${i}" data-f="name" value="${esc(e.name)}" style="width:150px;padding:4px 8px"></td>
       <td class="n mono">${Object.keys(e.picks||{}).length}/${games().length}</td>
-      <td class="tbcol"><input type="number" data-ei="${i}" data-f="tiebreaker" value="${e.tiebreaker ?? ""}" style="width:76px;padding:4px 6px"></td>
+      <td class="tbcol"><input type="number" data-ei="${i}" data-f="tiebreaker" value="${e.tiebreaker ?? ""}"
+            class="${tbIssue(e.tiebreaker) ? "tbbad" : ""}" title="${esc(tbIssue(e.tiebreaker) || "")}"
+            min="${TB_MIN}" max="${TB_MAX}" style="width:76px;padding:4px 6px"></td>
       <td><button class="sm ${e.paid?"on":""}" data-paid="${i}">${e.paid?"Paid":"Unpaid"}</button></td>
       <td class="n"><button class="sm" data-del="${i}">Remove</button></td></tr>`).join("") + `</tbody>`;
   $("entTbl").querySelectorAll("input[data-ei]").forEach(inp => inp.oninput = () => {
     const e = entries()[+inp.dataset.ei];
     if (inp.dataset.f === "name") e.name = inp.value;
-    else e.tiebreaker = inp.value === "" ? null : Number(inp.value);
+    else {
+      e.tiebreaker = inp.value === "" ? null : Number(inp.value);
+      inp.classList.toggle("tbbad", !!tbIssue(e.tiebreaker));
+      inp.title = tbIssue(e.tiebreaker) || "";
+    }
   });
   $("entTbl").querySelectorAll("button[data-paid]").forEach(b => b.onclick = () => {
     const e = entries()[+b.dataset.paid]; e.paid = !e.paid; render();
@@ -1839,6 +1927,7 @@ async function readFiles(files) {
     const out = await r.json();
     if (!r.ok) { $("readMsg").innerHTML = `<span class="err">${esc(out.error||"Failed")}</span>`; renderArchive(); return; }
     pending = out.entries || [];
+    pendingWeek = out.week ?? null;
     $("readMsg").textContent = `Read ${pending.length} entries — confirm below.`;
     renderReview(); renderArchive();
   } catch (e) { $("readMsg").innerHTML = '<span class="err">Upload failed.</span>'; }
@@ -1848,8 +1937,19 @@ function renderReview() {
   if (!pending?.length) { $("review").innerHTML = ""; return; }
   const gs = games();
   const missing = pending.filter(p => Object.keys(p.picks||{}).length < gs.length).length;
+  const tbBad = pending.filter(p => tbIssue(p.tiebreaker));
+  const wrongWeek = pendingWeek && pendingWeek !== week;
+  const clash = pending.filter(p => (pool.entries || []).some(e => slug(e.name) === slug(p.assigned || p.name)));
+  const banner = wrongWeek
+    ? `<div class="warnbar"><b>This sheet says Week ${pendingWeek}, you're importing into Week ${week}.</b>
+         Change the week selector above, or continue if the sheet is mislabeled.</div>`
+    : clash.length
+      ? `<div class="warnbar soft"><b>${clash.length} of these will overwrite existing Week ${week} entries.</b>
+           ${clash.slice(0, 6).map(p => esc(tc(p.assigned || p.name))).join(", ")}${clash.length > 6 ? "…" : ""}</div>`
+      : "";
   $("review").innerHTML = `<div class="card"><div class="hd"><h2>Confirm What Was Read</h2>
-      <div class="r note">${pending.length} rows${missing?` · ${missing} with gaps`:""}</div></div>
+      <div class="r note">${pending.length} rows${missing?` · ${missing} with gaps`:""}${tbBad.length?` · <span class="err">${tbBad.length} tiebreaker${tbBad.length>1?"s":""} to check</span>`:""}</div></div>
+    ${banner ? `<div class="bd" style="padding-bottom:0">${banner}</div>` : ""}
     <div class="bd flush scroll"><table class="pg"><thead><tr><th class="who">Player</th>` +
     gs.map(g => `<th class="c">${esc(g.away)}<div class="vs">at</div>${esc(g.home)}</th>`).join("") +
     `<th class="tbcol">Tie<br>breaker</th></tr></thead><tbody>` +
@@ -1864,10 +1964,14 @@ function renderReview() {
           style="width:128px;padding:4px 7px;margin-top:4px;${guess === null ? "" : "display:none"}">
         <div class="note" style="font-size:10.5px;margin-top:2px">read: ${esc(p.name) || "—"}</div></td>` +
       gs.map(g => { const v = p.picks?.[g.id]; return `<td class="${v?"":"miss"}">${esc(v||"?")}</td>`; }).join("") +
-      `<td class="tbcol mono">${p.tiebreaker ?? "?"}</td></tr>`;
+      `<td class="tbcol mono${tbIssue(p.tiebreaker) ? " tbbad" : ""}"
+          title="${esc(tbIssue(p.tiebreaker) || "")}">${p.tiebreaker ?? "?"}</td></tr>`;
     }).join("") + `</tbody></table></div>
     <div class="bar"><button class="primary" id="merge">Accept ${pending.length} entries</button>
-      <button id="toss">Discard</button><span class="note">Nothing is published until you hit Publish below.</span></div></div>`;
+      <button id="toss">Discard</button>
+      <span class="note">${tbBad.length
+        ? `Check: ${tbBad.map(p => `${esc(tc(p.assigned || p.name || "?"))} (${p.tiebreaker ?? "blank"})`).join(", ")}`
+        : "Nothing is published until you hit Publish below."}</span></div></div>`;
   makeFoldable();
   $("review").querySelectorAll("select[data-pick]").forEach(sel => sel.onchange = () => {
     const i = +sel.dataset.pick;
@@ -1883,6 +1987,14 @@ function renderReview() {
     const names = [];
     const unassigned = pending.filter(p => !(p.assigned || p.name.trim()));
     if (unassigned.length) { $("readMsg").innerHTML = `<span class="err">${unassigned.length} sheet(s) still need a player.</span>`; return; }
+    if (pendingWeek && pendingWeek !== week &&
+        !confirm(`The sheet reads Week ${pendingWeek} but you're importing into Week ${week}.\n\n` +
+                 `Importing the wrong week overwrites real picks. Continue?`)) return;
+    const overwrite = pending.filter(p => (pool.entries || []).some(e => slug(e.name) === slug(p.assigned || p.name)));
+    if (overwrite.length &&
+        !confirm(`${overwrite.length} existing Week ${week} entr${overwrite.length > 1 ? "ies" : "y"} will be replaced:\n\n` +
+                 overwrite.slice(0, 8).map(p => tc(p.assigned || p.name)).join(", ") +
+                 `\n\nReplace them?`)) return;
     for (const p of pending) {
       const finalName = (p.assigned || p.name).trim();
       if (!finalName) continue;
@@ -1901,11 +2013,11 @@ function renderReview() {
       }
       renderArchive();
     }
-    pending = null; $("review").innerHTML = ""; $("readMsg").textContent = "Merged. Publish to make it live.";
+    pending = null; pendingWeek = null; $("review").innerHTML = ""; $("readMsg").textContent = "Merged. Publish to make it live.";
     roster = [...new Set(roster)].sort((a,b) => a.localeCompare(b));
     renderRoster(); saveRoster(); render();
   };
-  $("toss").onclick = () => { pending = null; $("review").innerHTML = ""; $("readMsg").textContent = ""; };
+  $("toss").onclick = () => { pending = null; pendingWeek = null; $("review").innerHTML = ""; $("readMsg").textContent = ""; };
 }
 
 // every NFL team, with every spelling anyone might type or any feed might use
@@ -1994,6 +2106,21 @@ $("rosterFromWeek").onclick = () => {
 $("rosterSave").onclick = saveRoster;
 $("archSave").onclick = saveArchive;
 
+$("undoBtn").onclick = async () => {
+  if (!authed) { toast("Manager passcode required", "bad"); return; }
+  try {
+    const prev = await getJSON(`/api/pool?week=${week}&prev=1`);
+    if (!prev || !prev.entries) { toast("No earlier version saved for this week", "bad"); return; }
+    const when = prev.updatedAt ? new Date(prev.updatedAt).toLocaleString([], {weekday:"short", hour:"numeric", minute:"2-digit"}) : "earlier";
+    if (!confirm(`Restore the version published ${when}?\n\n` +
+                 `${prev.entries.length} entries would replace the current ${entries().length}.`)) return;
+    const r = await fetch(`/api/pool?week=${week}&restore=1`, { method: "POST",
+      headers: { "content-type": "application/json", "x-admin-key": pass }, body: JSON.stringify(prev) });
+    if (!r.ok) { toast("Restore failed", "bad"); return; }
+    pool = await r.json(); render(); loadSeason(); toast("Previous version restored", "ok");
+  } catch (e) { toast("Restore failed: " + (e.message || e), "bad"); }
+};
+
 $("addRow").onclick = () => {
   pool.entries = pool.entries || [];
   pool.entries.push({name:"New entry", picks:{}, tiebreaker:null, paid:false});
@@ -2002,6 +2129,12 @@ $("addRow").onclick = () => {
 $("allPaid").onclick = () => { entries().forEach(e => e.paid = true); render(); };
 
 async function save(msgEl) {
+  const odd = entries().filter(e => tbIssue(e.tiebreaker));
+  if (odd.length && msgEl === "saveMsg") {
+    const list = odd.slice(0, 6).map(e => `${tc(e.name)}: ${e.tiebreaker ?? "blank"}`).join("\n");
+    if (!confirm(`${odd.length} tiebreaker${odd.length > 1 ? "s look" : " looks"} wrong:\n\n${list}` +
+                 `\n\nA blank tiebreaker loses every tie. Publish anyway?`)) return;
+  }
   if (!pass) { $(msgEl).innerHTML = '<span class="err">Manager Passcode required.</span>'; return; }
   $(msgEl).textContent = "Saving…";
   try {
@@ -2030,6 +2163,7 @@ $("pass").oninput = e => {
   }, 450);
 };
 $("picksFilter").oninput = () => { if (pool) renderPicks(ranked()); };
+$("meSel").onchange = e => { mePlayer = e.target.value; localStorage.setItem("pc.me", mePlayer); if (pool) renderPicks(ranked()); };
 $("picksOrder").onchange = e => { picksOrder = e.target.value; localStorage.setItem("pc.picksOrder", picksOrder); if (pool) renderPicks(ranked()); };
 $("h2hA").onchange = renderH2H; $("h2hB").onchange = renderH2H;
 $("sortSel").onchange = e => { sortBy = e.target.value; localStorage.setItem("pc.sort", sortBy); renderSeason(); };
@@ -2059,7 +2193,7 @@ verifyPass(pass).then(ok => {
 });
 $("stTbl").innerHTML = skeleton(6);
 $("seasonTbl").innerHTML = skeleton(6);
-loadWeek(); loadSeason(); loadRoster(); loadArchive();
+loadWeek(); loadSeason(); loadRoster(); loadArchive(); detectLiveWeek();
 setInterval(() => { if (!document.hidden) loadWeek(); }, 30000);
 </script>
 </body>
