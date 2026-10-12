@@ -71,7 +71,7 @@ export default async function handler(req, res) {
     // The league's own week flips Wednesday ~2am CT. Our pool rolls over at
     // Tuesday 00:00 CT, right after Monday night. When no week was requested and
     // we're inside that gap, report the next week instead.
-    let reportedWeek = data.week?.number ?? Number(week) || null;
+    let reportedWeek = data.week?.number ?? (Number(week) || null);
     let rolledForward = false;
     if (!week && reportedWeek) {
       const cal = (data.leagues?.[0]?.calendar || []).find((c) => String(c.value) === "2");

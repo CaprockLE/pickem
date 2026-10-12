@@ -229,8 +229,9 @@ ul.why b{color:var(--ink)}
           <option value="avg">Rank by Average</option>
           <option value="wins">Rank by Weeks Won</option>
         </select>
-        <label class="note" style="display:flex;gap:5px;align-items:center" title="Players under this many weeks are listed below the ranked group">
-          min <input type="number" id="minWeeks" min="1" value="1" style="width:56px;padding:5px 6px"> wks</label>
+        <label class="note" id="minWeeksWrap" hidden style="display:flex;gap:5px;align-items:center"
+          title="With average ranking, someone who played one lucky week can top the table. This sets how many weeks a player needs before they're ranked; everyone else is listed below.">
+          Needs <input type="number" id="minWeeks" min="1" value="1" style="width:56px;padding:5px 6px"> weeks to qualify</label>
         <select id="hlSel" title="Highlight a row"><option value="">Highlight…</option></select></div></div>
     <div class="kpis" id="seasonKpis"></div>
     <div class="card"><div class="hd"><h2>Cumulative</h2><div class="r note" id="seasonNote"></div></div>
@@ -425,11 +426,19 @@ $("unlockBtn").onclick = () => {
 };
 
 document.querySelectorAll("nav button.tab").forEach(b => b.onclick = () => setView(b.dataset.v));
+function syncUrl() {
+  const q = new URLSearchParams();
+  if (view && view !== "season") q.set("v", view);
+  if (week) q.set("week", week);                  // only once we know the week
+  const qs2 = q.toString();
+  history.replaceState(null, "", qs2 ? `?${qs2}` : location.pathname);
+}
+
 function setView(v) {
   view = v;
   document.querySelectorAll("nav button.tab").forEach(b => b.classList.toggle("on", b.dataset.v === v));
   ["season","week","picks","h2h","import","money"].forEach(k => $("v-" + k).hidden = k !== v);
-  history.replaceState(null, "", `?v=${v}&week=${week}`);
+  syncUrl();
   if (v === "season") loadSeason(); else if (v === "h2h") renderH2H(); else render();
   window.scrollTo({top:0});
 }
@@ -465,13 +474,16 @@ async function loadWeek() {
           if (!s2.error) scores = s2;
         }
         ["weekSel","impWeek","moneyWeek","picksWeek"].forEach(id => $(id).value = week);
-        history.replaceState(null, "", `?v=${view}&week=${week}`);
+        syncUrl();
         const p2 = await getJSON(`/api/pool?week=${week}`);
         if (!p2.error) { pool = p2; $("updTag").textContent = "updated " + new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}); render(); return; }
       }
     }
-    if (s.error) showError("scores: " + s.error);
-    if (p.error) { $("weekSub").innerHTML = `<span class="err">${esc(p.error)}</span>`; showError("pool: " + p.error); return; }
+    if (s.error) showError("scores: " + (typeof s.error === "object" ? JSON.stringify(s.error) : s.error));
+    if (p.error) {
+      const txt = typeof p.error === "object" ? JSON.stringify(p.error) : p.error;
+      $("weekSub").innerHTML = `<span class="err">${esc(txt)}</span>`; showError("pool: " + txt); return;
+    }
     pool = p;
     $("updTag").textContent = "updated " + new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});
     render();
@@ -554,6 +566,7 @@ function renderSeason() {
 
   $("sortSel").value = sortBy;
   $("minWeeks").value = minWeeks;
+  $("minWeeksWrap").hidden = sortBy !== "avg";     // only relevant to averages
   const avg = p => p.total / Math.max(p.weeks, 1);
   const qualifies = p => p.weeks >= minWeeks;
   const rankKey = (a, b) =>
@@ -729,6 +742,7 @@ function step(name, fn) {
 }
 
 function showError(msg) {
+  if (msg && typeof msg === "object") msg = msg.message || msg.error || JSON.stringify(msg);
   const bar = $("errBar");
   const seen = bar.dataset.msgs ? JSON.parse(bar.dataset.msgs) : [];
   if (!seen.includes(msg)) seen.push(msg);
@@ -1303,7 +1317,7 @@ $("refreshBtn").onclick = loadWeek;
 ["weekSel","impWeek","moneyWeek","picksWeek"].forEach(id => $(id).onchange = e => {
   week = Number(e.target.value);
   ["weekSel","impWeek","moneyWeek","picksWeek"].forEach(i2 => $(i2).value = week);
-  history.replaceState(null,"",`?v=${view}&week=${week}`);
+  syncUrl();
   loadWeek();
 });
 
