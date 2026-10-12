@@ -402,7 +402,7 @@ ul.why b{color:var(--ink)}
   <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
-    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">build-42 · 2026-10-12 02:43 UTC</div>
+    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">build-43 · 2026-10-12 02:43 UTC</div>
     <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
@@ -544,7 +544,7 @@ ul.why b{color:var(--ink)}
 </div>
 
 <script>
-const BUILD = "build-42 (2026-10-12 02:43 UTC)";
+const BUILD = "build-43 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -1802,12 +1802,34 @@ async function readFiles(files) {
     fr.onload = () => res({media_type:f.type, data:fr.result.split(",")[1]});
     fr.onerror = rej; fr.readAsDataURL(f);
   })));
+
+  // keep a compact copy of each photo for the archive
+  pendingShots = [];
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i];
+    const label = (f.name || `sheet-${i + 1}`).replace(/\.[^.]+$/, "").slice(0, 40);
+    try {
+      pendingShots.push({ id: Date.now() + "-" + i, label,
+        uploadedAt: new Date().toISOString(), data: await shrinkImage(f) });
+    } catch (err) {
+      // some phone formats won't decode into a canvas; keep the original if it's small enough
+      const raw = "data:" + (f.type || "image/jpeg") + ";base64," + images[i].data;
+      if (raw.length < 650000) {
+        pendingShots.push({ id: Date.now() + "-" + i, label,
+          uploadedAt: new Date().toISOString(), data: raw });
+      } else {
+        toast(`Couldn't archive ${label} — image too large`, "bad");
+      }
+    }
+  }
+  renderArchive();
+
   try {
     const r = await fetch("/api/read-sheet", {method:"POST",
       headers:{"content-type":"application/json","x-admin-key":pass},
       body: JSON.stringify({images, games: games().map(g=>({id:g.id,away:g.away,home:g.home}))})});
     const out = await r.json();
-    if (!r.ok) { $("readMsg").innerHTML = `<span class="err">${esc(out.error||"Failed")}</span>`; return; }
+    if (!r.ok) { $("readMsg").innerHTML = `<span class="err">${esc(out.error||"Failed")}</span>`; renderArchive(); return; }
     pending = out.entries || [];
     $("readMsg").textContent = `Read ${pending.length} entries — confirm below.`;
     renderReview(); renderArchive();
