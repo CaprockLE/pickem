@@ -30,9 +30,9 @@ Drop this folder into a Git repo and import it on Vercel, or run `vercel` from h
 No build step: static `index.html` plus three functions in `/api`.
 
 ## Two builds
-`/` is the main site. `/lab` is an experimental skin, `/lab2` an experimental *layout* (clean URLs are enabled in
+`/` is the main site. `/lab` is an experimental skin (clean URLs are enabled in
 `vercel.json`; without it the path is `/lab.html`) with the same data and logic —
-regenerate them after editing index.html with `node make-lab.mjs && node make-lab2.mjs`.
+regenerate it after editing index.html with `node make-lab.mjs`.
 
 ## Sections
 - **Season standings** — cumulative totals, weeks won, week-by-week grid.
