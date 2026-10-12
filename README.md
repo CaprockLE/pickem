@@ -29,6 +29,10 @@ Project -> Settings -> Environment Variables:
 Drop this folder into a Git repo and import it on Vercel, or run `vercel` from here.
 No build step: static `index.html` plus three functions in `/api`.
 
+## Two builds
+`/` is the main site. `/lab` is an experimental skin with the same data and logic —
+regenerate it after editing index.html with `node make-lab.mjs`.
+
 ## Sections
 - **Season standings** — cumulative totals, weeks won, week-by-week grid.
 - **Week results** — live scoreboard, standings, every pick, auto winner with tiebreaker.

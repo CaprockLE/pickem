@@ -46,6 +46,9 @@ export default async function handler(req, res) {
         awayName: away.team?.shortDisplayName || "",
         homeLogo: home.team?.logo || "",
         awayLogo: away.team?.logo || "",
+        // ESPN publishes a light-on-dark variant at the same path
+        homeLogoDark: (home.team?.logo || "").replace("/500/", "/500-dark/"),
+        awayLogoDark: (away.team?.logo || "").replace("/500/", "/500-dark/"),
         homeColor: home.team?.color ? "#" + home.team.color : "",
         awayColor: away.team?.color ? "#" + away.team.color : "",
         homeRecord: home.records?.[0]?.summary || "",

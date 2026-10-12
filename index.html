@@ -6,7 +6,7 @@
 <title>League Console</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#EDEFF3; --panel:#FFFFFF; --panel2:#F6F8FB; --rule:#E3E7EE; --rule2:#CBD3DF;
@@ -116,79 +116,12 @@ main > div:not([hidden]){animation:viewIn .22s ease-out}
 .pg td .lg{display:inline-flex;align-items:center;gap:0}
 .pg td img.pick{height:22px;width:22px;object-fit:contain;vertical-align:middle;
   image-rendering:auto;display:block;margin:0 auto}
-.pg td.miss img.pick{filter:grayscale(.85);opacity:.45}
+.pg td.miss img.pick{opacity:.92}
 .pg td{padding:7px 4px}
 
 /* confetti layer */
 #confetti{position:fixed;inset:0;pointer-events:none;z-index:70}
 #confetti[hidden]{display:none}
-
-/* ========== SKIN: BROADCAST ========== */
-:root[data-skin=broadcast]{--r:6px;--brand:#19C37D;--brand2:#0C2E20;--gold:#FFC53D;--hot:#FF6B35;--hot2:#3A1A0E}
-[data-skin=broadcast] body{letter-spacing:.005em}
-[data-skin=broadcast] nav{background:#05070B}
-[data-skin=broadcast] h1{font-family:Oswald,sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:34px}
-[data-skin=broadcast] .card>.hd{background:linear-gradient(90deg,var(--brand2),transparent 60%);border-bottom:2px solid var(--brand)}
-[data-skin=broadcast] .card>.hd h2{font-family:Oswald,sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.09em;font-size:14px}
-[data-skin=broadcast] .kpi .v{font-size:38px;font-weight:700}
-[data-skin=broadcast] .gm{border-left:4px solid var(--brand);background:linear-gradient(180deg,rgba(255,255,255,.03),transparent)}
-[data-skin=broadcast] .gm.live{border-left-color:var(--hot)}
-[data-skin=broadcast] .tm .pts{font-size:21px;font-weight:700}
-[data-skin=broadcast] .tm .ab{font-family:Oswald,sans-serif;font-weight:600;letter-spacing:.05em;font-size:15px}
-[data-skin=broadcast] td{font-weight:500}
-[data-skin=broadcast] .big,[data-skin=broadcast] .num{font-size:22px}
-[data-skin=broadcast] .pill{border-radius:3px;text-transform:uppercase;letter-spacing:.07em;font-size:10px;font-weight:700}
-[data-skin=broadcast] th{background:#0C1420;color:#7B8CA0;text-transform:uppercase;letter-spacing:.1em;font-size:10px;font-weight:700}
-
-/* ========== SKIN: EDITORIAL ========== */
-:root[data-skin=editorial]{--r:3px;--brand:#1C6B4A;--brand2:#E8F1EC;--rule:#E6E2DA;--rule2:#D6D0C5;
-  --bg:#F7F5F1;--panel:#FFFDFA;--panel2:#F2EFE9;--ink:#1A1713;--muted:#726B61;--nav:#1A1713;--sh:none}
-@media (prefers-color-scheme:dark){:root[data-skin=editorial]:not([data-theme=light]){
-  --bg:#13110F;--panel:#1A1815;--panel2:#201D19;--rule:#2B2621;--rule2:#39332C;--ink:#F0EBE3;--muted:#9A9289;--brand:#6FBE97;--brand2:#17291F}}
-[data-skin=editorial] h1{font-family:"Source Serif 4",Georgia,serif;font-weight:700;font-size:34px;letter-spacing:-.01em}
-[data-skin=editorial] .card>.hd h2{font-family:"Source Serif 4",Georgia,serif;font-weight:600;font-size:19px;letter-spacing:0}
-[data-skin=editorial] .card{border:0;border-top:1px solid var(--rule2);border-radius:0;background:transparent;box-shadow:none;margin-bottom:34px}
-[data-skin=editorial] .card>.hd{border-bottom:0;padding:18px 0 8px}
-[data-skin=editorial] .card>.bd{padding:0}
-[data-skin=editorial] .kpis{border:0;background:transparent;gap:28px;border-top:1px solid var(--rule2);border-radius:0}
-[data-skin=editorial] .kpi{background:transparent;padding:16px 0}
-[data-skin=editorial] .kpi .v{font-family:"Source Serif 4",Georgia,serif;font-weight:700}
-[data-skin=editorial] .kpi .k{letter-spacing:.16em;font-size:9.5px}
-[data-skin=editorial] th{background:transparent;border-bottom:1px solid var(--ink);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase}
-[data-skin=editorial] td{border-bottom:1px solid var(--rule);padding:11px 10px}
-[data-skin=editorial] tbody tr:hover td{background:var(--panel2)}
-[data-skin=editorial] .board{background:transparent;gap:0 28px}
-[data-skin=editorial] .gm{border:0;border-top:1px solid var(--rule);background:transparent;border-radius:0}
-[data-skin=editorial] .gm:hover{transform:none;box-shadow:none;background:var(--panel2)}
-[data-skin=editorial] .pill{border-radius:2px;background:transparent;border:1px solid currentColor;font-weight:500}
-[data-skin=editorial] nav button.tab.on{background:transparent;color:#fff;box-shadow:inset 3px 0 0 var(--brand);border-radius:0}
-
-/* ========== SKIN: TERMINAL ========== */
-:root[data-skin=terminal]{--r:0px;--brand:#4BE38E;--brand2:#0A2417;--gold:#E8C14A;--hot:#FF7A59;--hot2:#2E1710;
-  --bg:#070A0E;--panel:#0C1117;--panel2:#10161E;--rule:#1B2430;--rule2:#273343;--ink:#D6E2EE;--muted:#5F7084;--nav:#05080C;--sh:none}
-[data-skin=terminal] body,[data-skin=terminal] td,[data-skin=terminal] th,[data-skin=terminal] button,
-[data-skin=terminal] select,[data-skin=terminal] input,[data-skin=terminal] .pill,[data-skin=terminal] .note
-  {font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
-[data-skin=terminal] body{font-size:13px}
-[data-skin=terminal] h1{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:21px;letter-spacing:.02em;text-transform:lowercase}
-[data-skin=terminal] h1::before{content:"> ";color:var(--brand)}
-[data-skin=terminal] .card>.hd h2{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.08em;text-transform:lowercase;font-weight:500}
-[data-skin=terminal] .card>.hd h2::before{content:"[ ";color:var(--muted)}
-[data-skin=terminal] .card>.hd h2::after{content:" ]";color:var(--muted)}
-[data-skin=terminal] .card{border-radius:0;border-color:var(--rule2)}
-[data-skin=terminal] .kpis,[data-skin=terminal] .kpi{border-radius:0}
-[data-skin=terminal] .kpi .v{font-family:"JetBrains Mono",monospace;font-size:24px;font-weight:700}
-[data-skin=terminal] .kpi .k{letter-spacing:.1em;font-size:9.5px;text-transform:lowercase}
-[data-skin=terminal] td{padding:5px 9px;border-bottom:1px solid var(--rule)}
-[data-skin=terminal] th{background:var(--panel2);font-size:10px;letter-spacing:.06em;text-transform:lowercase;border-bottom:1px solid var(--rule2)}
-[data-skin=terminal] .pill{border-radius:0;font-size:10px;text-transform:lowercase;letter-spacing:.04em}
-[data-skin=terminal] .gm{border-radius:0;border-color:var(--rule2)}
-[data-skin=terminal] .gm:hover{transform:none;box-shadow:inset 0 0 0 1px var(--brand)}
-[data-skin=terminal] .tm .pts{font-family:"JetBrains Mono",monospace;font-weight:700}
-[data-skin=terminal] nav button.tab{border-radius:0;font-size:12.5px;text-transform:lowercase}
-[data-skin=terminal] nav button.tab.on{background:transparent;color:var(--brand);box-shadow:inset 2px 0 0 var(--brand)}
-[data-skin=terminal] nav button.tab.on::before{content:"$ "}
-[data-skin=terminal] .num,[data-skin=terminal] .pos,[data-skin=terminal] .big{font-family:"JetBrains Mono",monospace}
 
 /* kpis */
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--rule);
@@ -266,9 +199,8 @@ th.tbcol .vs{font-size:8.5px;color:var(--muted);letter-spacing:.02em;margin-top:
 .pg td.hit{color:var(--brand)}
 .pg td.miss{color:var(--hot);font-weight:400}
 /* result shown as a hairline under the logo, so the mark itself stays clean */
-.pg td.hit{box-shadow:inset 0 -2px 0 var(--brand)}
-.pg td.miss{box-shadow:inset 0 -2px 0 var(--hot)}
-.pg td.hit:has(img),.pg td.miss:has(img){background:transparent}
+.pg td.hit{box-shadow:inset 0 -2px 0 var(--brand);background:color-mix(in srgb, var(--brand) 9%, transparent)}
+.pg td.miss{box-shadow:inset 0 -2px 0 var(--hot);background:color-mix(in srgb, var(--hot) 9%, transparent)}
 .pg td.tied{color:var(--hot);font-weight:400;position:relative;box-shadow:inset 0 -2px 0 var(--hot)}
 .pg td.tied::after{content:"=";position:absolute;top:1px;right:3px;font-size:8px;opacity:.75}
 .slot{grid-column:1/-1;background:var(--panel2);padding:7px 12px;font-size:10.5px;font-weight:700;
@@ -365,13 +297,7 @@ ul.why b{color:var(--ink)}
   <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
-    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">build-17 · 2026-10-12 02:43 UTC</div>
-    <select id="skinSel" style="width:100%;margin-top:8px;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">
-      <option value="console">Theme · Console</option>
-      <option value="broadcast">Theme · Broadcast</option>
-      <option value="editorial">Theme · Editorial</option>
-      <option value="terminal">Theme · Terminal</option>
-    </select>
+    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">build-19 · 2026-10-12 02:43 UTC</div>
     <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
@@ -511,7 +437,7 @@ ul.why b{color:var(--ink)}
 </div>
 
 <script>
-const BUILD = "build-17 (2026-10-12 02:43 UTC)";
+const BUILD = "build-19 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -525,6 +451,16 @@ async function getJSON(url) {
     throw new Error(`${url} → HTTP ${r.status}: ${snippet || "empty response"}`);
   }
 }
+
+// which logo set suits the current background
+function darkMode() {
+  const forced = document.documentElement.getAttribute("data-theme");
+  if (forced) return forced === "dark";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+const logoFor = (g, side) => (darkMode()
+  ? (side === "home" ? g.homeLogoDark : g.awayLogoDark) || (side === "home" ? g.homeLogo : g.awayLogo)
+  : (side === "home" ? g.homeLogo : g.awayLogo)) || "";
 
 const tc = n => String(n ?? "").toLowerCase().replace(/\b[a-z]/g, m => m.toUpperCase());
 
@@ -558,18 +494,6 @@ function applyRole() {
                     $("lockPill").className = "pill " + (on ? "ok" : "no"));
   if (!on && (view === "import" || view === "money")) setView("season");
 }
-(function initSkin(){
-  const saved = localStorage.getItem("pc.skin") || "console";
-  if (saved !== "console") document.documentElement.setAttribute("data-skin", saved);
-  $("skinSel").value = saved;
-  $("skinSel").onchange = e => {
-    const v = e.target.value;
-    if (v === "console") document.documentElement.removeAttribute("data-skin");
-    else document.documentElement.setAttribute("data-skin", v);
-    localStorage.setItem("pc.skin", v);
-  };
-})();
-
 (function initTheme(){
   const saved = localStorage.getItem("pc.theme");
   if (saved) document.documentElement.setAttribute("data-theme", saved);
@@ -579,7 +503,9 @@ function applyRole() {
     const next = now ? (now === "dark" ? "light" : "dark") : (sysDark ? "light" : "dark");
     document.documentElement.setAttribute("data-theme", next);
     localStorage.setItem("pc.theme", next);
+    if (pool) render();
   };
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { if (pool) render(); });
 })();
 
 $("unlockBtn").onclick = () => {
@@ -910,7 +836,7 @@ function renderBoard() {
       : w === "TIE" ? `<span class="tiefinal">Final · Tie — No Credit</span>`
       : `<span>${g.final ? "Final · " + shortSlot(g.kickoff) : esc(g.detail)}</span>`;
     const flashed = bumped.has(g.id + ":" + g.away) || bumped.has(g.id + ":" + g.home);
-    return `<div class="gm${g.state==="in"?" live":""}${w==="TIE"?" tiegame":""}${flashed?" flash":""}">${tm(g.away,g.awayLogo,g.awayScore)}${tm(g.home,g.homeLogo,g.homeScore)}
+    return `<div class="gm${g.state==="in"?" live":""}${w==="TIE"?" tiegame":""}${flashed?" flash":""}">${tm(g.away,logoFor(g,"away"),g.awayScore)}${tm(g.home,logoFor(g,"home"),g.homeScore)}
       <div class="st">${st}${!g.final && g.weather ? `<span>${esc(g.weather.text)} ${g.weather.temp}°</span>`:""}</div></div>`;
   }).join("");
 }
@@ -1101,15 +1027,15 @@ function renderPicks(rows) {
     return `${a}-${h}`;
   };
   $("pgTbl").innerHTML = `<thead><tr><th class="who">Player</th>` +
-    gs.map(g => `<th class="c">${g.awayLogo?`<img src="${esc(g.awayLogo)}" alt="${esc(g.away)}">`:esc(g.away)}
-      <div class="vs">at</div>${g.homeLogo?`<img src="${esc(g.homeLogo)}" alt="${esc(g.home)}">`:esc(g.home)}</th>`).join("") +
+    gs.map(g => `<th class="c">${g.awayLogo?`<img src="${esc(logoFor(g,"away"))}" alt="${esc(g.away)}">`:esc(g.away)}
+      <div class="vs">at</div>${g.homeLogo?`<img src="${esc(logoFor(g,"home"))}" alt="${esc(g.home)}">`:esc(g.home)}</th>`).join("") +
     `<th class="tbcol">Tie<br>breaker${tbGameLabel() ? `<div class="vs">${esc(tbGameLabel())}</div>` : ""}</th></tr></thead><tbody>` +
     `<tr class="split"><td class="who">Pool Split</td>` +
       gs.map(g => `<td>${split(g)}</td>`).join("") + `<td class="tbcol">${tbActualLabel()}</td></tr>` +
     shown.map(r => `<tr class="${r.e.name===hl?"me":""}"><td class="who">${esc(tc(r.e.name))}</td>` +
       gs.map(g => { const p = r.e.picks?.[g.id]||"", w = winnerOf(g);
         const c = !w||!p ? "" : (w==="TIE" ? "miss tied" : (p===w?"hit":"miss"));
-        const raw = !p ? "" : p === g.home ? g.homeLogo : p === g.away ? g.awayLogo : "";
+        const raw = !p ? "" : p === g.home ? logoFor(g, "home") : p === g.away ? logoFor(g, "away") : "";
         const logo = raw ? raw + (raw.includes("?") ? "&" : "?") + "w=80&h=80" : "";   // let the CDN downscale
         const cell = logo
           ? `<span class="lg"><img class="pick" src="${esc(logo)}" alt="${esc(p)}" width="22" height="22" loading="lazy"></span>`
