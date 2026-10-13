@@ -223,8 +223,9 @@ tbody tr:first-child .pos{color:var(--gold)}
 .pill.gold{color:var(--gold)}
 
 /* scoreboard */
-.board{display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:1px;background:var(--rule)}
-.gm{background:var(--panel);padding:10px 12px;border:1px solid transparent;position:relative}
+.board{display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:9px;
+  background:transparent;padding:9px}
+.gm{background:var(--panel);padding:10px 12px;border:1px solid var(--rule);border-radius:11px;position:relative}
 /* Live game ring: the gradient is drawn ON TOP of the card and then masked so
    only a 2px frame survives. Nothing relies on paint order, so neighbouring
    cards can't cover it and no stacking context can trap it. */
@@ -266,16 +267,15 @@ tbody tr:first-child .pos{color:var(--gold)}
 /* ticker: one game per line, columns aligned down the whole list.
    .tm uses display:contents so each logo / code / score becomes a grid cell
    of the row itself — that's what keeps every row in step. */
-.board.ticker{grid-template-columns:1fr;gap:0;padding:3px 3px 5px}
+.board.ticker{grid-template-columns:1fr;gap:6px;padding:9px;background:transparent}
 .board.ticker .gm{
   display:grid;
   grid-template-columns:24px 50px 40px 24px 50px 40px minmax(130px,1fr);
   align-items:center;column-gap:8px;padding:8px 14px;
-  border:0;border-bottom:1px solid var(--rule);border-radius:0;background:var(--panel)}
-.board.ticker .gm:last-child{border-bottom:0}
+  border:1px solid var(--rule);border-radius:9px;background:var(--panel)}
 .board.ticker .gm:hover{transform:none;box-shadow:none;background:var(--panel2)}
-.board.ticker .gm.live{border:0;border-bottom-color:transparent;background:var(--panel);animation:none}
-.board.ticker .gm.live::before{inset:0;border-radius:5px;padding:3px}
+.board.ticker .gm.live{border-color:transparent;background:var(--panel);animation:none}
+.board.ticker .gm.live::before{inset:-3px;border-radius:12px;padding:3px}
 .board.ticker .tm{display:contents}
 .board.ticker .tm.dim img,.board.ticker .tm.dim .ab,.board.ticker .tm.dim .pts{opacity:.45}
 .board.ticker .tm img{width:22px;height:22px}
@@ -606,7 +606,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
   <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
-    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">lab-90 · 2026-10-12 02:43 UTC</div>
+    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">lab-91 · 2026-10-12 02:43 UTC</div>
     <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
@@ -756,7 +756,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
 </div>
 
 <script>
-const BUILD = "lab-90 (2026-10-12 02:43 UTC)";
+const BUILD = "lab-91 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
