@@ -462,7 +462,7 @@ ul.why b{color:var(--ink)}
   <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
-    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">build-92 · 2026-10-12 02:43 UTC</div>
+    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">build-95 · 2026-10-12 02:43 UTC</div>
     <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
@@ -612,7 +612,7 @@ ul.why b{color:var(--ink)}
 </div>
 
 <script>
-const BUILD = "build-92 (2026-10-12 02:43 UTC)";
+const BUILD = "build-95 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -765,18 +765,39 @@ function vividness(c) {
 
 // bring a colour into a band where it actually shows on screen
 function liftColour(c, target) {
+  if (c.s < 0.12) return { h: c.h, s: 0, l: 0.74 };   // black / silver stay neutral
   const out = { h: c.h, s: Math.max(c.s, 0.5), l: Math.min(Math.max(c.l, target[0]), target[1]) };
   if (c.l < target[0]) out.l = target[0];
   if (c.l > target[1]) out.l = target[1];
   return out;
 }
 
+// The feed occasionally omits a team's colours. Fall back to the real palette
+// rather than a generic red, which is how Philadelphia ended up scarlet.
+const TEAM_COLOURS = {
+  ARI:["#97233F","#FFB612"], ATL:["#A71930","#000000"], BAL:["#241773","#9E7C0C"], BUF:["#00338D","#C60C30"],
+  CAR:["#0085CA","#101820"], CHI:["#0B162A","#C83803"], CIN:["#FB4F14","#000000"], CLE:["#FF3C00","#311D00"],
+  DAL:["#002244","#B0B7BC"], DEN:["#FB4F14","#002244"], DET:["#0076B6","#B0B7BC"], GB:["#203731","#FFB612"],
+  HOU:["#03202F","#A71930"], IND:["#002C5F","#A2AAAD"], JAX:["#006778","#D7A22A"], KC:["#E31837","#FFB81C"],
+  LV:["#000000","#A5ACAF"], LAC:["#0080C6","#FFC20E"], LAR:["#003594","#FFD100"], MIA:["#008E97","#FC4C02"],
+  MIN:["#4F2683","#FFC62F"], NE:["#002244","#C60C30"], NO:["#D3BC8D","#101820"], NYG:["#0B2265","#A71930"],
+  NYJ:["#115740","#FFFFFF"], PHI:["#004C54","#A5ACAF"], PIT:["#FFB612","#101820"], SF:["#AA0000","#B3995D"],
+  SEA:["#002244","#69BE28"], TB:["#D50A0A","#FF7900"], TEN:["#0C2340","#4B92DB"], WSH:["#5A1414","#FFB612"],
+  WAS:["#5A1414","#FFB612"],
+};
+
 function ringColours(g) {
-  const cand = side => [
-      { c: hexToHsl(g[side + "Color"]), primary: true },
-      { c: hexToHsl(g[side + "Alt"]), primary: false },
-    ].filter(x => x.c)
-     .sort((a, b) => vividness(b.c) - vividness(a.c));
+  const cand = side => {
+    const ab = String(side === "home" ? g.home : g.away || "").toUpperCase();
+    const fb = TEAM_COLOURS[ab] || [];
+    const all = [
+      { c: hexToHsl(g[side + "Color"] || fb[0]), primary: true },
+      { c: hexToHsl(g[side + "Alt"] || fb[1]), primary: false },
+    ].filter(x => x.c);
+    const chromatic = all.filter(x => x.c.s >= 0.12);
+    return (chromatic.length ? chromatic : all)
+      .sort((a, b) => vividness(b.c) - vividness(a.c));
+  };
   const away = cand("away"), home = cand("home");
   if (!away.length && !home.length) return ["#22C55E", "#EF4444"];
   if (!away.length) return [hslCss(liftColour(home[0].c, [0.42, 0.62])), "#EF4444"];
