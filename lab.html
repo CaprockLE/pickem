@@ -232,15 +232,14 @@ tbody tr:first-child .pos{color:var(--gold)}
 .gm.live{border-color:transparent}
 .gm.live::before{content:"";position:absolute;inset:-3px;border-radius:14px;padding:3px;
   pointer-events:none;z-index:3;
-  /* Each team holds a solid band, and the two meet through a bright glint
-     rather than blending directly — mixing the hues themselves is what made
-     blue-and-red look purple. Symmetric, so the loop point is invisible. */
+  /* Alternating quarter bands — c1, c2, c1, c2 — so the two colours chase each
+     other around the ring instead of one scrolling past before the other starts.
+     Hard edges keep the hues honest; no third colour appears between them. */
   background:linear-gradient(90deg,
-    var(--c1,#22C55E) 0 14%,
-    rgba(255,255,255,.92) 25% 31%,
-    var(--c2,#EF4444) 42% 58%,
-    rgba(255,255,255,.92) 69% 75%,
-    var(--c1,#22C55E) 86% 100%);
+    var(--c1,#22C55E) 0 24%,
+    var(--c2,#EF4444) 26% 49%,
+    var(--c1,#22C55E) 51% 74%,
+    var(--c2,#EF4444) 76% 100%);
   background-size:200% 100%;
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
   -webkit-mask-composite:xor;
@@ -613,7 +612,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
   <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
-    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">lab-96 · 2026-10-12 02:43 UTC</div>
+    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">lab-97 · 2026-10-12 02:43 UTC</div>
     <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
@@ -763,7 +762,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
 </div>
 
 <script>
-const BUILD = "lab-96 (2026-10-12 02:43 UTC)";
+const BUILD = "lab-97 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
