@@ -232,20 +232,20 @@ tbody tr:first-child .pos{color:var(--gold)}
 .gm.live::before{content:"";position:absolute;inset:-3px;border-radius:14px;padding:3px;
   pointer-events:none;z-index:3;
   background:linear-gradient(90deg,
-    var(--c1,#22C55E), var(--c2,#EF4444), var(--c1,#3B82F6), var(--c2,#22C55E));
-  background-size:300% 100%;
+    var(--c1,#22C55E), var(--c2,#EF4444) 50%, var(--c1,#22C55E));
+  background-size:200% 100%;
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
   -webkit-mask-composite:xor;
           mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
           mask-composite:exclude;
   animation:ringmove 6s linear infinite}
-@keyframes ringmove{to{background-position:300% 0}}
+@keyframes ringmove{to{background-position:200% 0}}
 /* any browser without mask-composite still gets a moving colour cycle */
 @supports not (mask-composite: exclude){
   .gm.live::before{display:none}
   .gm.live{border:2px solid #22C55E;animation:livecycle 7.2s linear infinite}
   @keyframes livecycle{
-    0%{border-color:#22C55E}33%{border-color:#EF4444}66%{border-color:#3B82F6}100%{border-color:#22C55E}}
+    0%{border-color:#22C55E}50%{border-color:#EF4444}100%{border-color:#22C55E}}
 }
 @media (prefers-reduced-motion:reduce){.gm.live::before{animation:none}}
 .tm{display:flex;align-items:center;gap:7px;padding:2px 0}
@@ -266,7 +266,7 @@ tbody tr:first-child .pos{color:var(--gold)}
 /* ticker: one game per line, columns aligned down the whole list.
    .tm uses display:contents so each logo / code / score becomes a grid cell
    of the row itself — that's what keeps every row in step. */
-.board.ticker{grid-template-columns:1fr;gap:0}
+.board.ticker{grid-template-columns:1fr;gap:0;padding:3px 3px 5px}
 .board.ticker .gm{
   display:grid;
   grid-template-columns:24px 50px 40px 24px 50px 40px minmax(130px,1fr);
@@ -274,8 +274,8 @@ tbody tr:first-child .pos{color:var(--gold)}
   border:0;border-bottom:1px solid var(--rule);border-radius:0;background:var(--panel)}
 .board.ticker .gm:last-child{border-bottom:0}
 .board.ticker .gm:hover{transform:none;box-shadow:none;background:var(--panel2)}
-.board.ticker .gm.live{border:0;border-bottom:1px solid var(--rule);background:var(--panel);animation:none}
-.board.ticker .gm.live::before{inset:0;border-radius:0;padding:3px}
+.board.ticker .gm.live{border:0;border-bottom-color:transparent;background:var(--panel);animation:none}
+.board.ticker .gm.live::before{inset:0;border-radius:5px;padding:3px}
 .board.ticker .tm{display:contents}
 .board.ticker .tm.dim img,.board.ticker .tm.dim .ab,.board.ticker .tm.dim .pts{opacity:.45}
 .board.ticker .tm img{width:22px;height:22px}
@@ -606,7 +606,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
   <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
-    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">lab-83 · 2026-10-12 02:43 UTC</div>
+    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">lab-85 · 2026-10-12 02:43 UTC</div>
     <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
@@ -756,7 +756,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
 </div>
 
 <script>
-const BUILD = "lab-83 (2026-10-12 02:43 UTC)";
+const BUILD = "lab-85 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
