@@ -233,7 +233,7 @@ tbody tr:first-child .pos{color:var(--gold)}
 .gm.live::before{content:"";position:absolute;inset:-3px;border-radius:14px;padding:3px;
   pointer-events:none;z-index:3;
   background:linear-gradient(90deg,
-    var(--c1,#22C55E), var(--c2,#EF4444) 50%, var(--c1,#22C55E));
+    var(--c1,#22C55E) 0 24%, var(--c2,#EF4444) 26% 74%, var(--c1,#22C55E) 76% 100%);
   background-size:200% 100%;
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
   -webkit-mask-composite:xor;
@@ -462,7 +462,7 @@ ul.why b{color:var(--ink)}
   <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
-    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">build-91 · 2026-10-12 02:43 UTC</div>
+    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">build-92 · 2026-10-12 02:43 UTC</div>
     <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
@@ -612,7 +612,7 @@ ul.why b{color:var(--ink)}
 </div>
 
 <script>
-const BUILD = "build-91 (2026-10-12 02:43 UTC)";
+const BUILD = "build-92 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -1429,8 +1429,8 @@ function renderBoard() {
     })() : "";
     // the ticker has no room for the possession dot, so it reads as text there
     const possText = g.state === "in" && g.possession
-      ? `<span class="poss${g.redZone ? " rz" : ""}" title="${esc(g.downDistance || "")}">
-           &#9679; ${esc(g.possession)}${g.redZone ? " red zone" : ""}</span>`
+      ? `<span class="poss${g.redZone ? " rz" : ""}" title="${esc(g.downDistance || "")}${g.redZone ? " · red zone" : ""}">
+           &#9679; ${esc(g.possession)}</span>`
       : "";
     const st = g.state === "in"
       ? `<span class="l"><span class="dot"></span>${g._demo ? "PREVIEW · " : ""}Q${g.period} ${esc(g.clock)}</span>${possText}${liveOdds}`
