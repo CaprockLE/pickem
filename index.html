@@ -369,8 +369,6 @@ ul.why b{color:var(--ink)}
   nav .sec:not(:first-of-type){margin-top:16px}
   nav button.tab{width:100%;min-height:44px;white-space:normal;margin-bottom:3px}
   nav .foot{display:block;margin-top:20px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08)}
-  nav .foot #navFoot{display:block}
-  nav .foot #buildTag{display:block}
   nav .foot button{width:100%;margin-top:8px;min-height:40px}
   main{padding:14px 12px 90px}
   .card>.hd{padding:12px 13px}
@@ -443,8 +441,7 @@ ul.why b{color:var(--ink)}
   <div class="sec" id="mgrSec" hidden>Manage</div>
   <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
-  <div class="foot"><div id="navFoot">—</div>
-    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">build-103 · 2026-10-12 02:43 UTC</div>
+  <div class="foot">
     <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
@@ -532,6 +529,7 @@ ul.why b{color:var(--ink)}
         <p class="note" style="margin:0 0 10px">The master list of players. Every uploaded sheet gets assigned to one of these names,
           so "George" on paper lands on George A in the standings.</p>
         <div id="rosterList" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
+        <p class="note" id="rosterNote" style="margin:0 0 10px"></p>
         <div class="ctl" style="display:flex;gap:8px;flex-wrap:wrap">
           <input type="text" id="rosterNew" placeholder="Add a player" style="width:170px">
           <button id="rosterAdd">Add</button>
@@ -593,7 +591,7 @@ ul.why b{color:var(--ink)}
 </div>
 
 <script>
-const BUILD = "build-103 (2026-10-12 02:43 UTC)";
+const BUILD = "build-104 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -1160,6 +1158,15 @@ function renderRoster() {
     ? roster.map((n, i) => `<span class="pill" style="display:inline-flex;gap:6px;align-items:center">${esc(tc(n))}
         <button data-rm="${i}" style="all:unset;cursor:pointer;color:var(--hot);font-weight:700">&times;</button></span>`).join("")
     : '<span class="note">Empty — add names, or pull them from a published week.</span>';
+  // the roster is the master list; season standings only counts published entries
+  const played = new Set((season?.players || []).map(p => slug(p.name)));
+  const never = roster.filter(n => !played.has(slug(n)));
+  const note = $("rosterNote");
+  if (note) {
+    note.innerHTML = season && never.length
+      ? `<b style="color:var(--ink)">${never.length} on the roster with no entries yet:</b> ${never.map(n => esc(tc(n))).join(", ")}`
+      : "";
+  }
   $("rosterList").querySelectorAll("button[data-rm]").forEach(b => b.onclick = () => {
     roster.splice(+b.dataset.rm, 1); renderRoster();
   });
@@ -1254,7 +1261,6 @@ function renderSeason() {
     ["weekSel","impWeek","moneyWeek","picksWeek"].forEach(id => $(id).value = week);
     setView("week"); loadWeek();
   });
-  $("navFoot").textContent = `${season.players.length} players · ${season.weeks.length} weeks`;
 }
 
 /* ---------- HEAD TO HEAD ---------- */
