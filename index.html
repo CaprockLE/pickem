@@ -135,6 +135,7 @@ main > div:not([hidden]){animation:viewIn .22s ease-out}
 /* collapsible manager sections */
 .card.foldable>.hd{cursor:pointer;user-select:none}
 .card.foldable>.hd:hover h2{opacity:.85}
+#previewBtn[hidden]{display:none}
 .card .chev{margin-left:auto;padding-left:12px;color:var(--muted);font-size:11px;transition:transform .18s ease;flex:none}
 .card>.hd .r+.chev{margin-left:12px}
 .card.folded .chev{transform:rotate(-90deg)}
@@ -237,12 +238,12 @@ tbody tr:first-child .pos{color:var(--gold)}
   -webkit-mask-composite:xor;
           mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
           mask-composite:exclude;
-  animation:ringmove 3s linear infinite}
+  animation:ringmove 6s linear infinite}
 @keyframes ringmove{to{background-position:300% 0}}
 /* any browser without mask-composite still gets a moving colour cycle */
 @supports not (mask-composite: exclude){
   .gm.live::before{display:none}
-  .gm.live{border:2px solid #22C55E;animation:livecycle 3.6s linear infinite}
+  .gm.live{border:2px solid #22C55E;animation:livecycle 7.2s linear infinite}
   @keyframes livecycle{
     0%{border-color:#22C55E}33%{border-color:#EF4444}66%{border-color:#3B82F6}100%{border-color:#22C55E}}
 }
@@ -460,7 +461,7 @@ ul.why b{color:var(--ink)}
   <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
-    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">build-78 · 2026-10-12 02:43 UTC</div>
+    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">build-81 · 2026-10-12 02:43 UTC</div>
     <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
@@ -489,7 +490,7 @@ ul.why b{color:var(--ink)}
       <div class="right"><select id="weekSel"></select><button id="shareBtn">Share Card</button><button id="refreshBtn">Refresh</button></div></div>
     <div class="kpis" id="weekKpis"></div>
     <div class="card"><div class="hd"><h2>Scoreboard</h2><div class="r"><button id="boardView" class="sm">Ticker</button>
-      <button id="previewBtn" class="sm" title="Show what a live game looks like">Preview Live</button>
+      <button id="previewBtn" class="sm" hidden title="Show what a live game looks like">Preview Live</button>
       <span class="note" id="updTag"></span></div></div>
       <div class="bd flush"><div class="board" id="board"></div></div></div>
     <div class="card" id="winCard" hidden><div class="hd"><h2>Week Winner</h2></div><div class="bd" id="winner"></div></div>
@@ -610,7 +611,7 @@ ul.why b{color:var(--ink)}
 </div>
 
 <script>
-const BUILD = "build-78 (2026-10-12 02:43 UTC)";
+const BUILD = "build-81 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -832,6 +833,10 @@ async function verifyPass(candidate) {
 function applyRole() {
   const on = authed;
   ["mgrSec","tabImport","tabMoney"].forEach(id => $(id).hidden = !on);
+  if ($("previewBtn")) {
+    $("previewBtn").hidden = !on;
+    if (!on && demoLive) { demoLive = false; if (pool) renderBoard(); }
+  }
   $("unlockBtn").textContent = on ? "Sign Out of Manager" : "Manager Sign-In";
   $("lockPill") && ($("lockPill").textContent = on ? "Unlocked" : "Locked",
                     $("lockPill").className = "pill " + (on ? "ok" : "no"));
@@ -1302,8 +1307,9 @@ function renderBoard() {
   bumped.clear();
   $("boardView").textContent = boardMode === "ticker" ? "Cards" : "Ticker";
   $("previewBtn").textContent = demoLive ? "Stop Preview" : "Preview Live";
+  const demoIdx = games().length - 1;                 // last kickoff = Monday night
   const list = demoLive && games().length
-    ? games().map((g, i) => i === 0
+    ? games().map((g, i) => i === demoIdx
         ? { ...g, state: "in", final: false, period: 2, clock: "7:21",
             possession: g.away, redZone: false, downDistance: "2nd & 6", _demo: true }
         : g)
@@ -1417,7 +1423,12 @@ function winChances(rows) {
     else {
       const tiedEntries = top.map(([nm]) => field.find(r => r.e.name === nm).e);
       const shares = tiebreakerShares(tiedEntries, tbGame());
-      for (const [nm] of top) out.set(nm, (out.get(nm) || 0) + c.p * (shares.get(nm) ?? 1 / top.length));
+      // A name missing from `shares` lost the tiebreaker outright — that's zero,
+      // not an equal split. The old fallback handed losers an even share.
+      for (const [nm] of top) {
+        const share = shares.size ? (shares.get(nm) || 0) : 1 / top.length;
+        out.set(nm, (out.get(nm) || 0) + c.p * share);
+      }
     }
   }
   return out;
