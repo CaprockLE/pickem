@@ -166,6 +166,9 @@ main > div:not([hidden]){animation:viewIn .22s ease-out}
 .sheetgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px}
 .sheetcard{border:1px solid var(--rule);border-radius:10px;overflow:hidden;background:var(--panel2);cursor:zoom-in}
 .sheetcard img{width:100%;height:104px;object-fit:cover;display:block}
+.sheetcard .pdftile{display:grid;place-items:center;height:104px;background:var(--panel);
+  color:var(--muted);font-weight:700;letter-spacing:.1em;font-size:13px;text-decoration:none}
+.sheetcard .pdftile:hover{color:var(--brand)}
 .sheetcard .cap{font-size:11px;padding:6px 8px;color:var(--muted);display:flex;justify-content:space-between;gap:6px}
 #lightbox{position:fixed;inset:0;background:rgba(4,8,14,.88);z-index:95;display:grid;place-items:center;padding:18px}
 #lightbox[hidden]{display:none}
@@ -519,8 +522,8 @@ ul.why b{color:var(--ink)}
         <input type="password" id="pass" placeholder="Manager passcode" autocomplete="off">
         <span class="note">Stored on this device only.</span></div></div></div>
     <div class="card"><div class="hd"><h2>Upload</h2></div><div class="bd">
-      <div id="drop"><b>Drop pick-sheet photos here</b>or click to browse · up to 6 at once
-        <input type="file" id="file" accept="image/*" multiple hidden>
+      <div id="drop"><b>Drop pick-sheet photos or PDFs here</b>or click to browse · up to 6 at once
+        <input type="file" id="file" accept="image/*,application/pdf,.pdf" multiple hidden>
         <div class="swipe" style="padding:10px 0 0">On a phone this opens your camera or photo library.</div></div>
       <p class="note" id="readMsg" style="margin:10px 0 0"></p></div></div>
     <div id="review"></div>
@@ -591,7 +594,7 @@ ul.why b{color:var(--ink)}
 </div>
 
 <script>
-const BUILD = "build-104 (2026-10-12 02:43 UTC)";
+const BUILD = "build-106 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -1120,7 +1123,9 @@ function renderArchive() {
   }
   $("archGrid").innerHTML = archive.length
     ? archive.map(sh => `<div class="sheetcard">
-        <img src="${esc(sh.data)}" alt="${esc(sh.label || "Pick sheet")}" loading="lazy" data-img="${esc(sh.id)}">
+        ${sh.kind === "pdf"
+          ? `<a href="${esc(sh.data)}" target="_blank" rel="noopener" class="pdftile">PDF</a>`
+          : `<img src="${esc(sh.data)}" alt="${esc(sh.label || "Pick sheet")}" loading="lazy" data-img="${esc(sh.id)}">`}
         <div class="cap">
           ${authed
             ? `<input type="text" data-label="${esc(sh.id)}" value="${esc(sh.label || "")}" placeholder="Player name"
@@ -2087,27 +2092,70 @@ drop.addEventListener("drop", e => readFiles(Array.from(e.dataTransfer.files||[]
 $("file").onchange = e => readFiles(Array.from(e.target.files||[]));
 
 async function readFiles(files) {
-  files = files.filter(f => f.type.startsWith("image/")).slice(0,6);
+  files = files.filter(f => f.type.startsWith("image/") || f.type === "application/pdf" ||
+                            /\.pdf$/i.test(f.name || "")).slice(0,6);
   if (!files.length) return;
   if (!pass) { $("readMsg").innerHTML = '<span class="err">Enter the manager passcode first.</span>'; return; }
-  $("readMsg").textContent = `Reading ${files.length} image${files.length>1?"s":""}…`;
-  const images = await Promise.all(files.map(f => new Promise((res,rej) => {
+  $("readMsg").textContent = `Preparing ${files.length} file${files.length>1?"s":""}…`;
+
+  // Phone photos run 4-8 MB and base64 adds a third on top — past the 4.5 MB
+  // request limit, which is why a straight upload failed. Re-encode first; the
+  // text on a pick sheet stays readable at 1600px.
+  const readRaw = f => new Promise((res, rej) => {
     const fr = new FileReader();
-    fr.onload = () => res({media_type:f.type, data:fr.result.split(",")[1]});
+    fr.onload = () => res(fr.result.split(",")[1]);
     fr.onerror = rej; fr.readAsDataURL(f);
-  })));
+  });
+
+  const images = [];
+  for (const f of files) {
+    const isPdf = f.type === "application/pdf" || /\.pdf$/i.test(f.name || "");
+    if (isPdf) {
+      const data = await readRaw(f);
+      if (data.length > 4000000) { toast(`${f.name} is too large to send`, "bad"); continue; }
+      images.push({ media_type: "application/pdf", data });
+      continue;
+    }
+    try {
+      const shrunk = await shrinkImage(f, 1600, 0.82);
+      images.push({ media_type: "image/jpeg", data: shrunk.split(",")[1] });
+    } catch (e) {
+      const data = await readRaw(f);
+      if (data.length > 4000000) { toast(`Couldn't shrink ${f.name}; too large to send`, "bad"); continue; }
+      images.push({ media_type: f.type || "image/jpeg", data });
+    }
+  }
+  if (!images.length) { $("readMsg").innerHTML = '<span class="err">Nothing could be prepared for reading.</span>'; return; }
+  const mb = images.reduce((n, i) => n + i.data.length, 0) / 1048576;
+  $("readMsg").textContent = `Reading ${images.length} file${images.length>1?"s":""} (${mb.toFixed(1)} MB)…`;
 
   // keep a compact copy of each photo for the archive
   pendingShots = [];
   for (let i = 0; i < files.length; i++) {
     const f = files[i];
     const label = (f.name || `sheet-${i + 1}`).replace(/\.[^.]+$/, "").slice(0, 40);
+    const isPdf = f.type === "application/pdf" || /\.pdf$/i.test(f.name || "");
+    if (isPdf) {
+      // keep the PDF itself; it can't be shrunk, so only archive a small one
+      const raw = await new Promise((res, rej) => {
+        const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(f);
+      });
+      if (raw.length < 650000) {
+        pendingShots.push({ id: Date.now() + "-" + i, label, kind: "pdf",
+          uploadedAt: new Date().toISOString(), data: raw });
+      } else {
+        toast(`Read ${label}, but the PDF is too large to archive`, "bad");
+      }
+      continue;
+    }
     try {
       pendingShots.push({ id: Date.now() + "-" + i, label,
         uploadedAt: new Date().toISOString(), data: await shrinkImage(f) });
     } catch (err) {
       // some phone formats won't decode into a canvas; keep the original if it's small enough
-      const raw = "data:" + (f.type || "image/jpeg") + ";base64," + images[i].data;
+      const raw = await new Promise((res, rej) => {
+        const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(f);
+      });
       if (raw.length < 650000) {
         pendingShots.push({ id: Date.now() + "-" + i, label,
           uploadedAt: new Date().toISOString(), data: raw });
@@ -2122,8 +2170,15 @@ async function readFiles(files) {
     const r = await fetch("/api/read-sheet", {method:"POST",
       headers:{"content-type":"application/json","x-admin-key":pass},
       body: JSON.stringify({images, games: games().map(g=>({id:g.id,away:g.away,home:g.home}))})});
-    const out = await r.json();
-    if (!r.ok) { $("readMsg").innerHTML = `<span class="err">${esc(out.error||"Failed")}</span>`; renderArchive(); return; }
+    const bodyText = await r.text();
+    const out = (() => { try { return JSON.parse(bodyText); }
+      catch (e) { return { error: `HTTP ${r.status}: ` +
+        bodyText.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 120) }; } })();
+    if (!r.ok) {
+      $("readMsg").innerHTML = `<span class="err">${esc(out.error || `HTTP ${r.status}`)}</span>`;
+      toast(out.error || `Upload failed (HTTP ${r.status})`, "bad");
+      renderArchive(); return;
+    }
     pending = out.entries || [];
     pendingWeek = out.week ?? null;
     $("readMsg").textContent = `Read ${pending.length} entries — confirm below.`;

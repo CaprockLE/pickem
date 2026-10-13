@@ -26,14 +26,17 @@ export default async function handler(req, res) {
   const legend = games.map((g) => `${g.id} = ${g.away} at ${g.home}`).join("; ");
 
   const content = [
-    ...images.map((img) => ({
-      type: "image",
-      source: { type: "base64", media_type: img.media_type || "image/jpeg", data: img.data },
-    })),
+    ...images.map((img) => {
+      const mt = img.media_type || "image/jpeg";
+      // a PDF is a document block; everything else is an image block
+      return mt === "application/pdf"
+        ? { type: "document", source: { type: "base64", media_type: "application/pdf", data: img.data } }
+        : { type: "image", source: { type: "base64", media_type: mt, data: img.data } };
+    }),
     {
       type: "text",
       text:
-        `These images show NFL pick'em entries. They may be either a printed pool sheet ` +
+        `These files show NFL pick'em entries — photos, scans or PDFs. They may be a printed pool sheet ` +
         `(a grid with one row per person) or a screenshot of a text message where someone ` +
         `listed their picks one per line.\n\n` +
         `Games this week, in order: ${legend}\n\n` +
