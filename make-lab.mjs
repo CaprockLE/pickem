@@ -92,11 +92,6 @@ h1{font-size:35px;letter-spacing:.01em;background:var(--head-grad);
 .gm{border:1px solid var(--brd);border-radius:14px;
   background:linear-gradient(180deg,var(--glass),var(--glass-2));transition:.16s cubic-bezier(.2,.8,.2,1)}
 .gm:hover{box-shadow:0 12px 28px rgba(2,8,16,.20), inset 0 0 0 1px var(--brd-lit)}
-.gm.live{border-color:transparent;
-  background:linear-gradient(var(--panel),var(--panel)) padding-box,
-             linear-gradient(120deg,var(--amber),#FF5E5B,var(--n2),var(--amber)) border-box;
-  background-size:auto,300% 300%; border:1.5px solid transparent; animation:ring 5s linear infinite}
-@keyframes ring{0%{background-position:0 0,0% 50%}100%{background-position:0 0,300% 50%}}
 .tm .pts{font-family:Oswald,Inter;font-size:19px;color:var(--ink)}
 .gm .st .odds{font-weight:700;color:var(--n2)}
 
@@ -145,7 +140,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
 #labTag a{color:inherit;text-decoration:none}
 
 @media (prefers-reduced-motion:reduce){
-  body{animation:none}.gm.live{animation:none}
+  body{animation:none}
 }
 @media (max-width:900px){
   #labTag{bottom:auto;top:9px;right:9px;padding:5px 10px;font-size:10px}
