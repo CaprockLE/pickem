@@ -228,7 +228,11 @@ tbody tr:first-child .pos{color:var(--gold)}
 .gm{background:var(--panel);padding:10px 12px;border:1px solid var(--rule);border-radius:11px;position:relative}
 /* Live game: a still 2px accent in the leading team's colour, plus a LIVE badge.
    Nothing moves except the badge dot — the scores stay the loudest thing. */
-.gm.live{border:2px solid var(--lead,#C2410C)}
+.gm.live{border:2px solid var(--lead,#C2410C);animation:leadpulse 2.4s ease-in-out infinite}
+@keyframes leadpulse{
+  0%,100%{box-shadow:0 0 0 0 transparent;border-color:var(--lead,#C2410C)}
+  50%{box-shadow:0 0 12px -2px var(--lead,#C2410C);border-color:color-mix(in srgb, var(--lead,#C2410C) 70%, transparent)}}
+@media (prefers-reduced-motion:reduce){.gm.live{animation:none}}
 .gm .livetag{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;
   letter-spacing:.09em;color:var(--lead,#C2410C)}
 .gm .livetag .dot{width:6px;height:6px;margin:0}
@@ -258,7 +262,8 @@ tbody tr:first-child .pos{color:var(--gold)}
   align-items:center;column-gap:8px;padding:8px 14px;
   border:1px solid var(--rule);border-radius:9px;background:var(--panel)}
 .board.ticker .gm:hover{transform:none;box-shadow:none;background:var(--panel2)}
-.board.ticker .gm.live{border-color:var(--lead,#C2410C);background:var(--panel)}
+.board.ticker .gm.live{border:2px solid var(--lead,#C2410C);background:var(--panel);
+  animation:leadpulse 2.4s ease-in-out infinite}
 .board.ticker .tm{display:contents}
 .board.ticker .tm.dim img,.board.ticker .tm.dim .ab,.board.ticker .tm.dim .pts{opacity:.45}
 .board.ticker .tm img{width:22px;height:22px}
@@ -445,7 +450,7 @@ ul.why b{color:var(--ink)}
   <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
-    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">build-99 · 2026-10-12 02:43 UTC</div>
+    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">build-100 · 2026-10-12 02:43 UTC</div>
     <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
@@ -595,7 +600,7 @@ ul.why b{color:var(--ink)}
 </div>
 
 <script>
-const BUILD = "build-99 (2026-10-12 02:43 UTC)";
+const BUILD = "build-100 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
