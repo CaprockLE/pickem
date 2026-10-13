@@ -606,7 +606,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
   <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
-    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">lab-85 · 2026-10-12 02:43 UTC</div>
+    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">lab-90 · 2026-10-12 02:43 UTC</div>
     <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
@@ -756,7 +756,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
 </div>
 
 <script>
-const BUILD = "lab-85 (2026-10-12 02:43 UTC)";
+const BUILD = "lab-90 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -881,6 +881,9 @@ function tiebreakerShares(entries, g) {
 }
 
 // ── live ring colours ───────────────────────────────────────────────
+// Each team offers a primary and an alternate. Pick the pair that reads as
+// two clearly different colours, skipping black / white / silver where there's
+// a real colour available, then lift very dark shades so they're visible.
 function hexToHsl(hex) {
   const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || ""));
   if (!m) return null;
@@ -888,29 +891,60 @@ function hexToHsl(hex) {
   const r = ((n >> 16) & 255) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
   const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2;
   if (mx === mn) return { h: 0, s: 0, l };
-  const d = mx - mn, s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+  const d = mx - mn, sat = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
   const h = mx === r ? ((g - b) / d + (g < b ? 6 : 0)) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
-  return { h: h * 60, s, l };
+  return { h: h * 60, s: sat, l };
 }
+const hslCss = c => `hsl(${Math.round(c.h)} ${Math.round(c.s * 100)}% ${Math.round(c.l * 100)}%)`;
 const hueGap = (a, b) => { const d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; };
 
-// Two blue teams produce a ring that looks like one colour. Try the second
-// team's alternate shade, and if that's still close, rotate it away.
+// colourful beats dark, dark beats grey
+function vividness(c) {
+  if (!c) return -1;
+  const greyPenalty = c.s < 0.15 ? 1.2 : 0;           // silver, white, black
+  const darkPenalty = c.l < 0.16 ? 0.5 : 0;           // near-black navies
+  const palePenalty = c.l > 0.86 ? 0.9 : 0;
+  return c.s - greyPenalty - darkPenalty - palePenalty;
+}
+
+// bring a colour into a band where it actually shows on screen
+function liftColour(c, target) {
+  const out = { h: c.h, s: Math.max(c.s, 0.5), l: Math.min(Math.max(c.l, target[0]), target[1]) };
+  if (c.l < target[0]) out.l = target[0];
+  if (c.l > target[1]) out.l = target[1];
+  return out;
+}
+
 function ringColours(g) {
-  const a = g.awayColor || g.homeColor || "#22C55E";
-  let b = g.homeColor || g.awayColor || "#EF4444";
-  const ha = hexToHsl(a), hb = hexToHsl(b);
-  const tooClose = ha && hb && hueGap(ha.h, hb.h) < 40 && Math.abs(ha.l - hb.l) < 0.22;
-  if (tooClose) {
-    const alt = g.homeAlt && hexToHsl(g.homeAlt);
-    if (alt && (hueGap(ha.h, alt.h) >= 40 || Math.abs(ha.l - alt.l) >= 0.22)) b = g.homeAlt;
-    else {
-      const shifted = hexToHsl(b) || { h: 0, s: 0.7, l: 0.5 };
-      b = `hsl(${Math.round((shifted.h + 150) % 360)} ${Math.round(Math.max(shifted.s, 0.55) * 100)}% ` +
-          `${Math.round(Math.min(Math.max(shifted.l, 0.45), 0.62) * 100)}%)`;
-    }
+  const cand = side => [
+      { c: hexToHsl(g[side + "Color"]), primary: true },
+      { c: hexToHsl(g[side + "Alt"]), primary: false },
+    ].filter(x => x.c)
+     .sort((a, b) => vividness(b.c) - vividness(a.c));
+  const away = cand("away"), home = cand("home");
+  if (!away.length && !home.length) return ["#22C55E", "#EF4444"];
+  if (!away.length) return [hslCss(liftColour(home[0].c, [0.42, 0.62])), "#EF4444"];
+  if (!home.length) return [hslCss(liftColour(away[0].c, [0.42, 0.62])), "#EF4444"];
+
+  // try every primary/alternate combination, keep the most distinguishable
+  let best = null;
+  for (const A of away) for (const B of home) {
+    const a = A.c, b = B.c, gap = hueGap(a.h, b.h);
+    const score = Math.min(gap, 120) / 120 * 2        // different hue matters most
+                + Math.abs(a.l - b.l) * 0.8           // different brightness helps
+                + (vividness(a) + vividness(b)) * 0.5
+                + (A.primary ? 0.6 : 0) + (B.primary ? 0.6 : 0)  // a team's main colour is its identity
+                + (gap < 30 ? -0.8 : 0);              // two shades of one hue read as a single colour
+    if (!best || score > best.score) best = { a, b, score, gap };
   }
-  return [a, b];
+  let a = liftColour(best.a, [0.42, 0.62]);
+  let b = liftColour(best.b, [0.42, 0.62]);
+  // same family after all (two navies, two reds): split them by brightness
+  if (hueGap(a.h, b.h) < 25 && Math.abs(a.l - b.l) < 0.12) {
+    a = { ...a, l: 0.68, s: Math.max(a.s, 0.6) };
+    b = { ...b, l: 0.40, s: Math.max(b.s, 0.6) };
+  }
+  return [hslCss(a), hslCss(b)];
 }
 
 // which logo set suits the current background
@@ -919,9 +953,20 @@ function darkMode() {
   if (forced) return forced === "dark";
   return window.matchMedia("(prefers-color-scheme: dark)").matches;
 }
-const logoFor = (g, side) => (darkMode()
-  ? (side === "home" ? g.homeLogoDark : g.awayLogoDark) || (side === "home" ? g.homeLogo : g.awayLogo)
-  : (side === "home" ? g.homeLogo : g.awayLogo)) || "";
+// ESPN's dark variant is usually an all-white silhouette — right for teams whose
+// normal mark is near-black, wrong for everyone else. Only reach for it when the
+// standard logo would disappear against a dark card.
+function needsDarkLogo(g, side) {
+  const c = hexToHsl(side === "home" ? g.homeColor : g.awayColor);
+  if (!c) return false;
+  return c.l < 0.22 || (c.s < 0.18 && c.l < 0.5);     // near-black, or dark grey
+}
+const logoFor = (g, side) => {
+  const std = side === "home" ? g.homeLogo : g.awayLogo;
+  const dark = side === "home" ? g.homeLogoDark : g.awayLogoDark;
+  if (darkMode() && needsDarkLogo(g, side)) return dark || std || "";
+  return std || dark || "";
+};
 
 function toast(msg, kind) {
   const el = document.createElement("div");
@@ -986,7 +1031,7 @@ let mePlayer = localStorage.getItem("pc.me") || "";
 let liveWeek = null;         // the week the league is actually in right now
 let liveFirstKick = null;    // its first kickoff — the import window closes here
 let boardMode = localStorage.getItem("pc.board") || "cards";
-let demoLive = false;        // renders the first game as if it were in progress
+let demoLive = 0;            // 0 off · 1 one game · 2 a full slate
 let picksOrder = localStorage.getItem("pc.picksOrder") || "az";
 const lastScores = new Map();            // game+team -> last score we drew
 const bumped = new Set();                // scores that just changed
@@ -1013,7 +1058,7 @@ function applyRole() {
   ["mgrSec","tabImport","tabMoney"].forEach(id => $(id).hidden = !on);
   if ($("previewBtn")) {
     $("previewBtn").hidden = !on;
-    if (!on && demoLive) { demoLive = false; if (pool) renderBoard(); }
+    if (!on && demoLive) { demoLive = 0; if (pool) renderBoard(); }
   }
   $("unlockBtn").textContent = on ? "Sign Out of Manager" : "Manager Sign-In";
   $("lockPill") && ($("lockPill").textContent = on ? "Unlocked" : "Locked",
@@ -1484,14 +1529,31 @@ function renderBoard() {
   if (!games().length) { $("board").innerHTML = '<div class="empty"><b>No games</b>Nothing scheduled for this week.</div>'; return; }
   bumped.clear();
   $("boardView").textContent = boardMode === "ticker" ? "Cards" : "Ticker";
-  $("previewBtn").textContent = demoLive ? "Stop Preview" : "Preview Live";
-  const demoIdx = games().length - 1;                 // last kickoff = Monday night
-  const list = demoLive && games().length
-    ? games().map((g, i) => i === demoIdx
-        ? { ...g, state: "in", final: false, period: 2, clock: "7:21",
-            possession: g.away, redZone: false, downDistance: "2nd & 6", _demo: true }
-        : g)
-    : games();
+  $("previewBtn").textContent = demoLive === 0 ? "Preview Live"
+    : demoLive === 1 ? "Preview Slate" : "Stop Preview";
+  const gs0 = games();
+  const demoIdx = gs0.length - 1;                      // last kickoff = Monday night
+  // a believable Sunday afternoon: several games running at different points
+  const slate = [
+    { period: 2, clock: "7:21", down: "2nd & 6", side: "away" },
+    { period: 3, clock: "11:04", down: "1st & 10", side: "home", rz: false },
+    { period: 4, clock: "2:38", down: "3rd & 4", side: "away", rz: true },
+    { period: 2, clock: "0:46", down: "1st & Goal", side: "home", rz: true },
+    { period: 3, clock: "5:52", down: "2nd & 11", side: "away" },
+  ];
+  const liveSet = demoLive === 2
+    ? new Set(gs0.slice(0, Math.min(5, gs0.length)).map(g => g.id))
+    : demoLive === 1 ? new Set([gs0[demoIdx]?.id]) : new Set();
+  let slateAt = 0;
+  const list = liveSet.size
+    ? gs0.map(g => {
+        if (!liveSet.has(g.id)) return g;
+        const cfg = demoLive === 2 ? slate[slateAt++ % slate.length] : slate[0];
+        return { ...g, state: "in", final: false, period: cfg.period, clock: cfg.clock,
+                 possession: cfg.side === "home" ? g.home : g.away, redZone: !!cfg.rz,
+                 downDistance: cfg.down, _demo: true };
+      })
+    : gs0;
   $("board").innerHTML = list.map(g => {
     const w = winnerOf(g);
     const won = w && w !== "TIE";
@@ -2467,7 +2529,7 @@ $("h2hA").onchange = renderH2H; $("h2hB").onchange = renderH2H;
 $("sortSel").onchange = e => { sortBy = e.target.value; localStorage.setItem("pc.sort", sortBy); renderSeason(); };
 $("hlSel").onchange = e => { hl = e.target.value; localStorage.setItem("pc.hl", hl); renderSeason(); render(); };
 $("buyin").oninput = e => { buyin = Number(e.target.value||0); localStorage.setItem("pc.buyin", buyin); render(); };
-$("previewBtn").onclick = () => { demoLive = !demoLive; renderBoard(); };
+$("previewBtn").onclick = () => { demoLive = (demoLive + 1) % 3; renderBoard(); };
 $("boardView").onclick = () => {
   boardMode = boardMode === "ticker" ? "cards" : "ticker";
   localStorage.setItem("pc.board", boardMode); renderBoard();
