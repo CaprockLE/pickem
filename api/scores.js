@@ -51,6 +51,8 @@ export default async function handler(req, res) {
         awayLogoDark: (away.team?.logo || "").replace("/500/", "/500-dark/"),
         homeColor: home.team?.color ? "#" + home.team.color : "",
         awayColor: away.team?.color ? "#" + away.team.color : "",
+        homeAlt: home.team?.alternateColor ? "#" + home.team.alternateColor : "",
+        awayAlt: away.team?.alternateColor ? "#" + away.team.alternateColor : "",
         homeRecord: home.records?.[0]?.summary || "",
         awayRecord: away.records?.[0]?.summary || "",
         homeScore: hs,
