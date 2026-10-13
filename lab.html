@@ -224,12 +224,13 @@ tbody tr:first-child .pos{color:var(--gold)}
 /* scoreboard */
 .board{display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:1px;background:var(--rule)}
 .gm{background:var(--panel);padding:10px 12px}
-.gm.live{border-color:transparent;
-  background:linear-gradient(var(--panel2),var(--panel2)) padding-box,
-             linear-gradient(120deg,var(--live),var(--miss),var(--brand),var(--live)) border-box;
-  background-size:auto,300% 300%;border:1px solid transparent;animation:livering 5s linear infinite}
-@keyframes livering{0%{background-position:0 0,0% 50%}100%{background-position:0 0,300% 50%}}
-@media (prefers-reduced-motion:reduce){.gm.live{animation:none}}
+.gm.live{border-color:var(--live);box-shadow:0 0 0 1px var(--live), 0 0 14px -2px var(--live);
+  animation:livepulse 2.2s ease-in-out infinite}
+@keyframes livepulse{
+  0%,100%{box-shadow:0 0 0 1px var(--live), 0 0 12px -3px var(--live)}
+  50%{box-shadow:0 0 0 1.5px var(--live), 0 0 20px 0 var(--live)}}
+@media (prefers-reduced-motion:reduce){
+  .gm.live{animation:none;box-shadow:0 0 0 1px var(--live)}}
 .tm{display:flex;align-items:center;gap:7px;padding:2px 0}
 .tm img{width:20px;height:20px;object-fit:contain;flex:none}
 .tm .ab{font-weight:600;font-size:13.5px}
@@ -255,8 +256,13 @@ tbody tr:first-child .pos{color:var(--gold)}
   border:0;border-bottom:1px solid var(--rule);border-radius:0;background:var(--panel)}
 .board.ticker .gm:last-child{border-bottom:0}
 .board.ticker .gm:hover{transform:none;box-shadow:none;background:var(--panel2)}
-.board.ticker .gm.live{border:0;border-bottom:1px solid var(--rule);background:var(--panel);animation:none;
-  box-shadow:inset 3px 0 0 var(--live)}
+.board.ticker .gm.live{border:0;border-bottom:1px solid var(--rule);background:var(--panel);
+  animation:livebar 2.2s ease-in-out infinite}
+@keyframes livebar{
+  0%,100%{box-shadow:inset 3px 0 0 var(--live), inset 0 0 22px -16px var(--live)}
+  50%{box-shadow:inset 5px 0 0 var(--live), inset 0 0 30px -10px var(--live)}}
+@media (prefers-reduced-motion:reduce){
+  .board.ticker .gm.live{animation:none;box-shadow:inset 3px 0 0 var(--live)}}
 .board.ticker .tm{display:contents}
 .board.ticker .tm.dim img,.board.ticker .tm.dim .ab,.board.ticker .tm.dim .pts{opacity:.45}
 .board.ticker .tm img{width:22px;height:22px}
@@ -389,6 +395,7 @@ ul.why b{color:var(--ink)}
   .board.ticker .tm img{width:19px;height:19px}
   .board.ticker .st{padding-left:8px;font-size:10px;gap:7px}
   .gm{padding:9px 10px}
+  .gm.live{border-color:var(--live)}          /* keep the live ring on phones */
   .tm .ab{font-size:12.5px}
   .tm .rec{display:none}
   #stTbl th:nth-child(4),#stTbl td:nth-child(4),
@@ -591,7 +598,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
   <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
-    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">lab-67 · 2026-10-12 02:43 UTC</div>
+    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">lab-70 · 2026-10-12 02:43 UTC</div>
     <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
@@ -739,7 +746,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
 </div>
 
 <script>
-const BUILD = "lab-67 (2026-10-12 02:43 UTC)";
+const BUILD = "lab-70 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -1304,7 +1311,8 @@ function renderSeason() {
 /* ---------- HEAD TO HEAD ---------- */
 function renderH2H() {
   if (!season || !season.players?.length) { $("h2hKpis").innerHTML = ""; $("h2hTbl").innerHTML = `<tbody><tr><td><div class="empty"><b>No season data yet</b>Publish a week first.</div></td></tr></tbody>`; return; }
-  const names = season.players.map(p => p.name);
+  const names = season.players.map(p => p.name)
+    .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
   [["h2hA", hl || names[0]], ["h2hB", names.find(n => n !== (hl || names[0])) || names[1]]].forEach(([id, dflt]) => {
     if ($(id).options.length !== names.length)
       $(id).innerHTML = names.map(n => `<option value="${esc(n)}">${esc(tc(n))}</option>`).join("");
@@ -1314,26 +1322,37 @@ function renderH2H() {
   const B = season.players.find(p => p.name === $("h2hB").value);
   if (!A || !B) return;
   const ws = season.weeks.map(w => w.week);
-  let aw = 0, bw = 0, tie = 0;
-  for (const w of ws) {
+  // Only weeks both of them entered can be compared. Season totals across
+  // different numbers of weeks aren't a like-for-like comparison.
+  const shared = ws.filter(w => A.byWeek[w] != null && B.byWeek[w] != null);
+  let aw = 0, bw = 0, tie = 0, aPts = 0, bPts = 0;
+  for (const w of shared) {
     const a = A.byWeek[w], b = B.byWeek[w];
-    if (a == null || b == null) continue;
+    aPts += a; bPts += b;
     if (a > b) aw++; else if (b > a) bw++; else tie++;
   }
+  const lead = aw > bw ? `${tc(A.name)} leads` : aw < bw ? `${tc(B.name)} leads` : "Level";
+  const gapName = aPts === bPts ? "" : tc(aPts > bPts ? A.name : B.name);
+  const sharedLabel = `${shared.length} shared week${shared.length === 1 ? "" : "s"}`;
+
   $("h2hKpis").innerHTML = [
-    ["Head to head", `${aw}\u2013${bw}${tie?`\u2013${tie}`:""}`, `${esc(tc(A.name))} leads`.replace("leads", aw>bw?"leads":aw<bw?"trails":"level")],
-    [`${tc(A.name)} total`, A.total, `${A.weeks} weeks`],
-    [`${tc(B.name)} total`, B.total, `${B.weeks} weeks`],
-    ["Gap", Math.abs(A.total - B.total), A.total === B.total ? "dead even" : `${esc(tc(A.total > B.total ? A.name : B.name))} ahead`],
-  ].map(([k,v,sub]) => `<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="note" style="font-size:11.5px">${sub}</div></div>`).join("");
+    ["Head to Head", `${aw}\u2013${bw}${tie ? `\u2013${tie}` : ""}`, `${lead} over ${sharedLabel}`],
+    [`${tc(A.name)}`, aPts, `in shared weeks · ${A.total} all season (${A.weeks} wks)`],
+    [`${tc(B.name)}`, bPts, `in shared weeks · ${B.total} all season (${B.weeks} wks)`],
+    ["Gap", Math.abs(aPts - bPts), aPts === bPts ? "dead even" : `${gapName} ahead in shared weeks`],
+  ].map(([k, v, sub]) => `<div class="kpi"><div class="k">${esc(k)}</div><div class="v">${v}</div>
+      <div class="note" style="font-size:11.5px">${sub}</div></div>`).join("");
 
   $("h2hTbl").innerHTML = `<thead><tr><th>Week</th><th class="n">${esc(tc(A.name))}</th><th class="n">${esc(tc(B.name))}</th><th>Edge</th></tr></thead><tbody>` +
     ws.map(w => {
       const a = A.byWeek[w], b = B.byWeek[w];
-      const edge = a == null || b == null ? '<span class="note">—</span>'
+      const edge = a == null || b == null
+        ? `<span class="note">not compared — ${esc(tc(a == null ? A.name : B.name))} sat out</span>`
         : a > b ? `<span class="pill ok">${esc(tc(A.name))}</span>`
         : b > a ? `<span class="pill ok">${esc(tc(B.name))}</span>` : '<span class="pill">Tied</span>';
-      return `<tr><td>Week ${w}</td><td class="n mono">${a ?? "·"}</td><td class="n mono">${b ?? "·"}</td><td>${edge}</td></tr>`;
+      const skipped = a == null || b == null;
+      return `<tr${skipped ? ' style="opacity:.55"' : ""}><td>Week ${w}</td>
+        <td class="n mono">${a ?? "—"}</td><td class="n mono">${b ?? "—"}</td><td>${edge}</td></tr>`;
     }).join("") + `</tbody>`;
 
 }
