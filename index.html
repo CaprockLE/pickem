@@ -20,6 +20,7 @@
   --ink:#0C1420; --ink2:#36414F; --muted:#6B7889;
   --brand:#0B6B57; --brand2:#E3F1EC; --hot:#B5460F; --hot2:#FBEBE1;
   --miss:#C0231F; --miss-bg:rgba(192,35,31,.10);
+  --tie-neutral:#1E2836;              /* ties read as near-black on a light card */
   --gold:#9A7318; --nav:#0C1420; --navink:#AEB9C7; --navink2:#FFFFFF;
   --r:12px; --sh:0 1px 2px rgba(12,20,32,.06), 0 4px 14px rgba(12,20,32,.05);
   box-sizing:border-box;
@@ -30,12 +31,14 @@
   --ink:#E9EEF5; --ink2:#C2CCD9; --muted:#8696A8;
   --brand:#39B28E; --brand2:#0E2A22; --hot:#E88A4D; --hot2:#2E1C0F;
   --miss:#FF5A52; --miss-bg:rgba(255,90,82,.13);
+  --tie-neutral:#8696A8;
   --gold:#D4AC54; --nav:#0A1019; --navink:#8696A8; --navink2:#FFFFFF; --sh:none;}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){
   --bg:#080C12; --panel:#101823; --panel2:#15202D; --rule:#1F2A38; 
   --rule2:#2B3A4B; --ink:#E9EEF5; --ink2:#C2CCD9; --muted:#8696A8;
   --brand:#39B28E; --brand2:#0E2A22; --hot:#E88A4D; --hot2:#2E1C0F;
   --miss:#FF5A52; --miss-bg:rgba(255,90,82,.13);
+  --tie-neutral:#8696A8;
   --gold:#D4AC54; --nav:#0A1019; --navink:#8696A8; --navink2:#FFFFFF; --sh:none;}}
 *,*::before,*::after{box-sizing:inherit}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;font-size:14.5px;line-height:1.55;-webkit-font-smoothing:antialiased}
@@ -135,7 +138,6 @@ main > div:not([hidden]){animation:viewIn .22s ease-out}
 /* collapsible manager sections */
 .card.foldable>.hd{cursor:pointer;user-select:none}
 .card.foldable>.hd:hover h2{opacity:.85}
-#previewBtn[hidden]{display:none}
 .card .chev{margin-left:auto;padding-left:12px;color:var(--muted);font-size:11px;transition:transform .18s ease;flex:none}
 .card>.hd .r+.chev{margin-left:12px}
 .card.folded .chev{transform:rotate(-90deg)}
@@ -228,14 +230,7 @@ tbody tr:first-child .pos{color:var(--gold)}
 .gm{background:var(--panel);padding:10px 12px;border:1px solid var(--rule);border-radius:11px;position:relative}
 /* Live game: a 2px accent in the leading team's colour, breathing gently.
    The border is the only signal — the scores stay the loudest thing. */
-.gm.live{border:2px solid var(--lead,var(--rule2));animation:breathe 5.5s cubic-bezier(.45,0,.55,1) infinite}
-@keyframes breathe{           /* in, hold, out, rest — like a slow breath */
-  0%   {box-shadow:0 0 0 0 transparent}
-  38%  {box-shadow:0 0 16px -3px var(--lead,var(--rule2))}
-  52%  {box-shadow:0 0 16px -3px var(--lead,var(--rule2))}
-  88%  {box-shadow:0 0 0 0 transparent}
-  100% {box-shadow:0 0 0 0 transparent}}
-@media (prefers-reduced-motion:reduce){.gm.live{animation:none}}
+.gm.live{border:2px solid var(--lead,var(--tie-neutral))}
 .tm{display:flex;align-items:center;gap:7px;padding:2px 0}
 .tm img{width:20px;height:20px;object-fit:contain;flex:none}
 .tm .ab{font-weight:600;font-size:13.5px}
@@ -262,8 +257,7 @@ tbody tr:first-child .pos{color:var(--gold)}
   align-items:center;column-gap:8px;padding:8px 14px;
   border:1px solid var(--rule);border-radius:9px;background:var(--panel)}
 .board.ticker .gm:hover{transform:none;box-shadow:none;background:var(--panel2)}
-.board.ticker .gm.live{border:2px solid var(--lead,var(--rule2));background:var(--panel);
-  animation:breathe 5.5s cubic-bezier(.45,0,.55,1) infinite}
+.board.ticker .gm.live{border:2px solid var(--lead,var(--tie-neutral));background:var(--panel)}
 .board.ticker .tm{display:contents}
 .board.ticker .tm.dim img,.board.ticker .tm.dim .ab,.board.ticker .tm.dim .pts{opacity:.45}
 .board.ticker .tm img{width:22px;height:22px}
@@ -450,7 +444,7 @@ ul.why b{color:var(--ink)}
   <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
-    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">build-102 · 2026-10-12 02:43 UTC</div>
+    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">build-103 · 2026-10-12 02:43 UTC</div>
     <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
@@ -479,7 +473,6 @@ ul.why b{color:var(--ink)}
       <div class="right"><select id="weekSel"></select><button id="shareBtn">Share Card</button><button id="refreshBtn">Refresh</button></div></div>
     <div class="kpis" id="weekKpis"></div>
     <div class="card"><div class="hd"><h2>Scoreboard</h2><div class="r"><button id="boardView" class="sm">Ticker</button>
-      <button id="previewBtn" class="sm" hidden title="Show what a live game looks like">Preview Live</button>
       <span class="note" id="updTag"></span></div></div>
       <div class="bd flush"><div class="board" id="board"></div></div></div>
     <div class="card" id="winCard" hidden><div class="hd"><h2>Week Winner</h2></div><div class="bd" id="winner"></div></div>
@@ -600,7 +593,7 @@ ul.why b{color:var(--ink)}
 </div>
 
 <script>
-const BUILD = "build-102 (2026-10-12 02:43 UTC)";
+const BUILD = "build-103 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -753,7 +746,7 @@ function vividness(c) {
 
 // bring a colour into a band where it actually shows on screen
 function liftColour(c, target) {
-  if (c.s < 0.12) return { h: c.h, s: 0, l: 0.74 };   // black / silver stay neutral
+  if (c.s < 0.12) return { h: c.h, s: 0, l: darkMode() ? 0.74 : 0.42 };  // greys stay grey
   const out = { h: c.h, s: Math.max(c.s, 0.5), l: Math.min(Math.max(c.l, target[0]), target[1]) };
   if (c.l < target[0]) out.l = target[0];
   if (c.l > target[1]) out.l = target[1];
@@ -788,8 +781,9 @@ function ringColours(g) {
   };
   const away = cand("away"), home = cand("home");
   if (!away.length && !home.length) return ["#22C55E", "#EF4444"];
-  if (!away.length) return [hslCss(liftColour(home[0].c, [0.42, 0.62])), "#EF4444"];
-  if (!home.length) return [hslCss(liftColour(away[0].c, [0.42, 0.62])), "#EF4444"];
+  const soloBand = darkMode() ? [0.48, 0.68] : [0.32, 0.46];
+  if (!away.length) return [hslCss(liftColour(home[0].c, soloBand)), "#EF4444"];
+  if (!home.length) return [hslCss(liftColour(away[0].c, soloBand)), "#EF4444"];
 
   // try every primary/alternate combination, keep the most distinguishable
   let best = null;
@@ -802,12 +796,13 @@ function ringColours(g) {
                 + (gap < 30 ? -0.8 : 0);              // two shades of one hue read as a single colour
     if (!best || score > best.score) best = { a, b, score, gap };
   }
-  let a = liftColour(best.a, [0.42, 0.62]);
-  let b = liftColour(best.b, [0.42, 0.62]);
+  const band = darkMode() ? [0.48, 0.68] : [0.32, 0.46];   // lighter on dark, deeper on light
+  let a = liftColour(best.a, band);
+  let b = liftColour(best.b, band);
   // same family after all (two navies, two reds): split them by brightness
   if (hueGap(a.h, b.h) < 25 && Math.abs(a.l - b.l) < 0.12) {
-    a = { ...a, l: 0.68, s: Math.max(a.s, 0.6) };
-    b = { ...b, l: 0.40, s: Math.max(b.s, 0.6) };
+    a = { ...a, l: darkMode() ? 0.70 : 0.50, s: Math.max(a.s, 0.65) };
+    b = { ...b, l: darkMode() ? 0.42 : 0.26, s: Math.max(b.s, 0.65) };
   }
   return [hslCss(a), hslCss(b)];
 }
@@ -896,7 +891,6 @@ let mePlayer = localStorage.getItem("pc.me") || "";
 let liveWeek = null;         // the week the league is actually in right now
 let liveFirstKick = null;    // its first kickoff — the import window closes here
 let boardMode = localStorage.getItem("pc.board") || "cards";
-let demoLive = 0;            // 0 off · 1 one game · 2 a full slate
 let picksOrder = localStorage.getItem("pc.picksOrder") || "az";
 const lastScores = new Map();            // game+team -> last score we drew
 const bumped = new Set();                // scores that just changed
@@ -921,10 +915,6 @@ async function verifyPass(candidate) {
 function applyRole() {
   const on = authed;
   ["mgrSec","tabImport","tabMoney"].forEach(id => $(id).hidden = !on);
-  if ($("previewBtn")) {
-    $("previewBtn").hidden = !on;
-    if (!on && demoLive) { demoLive = 0; if (pool) renderBoard(); }
-  }
   $("unlockBtn").textContent = on ? "Sign Out of Manager" : "Manager Sign-In";
   $("lockPill") && ($("lockPill").textContent = on ? "Unlocked" : "Locked",
                     $("lockPill").className = "pill " + (on ? "ok" : "no"));
@@ -1394,31 +1384,7 @@ function renderBoard() {
   if (!games().length) { $("board").innerHTML = '<div class="empty"><b>No games</b>Nothing scheduled for this week.</div>'; return; }
   bumped.clear();
   $("boardView").textContent = boardMode === "ticker" ? "Cards" : "Ticker";
-  $("previewBtn").textContent = demoLive === 0 ? "Preview Live"
-    : demoLive === 1 ? "Preview Slate" : "Stop Preview";
-  const gs0 = games();
-  const demoIdx = gs0.length - 1;                      // last kickoff = Monday night
-  // a believable Sunday afternoon: several games running at different points
-  const slate = [
-    { period: 2, clock: "7:21", down: "2nd & 6", side: "away" },
-    { period: 3, clock: "11:04", down: "1st & 10", side: "home", rz: false },
-    { period: 4, clock: "2:38", down: "3rd & 4", side: "away", rz: true },
-    { period: 2, clock: "0:46", down: "1st & Goal", side: "home", rz: true },
-    { period: 3, clock: "5:52", down: "2nd & 11", side: "away" },
-  ];
-  const liveSet = demoLive === 2
-    ? new Set(gs0.slice(0, Math.min(5, gs0.length)).map(g => g.id))
-    : demoLive === 1 ? new Set([gs0[demoIdx]?.id]) : new Set();
-  let slateAt = 0;
-  const list = liveSet.size
-    ? gs0.map(g => {
-        if (!liveSet.has(g.id)) return g;
-        const cfg = demoLive === 2 ? slate[slateAt++ % slate.length] : slate[0];
-        return { ...g, state: "in", final: false, period: cfg.period, clock: cfg.clock,
-                 possession: cfg.side === "home" ? g.home : g.away, redZone: !!cfg.rz,
-                 downDistance: cfg.down, _demo: true };
-      })
-    : gs0;
+  const list = games();
   $("board").innerHTML = list.map(g => {
     const w = winnerOf(g);
     const won = w && w !== "TIE";
@@ -1442,7 +1408,7 @@ function renderBoard() {
            &#9679; ${esc(g.possession)}</span>`
       : "";
     const st = g.state === "in"
-      ? `<span class="l"><span class="dot"></span>${g._demo ? "PREVIEW · " : ""}Q${g.period} ${esc(g.clock)}</span>${possText}${liveOdds}`
+      ? `<span class="l"><span class="dot"></span>Q${g.period} ${esc(g.clock)}</span>${possText}${liveOdds}`
       : `<span>${g.final ? (w === "TIE" ? "Final · Tie · " : "Final · ") + shortSlot(g.kickoff) : esc(g.detail)}</span>`;
     const flashed = bumped.has(g.id + ":" + g.away) || bumped.has(g.id + ":" + g.home);
     const ringStyle = g.state === "in"
@@ -2401,7 +2367,6 @@ $("h2hA").onchange = renderH2H; $("h2hB").onchange = renderH2H;
 $("sortSel").onchange = e => { sortBy = e.target.value; localStorage.setItem("pc.sort", sortBy); renderSeason(); };
 $("hlSel").onchange = e => { hl = e.target.value; localStorage.setItem("pc.hl", hl); renderSeason(); render(); };
 $("buyin").oninput = e => { buyin = Number(e.target.value||0); localStorage.setItem("pc.buyin", buyin); render(); };
-$("previewBtn").onclick = () => { demoLive = (demoLive + 1) % 3; renderBoard(); };
 $("boardView").onclick = () => {
   boardMode = boardMode === "ticker" ? "cards" : "ticker";
   localStorage.setItem("pc.board", boardMode); renderBoard();
