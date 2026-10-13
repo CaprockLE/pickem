@@ -240,13 +240,14 @@ tbody tr:first-child .pos{color:var(--gold)}
     var(--c2,#EF4444) 26% 49%,
     var(--c1,#22C55E) 51% 74%,
     var(--c2,#EF4444) 76% 100%);
-  background-size:200% 100%;
+  background-size:160px 100%;
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
   -webkit-mask-composite:xor;
           mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
           mask-composite:exclude;
-  animation:ringmove 6s linear infinite}
-@keyframes ringmove{to{background-position:200% 0}}
+  animation:ringmove 4.5s linear infinite;
+  animation-delay:var(--ringdelay,0s)}
+@keyframes ringmove{to{background-position:160px 0}}
 /* any browser without mask-composite still gets a moving colour cycle */
 @supports not (mask-composite: exclude){
   .gm.live::before{display:none}
@@ -612,7 +613,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
   <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
-    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">lab-97 · 2026-10-12 02:43 UTC</div>
+    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">lab-98 · 2026-10-12 02:43 UTC</div>
     <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
@@ -762,7 +763,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
 </div>
 
 <script>
-const BUILD = "lab-97 (2026-10-12 02:43 UTC)";
+const BUILD = "lab-98 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -1608,7 +1609,13 @@ function renderBoard() {
       : `<span>${g.final ? (w === "TIE" ? "Final · Tie · " : "Final · ") + shortSlot(g.kickoff) : esc(g.detail)}</span>`;
     const flashed = bumped.has(g.id + ":" + g.away) || bumped.has(g.id + ":" + g.home);
     const ringStyle = g.state === "in" && (g.awayColor || g.homeColor)
-      ? (() => { const [c1, c2] = ringColours(g); return ` style="--c1:${esc(c1)};--c2:${esc(c2)}"`; })()
+      ? (() => {
+          const [c1, c2] = ringColours(g);
+          // offset each game's animation so simultaneous games don't move as one
+          let h = 0; for (const ch of String(g.id)) h = (h * 31 + ch.charCodeAt(0)) % 1000;
+          const delay = -(h % 45) / 10;                 // 0 to -4.5s, one full cycle
+          return ` style="--c1:${esc(c1)};--c2:${esc(c2)};--ringdelay:${delay}s"`;
+        })()
       : "";
     return `<div class="gm${g.state==="in"?" live":""}${flashed?" flash":""}"${ringStyle}>${tm(g.away,logoFor(g,"away"),g.awayScore)}${tm(g.home,logoFor(g,"home"),g.homeScore)}
       <div class="st">${st}${!g.final && g.weather ? `<span>${esc(g.weather.text)} ${g.weather.temp}°</span>`:""}</div></div>`;
