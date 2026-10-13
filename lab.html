@@ -604,7 +604,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
   <button class="tab" data-v="import" id="tabImport" hidden>Import Sheets</button>
   <button class="tab" data-v="money" id="tabMoney" hidden>Payments</button>
   <div class="foot"><div id="navFoot">—</div>
-    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">lab-76 · 2026-10-12 02:43 UTC</div>
+    <div id="buildTag" style="margin-top:6px;font-size:10.5px;opacity:.65">lab-78 · 2026-10-12 02:43 UTC</div>
     <button id="themeBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Light / Dark</button>
     <button id="unlockBtn" style="margin-top:8px;width:100%;background:transparent;border-color:rgba(255,255,255,.14);color:#8696A8;font-size:12.5px;padding:6px 8px">Manager Sign-In</button></div>
 </nav>
@@ -632,7 +632,9 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
     <div class="head"><div><h1 id="weekTitle">Week</h1><p class="sub" id="weekSub">Loading…</p></div>
       <div class="right"><select id="weekSel"></select><button id="shareBtn">Share Card</button><button id="refreshBtn">Refresh</button></div></div>
     <div class="kpis" id="weekKpis"></div>
-    <div class="card"><div class="hd"><h2>Scoreboard</h2><div class="r"><button id="boardView" class="sm">Ticker</button><span class="note" id="updTag"></span></div></div>
+    <div class="card"><div class="hd"><h2>Scoreboard</h2><div class="r"><button id="boardView" class="sm">Ticker</button>
+      <button id="previewBtn" class="sm" title="Show what a live game looks like">Preview Live</button>
+      <span class="note" id="updTag"></span></div></div>
       <div class="bd flush"><div class="board" id="board"></div></div></div>
     <div class="card" id="winCard" hidden><div class="hd"><h2>Week Winner</h2></div><div class="bd" id="winner"></div></div>
     <div class="card" id="scenarioCard" hidden><div class="hd"><h2>What's Still in Play</h2>
@@ -752,7 +754,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
 </div>
 
 <script>
-const BUILD = "lab-76 (2026-10-12 02:43 UTC)";
+const BUILD = "lab-78 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -949,6 +951,7 @@ let mePlayer = localStorage.getItem("pc.me") || "";
 let liveWeek = null;         // the week the league is actually in right now
 let liveFirstKick = null;    // its first kickoff — the import window closes here
 let boardMode = localStorage.getItem("pc.board") || "cards";
+let demoLive = false;        // renders the first game as if it were in progress
 let picksOrder = localStorage.getItem("pc.picksOrder") || "az";
 const lastScores = new Map();            // game+team -> last score we drew
 const bumped = new Set();                // scores that just changed
@@ -1441,7 +1444,15 @@ function renderBoard() {
   $("boardView").textContent = boardMode === "ticker" ? "Cards" : "Ticker";
   if (!games().length) { $("board").innerHTML = '<div class="empty"><b>No games</b>Nothing scheduled for this week.</div>'; return; }
   bumped.clear();
-  $("board").innerHTML = games().map(g => {
+  $("boardView").textContent = boardMode === "ticker" ? "Cards" : "Ticker";
+  $("previewBtn").textContent = demoLive ? "Stop Preview" : "Preview Live";
+  const list = demoLive && games().length
+    ? games().map((g, i) => i === 0
+        ? { ...g, state: "in", final: false, period: 2, clock: "7:21",
+            possession: g.away, redZone: false, downDistance: "2nd & 6", _demo: true }
+        : g)
+    : games();
+  $("board").innerHTML = list.map(g => {
     const w = winnerOf(g);
     const tm = (ab, logo, pts) => {
       const key = g.id + ":" + ab, changed = lastScores.has(key) && lastScores.get(key) !== pts;
@@ -1463,7 +1474,7 @@ function renderBoard() {
            &#9679; ${esc(g.possession)}${g.redZone ? " red zone" : ""}</span>`
       : "";
     const st = g.state === "in"
-      ? `<span class="l"><span class="dot"></span>Q${g.period} ${esc(g.clock)}</span>${possText}${liveOdds}`
+      ? `<span class="l"><span class="dot"></span>${g._demo ? "PREVIEW · " : ""}Q${g.period} ${esc(g.clock)}</span>${possText}${liveOdds}`
       : `<span>${g.final ? (w === "TIE" ? "Final · Tie · " : "Final · ") + shortSlot(g.kickoff) : esc(g.detail)}</span>`;
     const flashed = bumped.has(g.id + ":" + g.away) || bumped.has(g.id + ":" + g.home);
     const ringStyle = g.state === "in" && (g.awayColor || g.homeColor)
@@ -1773,7 +1784,20 @@ function renderPicks(rows) {
   if (!rows.length || !gs.length) { $("pgTbl").innerHTML = ""; $("picksSub").textContent = "Nothing published for this week yet."; return; }
   const q = ($("picksFilter").value || "").trim().toLowerCase();
   let shown = q ? rows.filter(r => r.e.name.toLowerCase().includes(q)) : rows.slice();
-  if (picksOrder === "az") shown.sort((a, b) => a.e.name.localeCompare(b.e.name, undefined, { sensitivity: "base" }));
+  if (picksOrder === "az") {
+    shown.sort((a, b) => a.e.name.localeCompare(b.e.name, undefined, { sensitivity: "base" }));
+  } else {
+    // By rank: correct picks, then tiebreaker distance once the week is settled
+    const o = weekOutcome(rows);
+    if (o.complete && o.actual != null) {
+      const dist = r => Math.abs((r.e.tiebreaker ?? 9999) - o.actual);
+      shown.sort((a, b) => b.s.correct - a.s.correct || dist(a) - dist(b) ||
+                           a.e.name.localeCompare(b.e.name, undefined, { sensitivity: "base" }));
+    } else {
+      shown.sort((a, b) => b.s.correct - a.s.correct ||
+                           a.e.name.localeCompare(b.e.name, undefined, { sensitivity: "base" }));
+    }
+  }
   $("picksOrder").value = picksOrder;
   $("picksSub").textContent = `${shown.length} of ${rows.length} Entries · Week ${week}`;
   const split = g => {
@@ -2397,6 +2421,7 @@ $("h2hA").onchange = renderH2H; $("h2hB").onchange = renderH2H;
 $("sortSel").onchange = e => { sortBy = e.target.value; localStorage.setItem("pc.sort", sortBy); renderSeason(); };
 $("hlSel").onchange = e => { hl = e.target.value; localStorage.setItem("pc.hl", hl); renderSeason(); render(); };
 $("buyin").oninput = e => { buyin = Number(e.target.value||0); localStorage.setItem("pc.buyin", buyin); render(); };
+$("previewBtn").onclick = () => { demoLive = !demoLive; renderBoard(); };
 $("boardView").onclick = () => {
   boardMode = boardMode === "ticker" ? "cards" : "ticker";
   localStorage.setItem("pc.board", boardMode); renderBoard();
