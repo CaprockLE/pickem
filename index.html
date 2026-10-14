@@ -461,6 +461,7 @@ ul.why b{color:var(--ink)}
           <option value="total">Rank by Total</option>
           <option value="avg">Rank by Average</option>
           <option value="wins">Rank by Weeks Won</option>
+          <option value="power">Rank by Power</option>
         </select>
         <select id="hlSel" title="Highlight a row"><option value="">Highlight…</option></select></div></div>
     <div class="kpis" id="seasonKpis"></div>
@@ -597,7 +598,7 @@ ul.why b{color:var(--ink)}
 </div>
 
 <script>
-const BUILD = "build-117 (2026-10-12 02:43 UTC)";
+const BUILD = "build-120 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -1237,13 +1238,16 @@ function renderSeason() {
   $("sortSel").value = sortBy;
 
   const avg = p => p.total / Math.max(p.weeks, 1);
+  const power = p => p.total + 3 * p.wins;            // each weekly win worth three picks
   const rankKey = (a, b) =>
     sortBy === "avg" ? avg(b) - avg(a) || b.total - a.total
     : sortBy === "wins" ? b.wins - a.wins || avg(b) - avg(a)
+    : sortBy === "power" ? power(b) - power(a) || avg(b) - avg(a)
     : b.total - a.total || avg(b) - avg(a);
   const players = [...season.players].sort(rankKey);
   $("seasonNote").textContent = sortBy === "avg" ? "Average is per week entered"
-    : sortBy === "wins" ? "Ranked by weeks won" : "Ranked by total correct";
+    : sortBy === "wins" ? "Ranked by weeks won"
+    : sortBy === "power" ? "Power = correct picks + 3 per week won" : "Ranked by total correct";
   const ws = season.weeks.map(w => w.week);
   $("seasonTbl").innerHTML =
     `<thead><tr><th></th><th>Player</th><th class="n">Total</th><th class="n">Avg</th><th class="n">Weeks</th><th class="n">Won</th>` +
