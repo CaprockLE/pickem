@@ -111,8 +111,11 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
 .vs .stack{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;min-width:78px}
 .vs .side .ab{font-family:Teko;font-weight:700;font-size:25px;letter-spacing:.06em;line-height:1;
   color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.65)}
-.vs .side .wpv{font-family:Teko;font-weight:600;font-size:19px;line-height:1;color:#fff;
-  background:rgba(0,0,0,.55);padding:1px 8px;letter-spacing:.04em}
+.vs .side .wpv{font-family:Teko;font-weight:600;font-size:16px;line-height:1;color:#fff;margin-top:5px;
+  letter-spacing:.04em;text-shadow:0 1px 4px rgba(0,0,0,.85)}
+.vs .wplab{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);z-index:4;
+  font-weight:700;font-size:9.5px;letter-spacing:.2em;color:#fff;opacity:.85;
+  text-shadow:0 1px 4px rgba(0,0,0,.85);white-space:nowrap}
 .vs .side .big{position:absolute;top:8px;font-family:Teko;font-weight:700;font-size:48px;color:#fff;
   text-shadow:0 3px 14px rgba(0,0,0,.7)}
 .vs .side.a .big{right:30%}.vs .side.h .big{left:30%}
@@ -122,11 +125,11 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
   text-shadow:0 0 14px rgba(255,45,85,.8),0 2px 0 #000}
 .vs .mid .st{font-weight:700;font-size:11.5px;letter-spacing:.16em;color:#fff;background:#000;
   padding:3px 10px;margin-top:-2px;display:inline-block;box-shadow:0 2px 10px rgba(0,0,0,.5)}
-.vs .mid .st.live{color:#FF5A7A}
+.vs .mid .st.live{color:#fff}
 .vs .tug{position:absolute;left:0;right:0;bottom:0;height:6px;display:flex;z-index:4}
 .vs .tug i{display:block}
 .vs.live{box-shadow:0 0 0 2px var(--hot),0 0 30px rgba(255,45,85,.35)}
-.vs .ball{position:absolute;top:-2px;right:-6px;z-index:4;font-size:17px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.8))}
+.vs .ball{font-size:12px;margin-left:4px;vertical-align:2px;filter:drop-shadow(0 1px 3px rgba(0,0,0,.8))}
 .vs .dd{display:inline-block;font-weight:700;font-size:10.5px;letter-spacing:.12em;color:#fff;background:#000;
   padding:1px 8px;margin-top:3px}
 
@@ -198,14 +201,13 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
 .grid th{position:sticky;top:0;z-index:3;background:rgba(8,12,19,.97);padding:6px 2px}
 .grid th img{width:20px;height:20px;object-fit:contain;display:block;margin:0 auto}
 .grid th .at{display:block;font-size:9px;letter-spacing:.1em;color:var(--muted);line-height:1.4}
-/* the summary block: pinned on the right, its own panel, reads as part of the table */
-.grid th.sum,.grid td.sum{position:sticky;z-index:2;background:#111A28;text-align:center;
-  font-family:Teko;font-weight:700;border-radius:0}
-.grid th.sum{z-index:4;font-family:Rajdhani;font-size:10px;letter-spacing:.18em;color:var(--muted);
-  vertical-align:bottom;padding:6px 8px 7px;line-height:1.2}
-.grid .sum.tb{right:64px;min-width:68px;font-size:22px;color:var(--ink2);
-  box-shadow:inset 1px 0 0 rgba(255,255,255,.12)}
-.grid .sum.pts{right:0;min-width:64px;font-size:28px;color:#fff;background:#152238}
+/* TB and PTS sit in the same cell style as the picks, just narrow */
+.grid th.sum{font-family:Rajdhani;font-weight:700;font-size:11px;letter-spacing:.14em;color:var(--muted);
+  vertical-align:middle;min-width:36px}
+.grid td.sum{background:rgba(255,255,255,.05);font-family:Teko;font-weight:600;font-size:19px;
+  min-width:36px;color:var(--ink2);border-radius:5px}
+.grid .sum.tb{box-shadow:inset 1px 0 0 rgba(255,255,255,.14)}
+.grid td.sum.pts{color:#fff;font-weight:700}
 .grid td.sum.pts.lead{color:var(--lime)}
 .grid th.who,.grid td.who{position:sticky;left:0;z-index:2;background:rgba(8,12,19,.97);text-align:left;
   padding-left:12px;min-width:112px;font-family:Teko;font-size:21px;letter-spacing:.04em;text-transform:uppercase;cursor:pointer}
@@ -251,12 +253,15 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
 .lrow.t2 .lr{color:var(--silv2)}.lrow.t3 .lr{color:var(--brz2)}
 .lname{font-family:Teko;font-weight:600;font-size:28px;letter-spacing:.04em;text-transform:uppercase;line-height:1;
   display:flex;align-items:center;gap:10px}
-.pips{display:flex;gap:3px;margin:7px 0 5px;flex-wrap:wrap}
-.pip{width:14px;height:8px;display:block;background:rgba(255,255,255,.12)}
-.pip.hit{background:var(--lime);box-shadow:0 0 8px rgba(182,255,59,.45)}
-.pip.miss{background:var(--hot)}
-.pip.open{background:rgba(255,255,255,.28)}
-.pip.none{background:transparent;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+.pips{display:flex;gap:4px;margin:8px 0 6px;flex-wrap:wrap}
+.lp{width:26px;height:26px;display:grid;place-items:center;border-radius:5px;background:rgba(255,255,255,.06);
+  font-size:9px;font-weight:700}
+.lp img{width:19px;height:19px;object-fit:contain}
+.lp.hit{background:rgba(182,255,59,.16);box-shadow:inset 0 -3px 0 var(--lime)}
+.lp.miss{background:rgba(255,45,85,.10);box-shadow:inset 0 -3px 0 var(--hot)}
+.lp.miss img{opacity:.6}
+.lp.open{box-shadow:inset 0 -3px 0 rgba(255,255,255,.22)}
+.lp.none{background:transparent;box-shadow:inset 0 0 0 1px rgba(255,255,255,.15)}
 .lmeta{font-weight:600;font-size:11px;letter-spacing:.14em;color:var(--muted)}
 .lwin,.lpts{text-align:right;line-height:.9}
 .lwin b,.lpts b{font-family:Teko;font-weight:700;display:block}
@@ -280,7 +285,7 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
 .sc .odds{font-family:Teko;font-size:28px;text-align:right;color:var(--lime)}
 @media (max-width:640px){
   .lrow{grid-template-columns:38px 1fr 62px 52px;gap:9px;padding:10px 12px}
-  .lr{font-size:30px}.lname{font-size:22px}.pip{width:10px}
+  .lr{font-size:30px}.lname{font-size:22px}.lp{width:21px;height:21px}.lp img{width:15px;height:15px}
   .lwin b{font-size:26px}.lpts b{font-size:34px}
   .sc{grid-template-columns:1fr;gap:4px}.sc .odds{text-align:left}
 }
@@ -540,9 +545,8 @@ function drawVs(){
       return `<div class="side ${cls}${w&&w!=="TIE"&&w!==ab?" lost":""}"
         style="background:linear-gradient(${cls==="a"?"100deg":"260deg"},${col} 0%,${col}CC 46%,#0B111B 100%)">
         <div class="stack">
-          ${live&&g.possession===ab?'<span class="ball">🏈</span>':""}
           ${logo?`<img src="${esc(logo)}" alt="">`:""}
-          <span class="ab">${esc(ab)}</span>
+          <span class="ab">${esc(ab)}${live&&g.possession===ab?'<span class="ball">🏈</span>':""}</span>
           ${live?`<span class="wpv">${pct}%</span>`:""}
         </div>
         ${g.state==="pre"?"":`<span class="big">${sc}</span>`}</div>`;};
@@ -552,6 +556,7 @@ function drawVs(){
     return `<div class="vs${live?" live":""}" data-g="${esc(g.id)}">
       ${side("a",g.away,g.awayLogo,g.awayScore,ca)}${side("h",g.home,g.homeLogo,g.homeScore,ch)}
       <div class="mid"><div class="v">VS</div>${st}${live&&g.downDistance?`<div><span class="dd">${esc(g.downDistance)}</span></div>`:""}</div>
+      ${live?'<div class="wplab">WIN PROB</div>':""}
       <div class="tug"><i style="width:${sp.a/sp.tot*100}%;background:${ca}"></i>
         <i style="width:${sp.h/sp.tot*100}%;background:${ch}"></i></div></div>`;
   }).join("");
@@ -653,7 +658,9 @@ function drawLadder(){
         : out ? '<span class="st out">OUT</span>' : r.s.c===top ? '<span class="st lead">LEAD</span>' : "";
       const pips=gs.map(g=>{const pk=r.e.picks?.[g.id], w=winnerOf(g);
         const c=!pk?"none":!w?"open":w==="TIE"?"miss":pk===w?"hit":"miss";
-        return `<i class="pip ${c}" title="${esc(g.away)} at ${esc(g.home)}: ${esc(pk||"no pick")}"></i>`;}).join("");
+        const lg=!pk?"":pk===g.home?g.homeLogo:g.awayLogo;
+        return `<span class="lp ${c}" title="${esc(g.away)} at ${esc(g.home)}: ${esc(pk||"no pick")}">${
+          lg?`<img src="${esc(lg)}" alt="${esc(pk)}">`:esc(pk||"")}</span>`;}).join("");
       const tier=i===0?"t1":i===1?"t2":i===2?"t3":"";
       const pct=done?"":p>=.995?"100":p<.0005?"":(p*100).toFixed(p<.095?1:0);
       return `<div class="lrow ${tier}${out?" out":""}${isChamp?" champ":""}" data-p="${esc(r.e.name)}">
@@ -707,7 +714,7 @@ function drawGrid(){
     gs.map(g=>`<th>${g.awayLogo?`<img src="${esc(g.awayLogo)}" alt="${esc(g.away)}">`:esc(g.away)}
       <span class="at">at</span>
       ${g.homeLogo?`<img src="${esc(g.homeLogo)}" alt="${esc(g.home)}">`:esc(g.home)}</th>`).join("")+
-    `<th class="sum tb">TIE<br>BREAKER</th><th class="sum pts">PTS</th></tr></thead><tbody>`+
+    `<th class="sum tb">TB</th><th class="sum pts">PTS</th></tr></thead><tbody>`+
     rows.map(r=>`<tr><td class="who" data-p="${esc(r.e.name)}">${esc(r.e.name)}</td>`+
       gs.map(g=>{const p=r.e.picks?.[g.id],w=winnerOf(g);
         if(!p)return`<td class="pend"></td>`;
