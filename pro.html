@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>PICK'EM ULTIMATE</title>
 <meta name="theme-color" content="#06080D">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -80,6 +81,7 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
   letter-spacing:.06em;color:var(--muted);padding:2px 16px 0;position:relative;transition:.15s}
 .tab:hover{color:#fff}
 .tab.on{color:#fff}
+.tab.mlink{display:none}
 .tab.on::after{content:"";position:absolute;left:12px;right:12px;bottom:-4px;height:3px;
   background:linear-gradient(90deg,var(--hot),var(--hot2));box-shadow:0 0 14px var(--hot)}
 
@@ -133,7 +135,9 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
 .vs .tug{position:absolute;left:0;right:0;bottom:0;height:6px;display:flex;z-index:4}
 .vs .tug i{display:block}
 .vs.live{box-shadow:0 0 0 2px var(--hot),0 0 30px rgba(255,45,85,.35)}
-.vs .ball{font-size:12px;margin-left:4px;vertical-align:2px;filter:drop-shadow(0 1px 3px rgba(0,0,0,.8))}
+.vs .side .ab{position:relative}
+.vs .ball{position:absolute;left:100%;top:50%;transform:translateY(-55%);margin-left:4px;font-size:12px;
+  filter:drop-shadow(0 1px 3px rgba(0,0,0,.8))}
 .vs .dd{display:inline-block;font-weight:700;font-size:13.5px;letter-spacing:.12em;color:#fff;text-shadow:0 2px 6px #000,0 0 2px #000,0 0 1px #000}
 
 /* ===== collectible cards ===== */
@@ -294,23 +298,117 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
 .sc .then b{font-family:Teko;font-size:22px;font-weight:600;letter-spacing:.04em;color:#fff}
 .sc .note{display:block;font-size:10.5px;letter-spacing:.16em;color:var(--muted);margin-top:2px}
 .sc .odds{font-family:Teko;font-size:28px;text-align:right;color:var(--lime)}
-@media (max-width:640px){
-  .lrow{grid-template-columns:38px 1fr 62px 52px;gap:9px;padding:10px 12px}
-  .lr{font-size:30px}.lname{font-size:22px}.lp{width:28px;height:28px}.lp img{width:21px;height:21px}
-  .lwin b{font-size:26px}.lpts b{font-size:34px}
-  .sc{grid-template-columns:1fr;gap:4px}.sc .odds{text-align:left}
-}
 .modesw{display:inline-flex;margin-left:14px}
 .modesw button{cursor:pointer;border:1px solid rgba(255,255,255,.18);background:transparent;color:var(--muted);
   font-family:Teko;font-size:18px;letter-spacing:.08em;padding:2px 12px 0}
 .modesw button+button{border-left:0}
 .modesw button.on{background:linear-gradient(90deg,var(--hot),var(--hot2));color:#0A0207;border-color:transparent}
 .empty{padding:50px 20px;text-align:center;font-family:Teko;font-size:28px;letter-spacing:.1em;color:var(--muted)}
-@media (max-width:640px){
-  .tab{font-size:21px;padding:2px 9px 0}
-  .vsgrid{grid-template-columns:1fr}
-  .deck{grid-template-columns:repeat(2,1fr);gap:12px}
-  .card .ovr{font-size:46px}.card .nm{font-size:24px}  .rung{grid-template-columns:40px 1fr 54px 52px;gap:8px}
+/* ================= PHONE ================= */
+html,body{max-width:100%;overflow-x:hidden}
+@media (max-width:700px){
+  /* nothing on the page may be wider than the screen; wide tables scroll inside themselves */
+  .screen{padding:14px 10px 70px}
+  .screen *{min-width:0}
+
+  /* HUD: brand and week on one line, the rest tucked away */
+  .hud{padding:8px 10px calc(8px + env(safe-area-inset-top,0px))}
+  .hud .row{gap:8px;flex-wrap:nowrap}
+  .logo{font-size:24px;white-space:nowrap}
+  .coins{gap:6px;flex-wrap:nowrap;margin-left:auto}
+  .coins .coin{display:none}
+  .coins select{font-size:12px;padding:5px 8px}
+
+  /* tabs become a swipeable strip; the controller bumpers are a desktop thing */
+  .tabs{overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap;margin-top:6px;gap:0;
+    -webkit-mask-image:linear-gradient(90deg,#000 88%,transparent)}
+  .tabs::-webkit-scrollbar{display:none}
+  .bump{display:none}
+  .tab.mlink{display:inline-block;color:var(--muted);opacity:.8}
+  .tab{font-size:20px;padding:2px 11px 0;white-space:nowrap;flex:none}
+
+  /* section headers wrap instead of pushing sideways */
+  .banner{flex-wrap:wrap;gap:6px 10px;margin-bottom:12px}
+  .banner .tag{font-size:17px;padding:3px 13px 0}
+  .banner .ttl{font-size:26px}
+  .banner .sub{margin-left:0;flex-basis:100%;font-size:10.5px}
+  .modesw{margin-left:0}
+
+  /* matchups: one per row, everything scaled to fit a phone */
+  .vsgrid{grid-template-columns:1fr;gap:10px}
+  .vs{height:138px;clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)}
+  .vs .side.a{padding-left:14px}.vs .side.h{padding-right:14px}
+  .vs .stack{min-width:62px;margin-top:-12px}
+  .vs .disc img{width:44px;height:44px}
+  .vs .side .ab{font-size:19px}
+  .vs .side .big{font-size:32px}
+  .vs .side.a .big{right:calc(13.8% + 18px)}.vs .side.h .big{left:calc(13.8% + 18px)}
+  .vs .mid .v{font-size:18px}
+  .vs .st{font-size:12.5px}.vs .dd{font-size:12px}
+  .vs .clk{top:9px}
+  .vs .side .wpv{width:62px;font-size:15px;bottom:11px}
+  .vs .side.a .wpv{left:14px}.vs .side.h .wpv{right:14px}
+  .vs .wplab{font-size:9px;bottom:13px}
+  .vs .ddrow{bottom:30px}
+
+  /* cards: two across, text scaled down so nothing collides */
+  .deck{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .face{padding:10px 10px 9px}
+  .card .ovr{font-size:40px}
+  .card .pos{font-size:11px}
+  .card .tier{font-size:8.5px;top:12px;right:10px;padding:1px 5px}
+  .card .nm{font-size:21px;top:36%}
+  .card .line{top:calc(36% + 24px)}
+  .card .stats{left:8px;right:8px;bottom:9px;gap:4px}
+  .card .stats b{font-size:18px}
+  .card .stats span{font-size:8.5px;letter-spacing:.1em}
+  .card .back h4{font-size:20px}
+  .card .back .wk{grid-template-columns:28px 1fr 22px;font-size:11px}
+
+  /* ladder: rank on the left, picks get the full width, numbers on the name line */
+  .lrow{grid-template-columns:30px 1fr auto;grid-template-areas:"r main pts" "r main win";
+    gap:2px 10px;padding:10px 12px 10px 10px;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%)}
+  .lr{grid-area:r;font-size:26px;align-self:center}
+  .lmain{grid-area:main}
+  .lpts{grid-area:pts;align-self:start}
+  .lwin{grid-area:win;align-self:end}
+  .lname{font-size:21px;flex-wrap:wrap;gap:6px}
+  .lp{width:27px;height:27px}.lp img{width:20px;height:20px}
+  .pips{gap:3px}
+  .lpts b{font-size:30px}.lwin b{font-size:20px}.lwin b small{font-size:12px}
+  .lmeta{font-size:10px}
+
+  /* scenarios stack */
+  .sc{grid-template-columns:1fr auto;gap:4px 10px;padding:9px 12px}
+  .sc .if{grid-column:1/-1}
+  .sc .then b{font-size:19px}
+  .sc .odds{font-size:24px}
+
+  /* season ladder: keep the columns that matter */
+  .rung.wide,.ladhead{grid-template-columns:30px 1fr 52px 40px;gap:8px;padding-left:10px;padding-right:10px}
+  .rung.wide>:nth-child(5),.ladhead>:nth-child(5){display:none}
+  .rung.wide>:nth-child(4),.ladhead>:nth-child(4){display:none}
+  .rung .r{font-size:24px}.rung .n{font-size:20px}.rung .v{font-size:26px}.rung .c{font-size:20px}
+
+  /* all picks: compact cells, scrolls inside its own box */
+  .grid{max-height:72vh;margin:0 -2px}
+  .grid table{border-spacing:3px}
+  .grid td{height:32px;min-width:32px}
+  .grid td img,.grid th img{width:22px;height:22px}
+  .grid th.who,.grid td.who{min-width:76px;max-width:92px;font-size:16px;padding-left:7px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .grid td.sum{font-size:18px;min-width:30px}
+
+  /* drawer takes the whole screen */
+  #dock{width:100%;border-left:0;border-top:3px solid var(--hot)}
+  .dnames{font-size:18px}
+}
+@media (max-width:380px){
+  .logo{font-size:21px}
+  .vs .disc img{width:38px;height:38px}
+  .vs .side .big{font-size:28px}
+  .card .nm{font-size:18px}
+  .lp{width:24px;height:24px}.lp img{width:18px;height:18px}
 }
 @media (prefers-reduced-motion:reduce){.speed,#gate .press{animation:none}.pane.on{animation:none}}
 </style>
@@ -348,6 +446,8 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
       <button class="tab" data-t="grid">All Picks</button>
       <button class="tab" data-t="season">Season</button>
       <button class="bump" id="rb">RB</button>
+      <a class="tab mlink" href="/?v=import" target="_blank" style="text-decoration:none">Import ↗</a>
+      <a class="tab mlink" href="/?v=money" target="_blank" style="text-decoration:none">Payments ↗</a>
       <button class="bump" id="demo" style="margin-left:auto;font-size:15px">SIM LIVE</button>
     </div>
   </div>
@@ -762,7 +862,8 @@ function drawScenarios(A){
   box.innerHTML=`<div class="banner" style="margin-top:22px"><span class="tag">STILL IN PLAY</span>
       <span class="ttl">${A.open.length} game${A.open.length>1?"s":""} left</span></div>
     <div class="scens">`+A.combos.slice().sort((a,b)=>b.p-a.p).map(c=>{
-      const cond=A.open.map(g=>name(g,c.picks[g.id])).join(" + ");
+      const teams=A.open.map(g=>name(g,c.picks[g.id]));
+      const cond=teams.join(" + ")+(teams.length>1?" WIN":" WINS");
       const who=c.top.length===1?`<b>${esc(up(c.top[0].name))}</b> WINS AT ${c.best}`
         :`${c.top.map(e=>`<b>${esc(up(e.name))}</b>`).join(" · ")} TIE AT ${c.best}`;
       return `<div class="sc"><div class="if"><span class="lbl">IF</span>${esc(up(cond))}</div>

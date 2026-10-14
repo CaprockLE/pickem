@@ -3,6 +3,21 @@
 Reconstructed from the build history. Newest first.
 Each entry is the build number shown at the bottom of the sidebar.
 
+## build-132 — browser QA pass
+- Tested every view of the main site and Pro in headless Chromium at 1440px, 390px and 360px
+- Fixed: phone standings hid the Tiebreaker column and showed Paid (columns were hidden by
+  position, and the Win % column shifted them); now hidden by name
+- Pro: football icon no longer pushes the team code off-centre (measured 0px offset)
+- Pro: scenario conditions read "LAR WINS" rather than a bare team code
+- Pro: narrower player-name column in All Picks on phones
+- Pro: favicon added
+
+## builds 108–131 — Pro (/pro)
+- Private manager-only build; settled on a football video game card-mode design
+- Matchup VS cards, collectible player cards with power-based ratings and tiers,
+  ladder with logo pips, win %, elimination and if/then scenarios, all-picks grid,
+  season standings with Season / Per Week ranking, game and player drawers
+
 ## build-57
 - Sheets are read for their week number; importing into a different week warns first
 - Importing over existing entries lists who would be replaced and asks to confirm

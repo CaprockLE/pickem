@@ -397,9 +397,7 @@ ul.why b{color:var(--ink)}
   .gm.live::before{inset:-2px}                /* keep the live ring on phones */
   .tm .ab{font-size:12.5px}
   .tm .rec{display:none}
-  #stTbl th:nth-child(4),#stTbl td:nth-child(4),
-  #stTbl th:nth-child(5),#stTbl td:nth-child(5),
-  #stTbl th:nth-child(7),#stTbl td:nth-child(7){display:none}
+  #stTbl .c-open,#stTbl .c-max,#stTbl .c-paid{display:none}
   #seasonTbl th:nth-child(4),#seasonTbl td:nth-child(4),
   #seasonTbl th:nth-child(5),#seasonTbl td:nth-child(5){display:none}
   th,td{padding:8px 7px;font-size:13px}
@@ -598,7 +596,7 @@ ul.why b{color:var(--ink)}
 </div>
 
 <script>
-const BUILD = "build-130 (2026-10-12 02:43 UTC)";
+const BUILD = "build-132 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -1571,8 +1569,8 @@ function renderStandings(rows) {
         return `${aliveCount} Still Alive${tail}`;
       })();
 
-  $("stTbl").innerHTML = `<thead><tr><th></th><th>Player</th><th class="n">Correct</th><th class="n">Open</th>
-    <th class="n">Max</th><th class="n" title="Chance of winning the week, from live game odds">Win %</th><th class="tbcol">Tie<br>breaker</th>${o.complete && o.actual != null ? '<th class="n">Off<br>by</th>' : ""}<th>Paid</th><th>Result</th></tr></thead><tbody>` +
+  $("stTbl").innerHTML = `<thead><tr><th></th><th>Player</th><th class="n">Correct</th><th class="n c-open">Open</th>
+    <th class="n c-max">Max</th><th class="n" title="Chance of winning the week, from live game odds">Win %</th><th class="tbcol">Tie<br>breaker</th>${o.complete && o.actual != null ? '<th class="n">Off<br>by</th>' : ""}<th class="c-paid">Paid</th><th>Result</th></tr></thead><tbody>` +
     list.map((r,i) => {
       const isChamp = o.champs.has(r.e.name);
       const wasTied = o.complete && o.tied.some(t => t.e.name === r.e.name);
@@ -1583,14 +1581,14 @@ function renderStandings(rows) {
         : (!alive.has(r.e.name) ? '<span class="pill no">Out</span>'
           : r.s.correct === top ? '<span class="pill ok">Lead</span>' : "");
       return `<tr class="${isChamp?"winrow":""}"><td class="pos">${i+1}</td><td>${esc(tc(r.e.name))}</td>
-      <td class="n num" style="font-size:17px">${r.s.correct}</td><td class="n mono">${r.s.remaining}</td>
-      <td class="n mono">${r.s.max}</td>
+      <td class="n num" style="font-size:17px">${r.s.correct}</td><td class="n mono c-open">${r.s.remaining}</td>
+      <td class="n mono c-max">${r.s.max}</td>
       <td class="n mono">${(() => { const p = chance.get(r.e.name);
         if (p == null || p < 0.0005) return '<span class="note">—</span>';
         return p >= 0.995 ? "100%" : `${(p * 100).toFixed(p < 0.095 ? 1 : 0)}%`; })()}</td>
       <td class="tbcol mono">${r.e.tiebreaker ?? "—"}</td>` +
       (o.complete && o.actual != null ? `<td class="n mono">${off != null && off < 9999 ? off : "—"}</td>` : "") +
-      `<td><span class="pill ${r.e.paid?"ok":"no"}">${r.e.paid?"Paid":"Unpaid"}</span></td>
+      `<td class="c-paid"><span class="pill ${r.e.paid?"ok":"no"}">${r.e.paid?"Paid":"Unpaid"}</span></td>
       <td>${status}</td></tr>`;
     }).join("") + `</tbody>`;
 }
