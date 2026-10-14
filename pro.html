@@ -98,7 +98,7 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
 
 /* ===== VS matchups ===== */
 .vsgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
-.vs{position:relative;height:150px;overflow:hidden;cursor:pointer;background:#0B111B;
+.vs{position:relative;height:172px;overflow:hidden;cursor:pointer;background:#0B111B;
   clip-path:polygon(16px 0,100% 0,calc(100% - 16px) 100%,0 100%);transition:transform .15s}
 .vs:hover{transform:translateY(-3px)}
 .vs .side{position:absolute;top:0;bottom:0;width:58%;display:flex;align-items:center}
@@ -106,32 +106,37 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
   clip-path:polygon(0 0,100% 0,82% 100%,0 100%)}
 .vs .side.h{right:0;justify-content:flex-end;padding-right:22px;
   clip-path:polygon(18% 0,100% 0,100% 100%,0 100%)}
-.vs .side img{width:58px;height:58px;object-fit:contain;
-  filter:drop-shadow(0 0 1px rgba(255,255,255,.9)) drop-shadow(0 0 10px rgba(255,255,255,.28)) drop-shadow(0 8px 18px rgba(0,0,0,.55))}
-.vs .stack{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;min-width:78px}
-.vs .side .ab{font-family:Teko;font-weight:700;font-size:25px;letter-spacing:.06em;line-height:1;
-  color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.65)}
-.vs .side .wpv{font-family:Teko;font-weight:600;font-size:16px;line-height:1;color:#fff;margin-top:5px;
-  letter-spacing:.04em;text-shadow:0 1px 4px rgba(0,0,0,.85)}
-.vs .wplab{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);z-index:4;
-  font-weight:700;font-size:9.5px;letter-spacing:.2em;color:#fff;opacity:.85;
-  text-shadow:0 1px 4px rgba(0,0,0,.85);white-space:nowrap}
-.vs .side .big{position:absolute;top:8px;font-family:Teko;font-weight:700;font-size:48px;color:#fff;
+.vs .disc{width:78px;height:78px;border-radius:50%;display:grid;place-items:center;
+  background:radial-gradient(circle at 50% 38%,#FFFFFF,#E9EEF4 70%,#CDD6E1);
+  box-shadow:0 0 0 3px rgba(255,255,255,.25),0 10px 24px rgba(0,0,0,.5)}
+.vs .disc img{width:60px;height:60px;object-fit:contain}
+.vs .stack{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;min-width:86px;margin-top:-18px}
+.vs .side .ab{font-family:Teko;font-weight:700;font-size:27px;letter-spacing:.06em;line-height:1;margin-top:5px;
+  color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.7)}
+.vs .side .wpv{position:absolute;bottom:13px;width:86px;text-align:center;z-index:4;
+  font-family:Teko;font-weight:600;font-size:22px;line-height:1;color:#fff;letter-spacing:.04em;
+  text-shadow:0 1px 5px rgba(0,0,0,.9)}
+.vs .side.a .wpv{left:22px}.vs .side.h .wpv{right:22px}
+.vs .wplab{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:4;
+  font-weight:700;font-size:12px;letter-spacing:.2em;color:#fff;
+  text-shadow:0 1px 5px rgba(0,0,0,.9);white-space:nowrap}
+.vs .side .big{position:absolute;top:6px;font-family:Teko;font-weight:700;font-size:50px;color:#fff;
   text-shadow:0 3px 14px rgba(0,0,0,.7)}
-.vs .side.a .big{right:30%}.vs .side.h .big{left:30%}
+.vs .side.a .big{right:27%}.vs .side.h .big{left:27%}
 .vs .side.lost{filter:saturate(.35) brightness(.62)}
 .vs .mid{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;text-align:center}
+.vs .clk{position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:4;white-space:nowrap}
+.vs .ddrow{position:absolute;left:50%;bottom:36px;transform:translateX(-50%);z-index:4;white-space:nowrap}
 .vs .mid .v{font-family:Teko;font-weight:700;font-size:28px;font-style:italic;color:#fff;
   text-shadow:0 0 14px rgba(255,45,85,.8),0 2px 0 #000}
-.vs .mid .st{font-weight:700;font-size:11.5px;letter-spacing:.16em;color:#fff;background:#000;
-  padding:3px 10px;margin-top:-2px;display:inline-block;box-shadow:0 2px 10px rgba(0,0,0,.5)}
-.vs .mid .st.live{color:#fff}
+.vs .st{font-weight:700;font-size:13px;letter-spacing:.14em;color:#fff;background:#000;
+  padding:3px 11px;display:inline-block;box-shadow:0 2px 10px rgba(0,0,0,.5)}
 .vs .tug{position:absolute;left:0;right:0;bottom:0;height:6px;display:flex;z-index:4}
 .vs .tug i{display:block}
 .vs.live{box-shadow:0 0 0 2px var(--hot),0 0 30px rgba(255,45,85,.35)}
 .vs .ball{font-size:12px;margin-left:4px;vertical-align:2px;filter:drop-shadow(0 1px 3px rgba(0,0,0,.8))}
-.vs .dd{display:inline-block;font-weight:700;font-size:10.5px;letter-spacing:.12em;color:#fff;background:#000;
-  padding:1px 8px;margin-top:3px}
+.vs .dd{display:inline-block;font-weight:700;font-size:12.5px;letter-spacing:.12em;color:#fff;background:#000;
+  padding:2px 10px}
 
 /* ===== collectible cards ===== */
 .deck{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:20px}
@@ -209,8 +214,12 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
 .grid .sum.tb{box-shadow:inset 1px 0 0 rgba(255,255,255,.14)}
 .grid td.sum.pts{color:#fff;font-weight:700}
 .grid td.sum.pts.lead{color:var(--lime)}
-.grid th.who,.grid td.who{position:sticky;left:0;z-index:2;background:rgba(8,12,19,.97);text-align:left;
-  padding-left:12px;min-width:112px;font-family:Teko;font-size:21px;letter-spacing:.04em;text-transform:uppercase;cursor:pointer}
+.grid th.who,.grid td.who{position:sticky;left:0;z-index:2;text-align:left;
+  padding-left:12px;min-width:118px;font-family:Teko;font-size:21px;letter-spacing:.04em;text-transform:uppercase;cursor:pointer}
+.grid th.who{background:rgba(8,12,19,.97)}
+.grid td.who{background:#141D2B;border-radius:5px;box-shadow:inset 3px 0 0 rgba(0,224,255,.35)}
+.grid tbody tr:hover td{filter:brightness(1.25)}
+.grid tbody tr:hover td.who{box-shadow:inset 3px 0 0 var(--cy)}
 .grid th.who{z-index:4;font-family:Rajdhani;font-size:11px;letter-spacing:.18em;color:var(--muted)}
 .grid td{height:28px;text-align:center}
 .grid td img{width:20px;height:20px;object-fit:contain;vertical-align:middle}
@@ -239,6 +248,12 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
 .dpick{text-align:center;padding:6px 0;background:rgba(255,255,255,.05);
   clip-path:polygon(5px 0,100% 0,calc(100% - 5px) 100%,0 100%)}
 .dpick img{width:22px;height:22px;object-fit:contain}
+.dpick .dsc{width:30px;height:30px;margin:0 auto;border-radius:50%;display:grid;place-items:center;
+  background:radial-gradient(circle at 50% 38%,#fff,#E6ECF2);box-shadow:0 2px 6px rgba(0,0,0,.4)}
+.dpick.miss .dsc{opacity:.7}
+.dhead .dsc{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;flex:none;
+  background:radial-gradient(circle at 50% 38%,#fff,#E6ECF2 70%,#CBD4DF);box-shadow:0 0 0 3px rgba(255,255,255,.2)}
+.dhead .dsc img{width:48px;height:48px;object-fit:contain}
 .dpick.hit{background:rgba(182,255,59,.3)}.dpick.miss{background:rgba(255,45,85,.18)}
 /* ladder rows: rank, the card as pips, chance, points */
 .lrow{display:grid;grid-template-columns:62px 1fr 100px 86px;align-items:center;gap:16px;cursor:pointer;
@@ -512,6 +527,11 @@ function analyseWeek(){
   });
   return {chance,alive,open,combos:results};
 }
+function playedIn(w){
+  const wk=season?.weeks?.find(x=>x.week===w);
+  if(!wk) return 0;
+  return wk.complete ? (wk.games||0) : (wk.finals||0);
+}
 const colourOf=(g,side)=>(side==="home"?g.homeColor:g.awayColor)||"#2A3648";
 
 function render(){
@@ -545,17 +565,19 @@ function drawVs(){
       return `<div class="side ${cls}${w&&w!=="TIE"&&w!==ab?" lost":""}"
         style="background:linear-gradient(${cls==="a"?"100deg":"260deg"},${col} 0%,${col}CC 46%,#0B111B 100%)">
         <div class="stack">
-          ${logo?`<img src="${esc(logo)}" alt="">`:""}
+          <div class="disc">${logo?`<img src="${esc(logo)}" alt="">`:""}</div>
           <span class="ab">${esc(ab)}${live&&g.possession===ab?'<span class="ball">🏈</span>':""}</span>
-          ${live?`<span class="wpv">${pct}%</span>`:""}
         </div>
+        ${live?`<span class="wpv">${pct}%</span>`:""}
         ${g.state==="pre"?"":`<span class="big">${sc}</span>`}</div>`;};
     const st=live?`<span class="st live">Q${g.period} ${esc(g.clock)}</span>`
       :w?`<span class="st">${w==="TIE"?"TIE":"FINAL"}</span>`
       :`<span class="st">${up(new Date(g.kickoff).toLocaleString([],{weekday:"short",hour:"numeric",minute:"2-digit"}))}</span>`;
     return `<div class="vs${live?" live":""}" data-g="${esc(g.id)}">
       ${side("a",g.away,g.awayLogo,g.awayScore,ca)}${side("h",g.home,g.homeLogo,g.homeScore,ch)}
-      <div class="mid"><div class="v">VS</div>${st}${live&&g.downDistance?`<div><span class="dd">${esc(g.downDistance)}</span></div>`:""}</div>
+      <div class="mid"><div class="v">VS</div></div>
+      <div class="clk">${st}</div>
+      ${live&&g.downDistance?`<div class="ddrow"><span class="dd">${esc(g.downDistance)}</span></div>`:""}
       ${live?'<div class="wplab">WIN PROB</div>':""}
       <div class="tug"><i style="width:${sp.a/sp.tot*100}%;background:${ca}"></i>
         <i style="width:${sp.h/sp.tot*100}%;background:${ch}"></i></div></div>`;
@@ -596,10 +618,11 @@ function drawDeck(){
   $("deck").innerHTML=list.map((name,i)=>{
     const {ovr,sp,pwr}=ratingFor(name), t=tierFor(i,list.length);
     const wr=weekRows.find(r=>slug(r.e.name)===slug(name));
-    const maxW=Math.max(1,...ws.map(w=>sp?.byWeek?.[w]??0));
-    const back=ws.map(w=>{const v=sp?.byWeek?.[w];const won=winners(w).some(n=>slug(n)===slug(name));
+    const back=ws.map(w=>{const v=sp?.byWeek?.[w], n=playedIn(w);
+      const won=winners(w).some(x=>slug(x)===slug(name));
+      const pct=v!=null&&n?Math.min(100,v/n*100):0;
       return `<div class="wk${won?" won":""}"><span>W${w}</span>
-        <div class="bar"><i style="width:${v!=null?v/maxW*100:0}%"></i></div><span>${v??"–"}</span></div>`;}).join("");
+        <div class="bar"><i style="width:${pct.toFixed(1)}%"></i></div><span>${v??"–"}</span></div>`;}).join("");
     return `<div class="card" data-n="${esc(name)}"><div class="in">
       <div class="face t-${t}"><div class="skin"></div>
         <div class="ovr">${ovr}</div><div class="pos">#${i+1}</div>
@@ -741,12 +764,12 @@ function openGame(id){
       ${live?`LIVE · Q${g.period} ${esc(g.clock)}${g.downDistance?" · "+esc(g.downDistance):""}`
         :w?(w==="TIE"?"FINAL · TIE":"FINAL")
         :up(new Date(g.kickoff).toLocaleString([],{weekday:"long",hour:"numeric",minute:"2-digit"}))}</div>
-    <div style="display:flex;align-items:center;gap:12px;margin-top:12px">
-      ${g.awayLogo?`<img src="${esc(g.awayLogo)}" style="width:52px;height:52px;object-fit:contain">`:""}
+    <div class="dhead" style="display:flex;align-items:center;gap:12px;margin-top:12px">
+      ${g.awayLogo?`<div class="dsc"><img src="${esc(g.awayLogo)}" alt=""></div>`:""}
       <span class="teko" style="font-size:56px;${w===g.away?"color:var(--lime)":""}">${g.state==="pre"?"–":g.awayScore}</span>
       <span class="teko" style="font-size:22px;color:var(--muted);margin:0 auto">AT</span>
       <span class="teko" style="font-size:56px;${w===g.home?"color:var(--lime)":""}">${g.state==="pre"?"–":g.homeScore}</span>
-      ${g.homeLogo?`<img src="${esc(g.homeLogo)}" style="width:52px;height:52px;object-fit:contain">`:""}
+      ${g.homeLogo?`<div class="dsc"><img src="${esc(g.homeLogo)}" alt=""></div>`:""}
     </div>`;
   $("dBd").innerHTML=`
     ${!w?`<div class="dlab">Win probability${live&&g.possession?` · ${esc(g.possession)} ball`:""}</div>
@@ -779,11 +802,15 @@ function openPlayer(name){
     <div class="dpicks">${gs.map(g=>{const p=row.e.picks?.[g.id],w=winnerOf(g);
       if(!p) return `<div class="dpick">–</div>`;
       const img=p===g.home?g.homeLogo:g.awayLogo, cls=!w?"":w==="TIE"?"miss":p===w?"hit":"miss";
-      return `<div class="dpick ${cls}">${img?`<img src="${esc(img)}" alt="${esc(p)}">`:esc(p)}</div>`;}).join("")}</div>`:""}
-    ${sp?`<div class="dlab">Season</div>${ws.map(w=>`<div class="rung" style="grid-template-columns:54px 1fr 60px">
-      <div class="r" style="font-size:22px">W${w}</div>
-      <div class="meter"><i style="width:${(sp.byWeek[w]??0)/Math.max(1,...ws.map(x=>sp.byWeek[x]??0))*100}%"></i></div>
-      <div class="v" style="font-size:26px">${sp.byWeek[w]??"–"}</div></div>`).join("")}`:""}`;
+      return `<div class="dpick ${cls}">${img?`<div class="dsc"><img src="${esc(img)}" alt="${esc(p)}"></div>`:esc(p)}</div>`;}).join("")}</div>`:""}
+    ${sp?`<div class="dlab">Season · correct out of games played</div>${ws.map(w=>{
+      const v=sp.byWeek[w], n=playedIn(w);
+      const pct=v!=null&&n?Math.min(100,v/n*100):0;
+      return `<div class="rung" style="grid-template-columns:54px 1fr 78px">
+        <div class="r" style="font-size:22px">W${w}</div>
+        <div class="meter"><i style="width:${pct.toFixed(1)}%"></i></div>
+        <div class="v" style="font-size:24px">${v==null?"–":`${v}<small style="font-size:15px;color:var(--muted)">/${n||"?"}</small>`}</div></div>`;
+    }).join("")}`:""}`;
   openDock();
 }
 function openDock(){ $("dock").classList.add("on"); $("scrim").classList.add("on"); }
