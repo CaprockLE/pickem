@@ -1,0 +1,29 @@
+{
+  "name": "League Console \u00b7 Lab",
+  "short_name": "Pick'em Lab",
+  "start_url": "/lab",
+  "display": "standalone",
+  "background_color": "#0C1420",
+  "theme_color": "#0C1420",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "id": "/lab"
+}

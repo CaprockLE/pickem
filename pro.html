@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pick'em · Control</title>
+<meta name="theme-color" content="#07090D">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07090D; --panel:#0D1117; --panel2:#121922; --line:#1C2531; --line2:#2A3645;
+  --ink:#EAF0F7; --ink2:#9FB0C3; --muted:#64788F;
+  --acc:#C8FF5E;            /* one accent, used sparingly */
+  --win:#4ADE80; --lose:#F2554B; --warn:#FFB454; --gold:#E8C14A;
+  --r:4px;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;
+  font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.display{font-family:"Bebas Neue",Impact,sans-serif;letter-spacing:.02em;line-height:.92}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer;background:transparent;border:1px solid var(--line2);color:var(--ink2);
+  border-radius:var(--r);padding:7px 13px;transition:.14s}
+button:hover{border-color:var(--acc);color:var(--acc)}
+button.go{background:var(--acc);border-color:var(--acc);color:#0A0E06;font-weight:700}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+
+/* ---------- gate ---------- */
+#gate{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg);z-index:100;padding:24px}
+#gate .box{max-width:360px;width:100%;text-align:center}
+#gate h1{font-size:62px;margin:0 0 4px}
+#gate p{color:var(--muted);margin:0 0 22px;font-size:13px;letter-spacing:.04em}
+#gate input{width:100%;background:var(--panel);border:1px solid var(--line2);border-radius:var(--r);
+  padding:13px 15px;text-align:center;letter-spacing:.22em;margin-bottom:10px}
+#gate .err{color:var(--lose);font-size:12.5px;min-height:18px;margin-top:10px}
+
+/* ---------- frame ---------- */
+.frame{display:none;min-height:100vh;grid-template-rows:auto auto 1fr}
+.frame.on{display:grid}
+header{position:sticky;top:0;z-index:40;background:rgba(7,9,13,.92);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);padding:12px 20px calc(12px + env(safe-area-inset-top,0px))}
+.hrow{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;max-width:1500px;margin:0 auto;width:100%}
+.hrow .wk{font-size:40px}
+.hrow .sub{color:var(--muted);font-size:12px;letter-spacing:.18em;text-transform:uppercase}
+.hrow .right{margin-left:auto;display:flex;gap:8px;align-items:center}
+select{background:var(--panel);border:1px solid var(--line2);border-radius:var(--r);padding:7px 10px}
+
+/* ---------- live rail ---------- */
+.rail{border-bottom:1px solid var(--line);background:var(--panel);overflow-x:auto;scrollbar-width:none}
+.rail::-webkit-scrollbar{display:none}
+.rail .inner{display:flex;max-width:1500px;margin:0 auto}
+.tile{flex:0 0 172px;border-right:1px solid var(--line);padding:11px 14px;cursor:pointer;position:relative}
+.tile:hover{background:var(--panel2)}
+.tile.sel{background:var(--panel2);box-shadow:inset 0 -2px 0 var(--acc)}
+.tile .row{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px}
+.tile .row.dim{color:var(--muted)}
+.tile .row .sc{font-family:"IBM Plex Mono",monospace;font-weight:600}
+.tile .meta{margin-top:7px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.tile .meta b{color:var(--warn);font-weight:600}
+.tile.live::after{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--warn)}
+
+/* ---------- body ---------- */
+main{max-width:1500px;margin:0 auto;width:100%;padding:20px;display:grid;gap:18px;
+  grid-template-columns:minmax(0,1.35fr) minmax(0,1fr)}
+@media (max-width:1080px){ main{grid-template-columns:1fr} }
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
+.card .hd{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.card .hd h2{margin:0;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.card .hd .r{margin-left:auto;font-size:11px;color:var(--muted);letter-spacing:.08em}
+.card .bd{padding:16px}
+.card .bd.flush{padding:0}
+.span2{grid-column:1/-1}
+
+/* ---------- leaderboard ---------- */
+.lb{display:flex;flex-direction:column}
+.lbrow{display:grid;grid-template-columns:30px 1fr 56px 64px;gap:12px;align-items:center;
+  padding:11px 16px;border-bottom:1px solid var(--line);position:relative}
+.lbrow:last-child{border-bottom:0}
+.lbrow .pos{font-family:"Bebas Neue",sans-serif;font-size:19px;color:var(--muted)}
+.lbrow.p1 .pos{color:var(--gold)}
+.lbrow .who{font-weight:600;letter-spacing:.01em;z-index:1}
+.lbrow .bar{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,rgba(200,255,94,.13),transparent);
+  pointer-events:none}
+.lbrow .n{font-family:"IBM Plex Mono",monospace;text-align:right;font-weight:600;font-size:15px}
+.lbrow .pct{font-family:"IBM Plex Mono",monospace;text-align:right;font-size:12px;color:var(--acc)}
+.lbrow .pct.out{color:var(--muted)}
+.lbrow.me{background:rgba(200,255,94,.05)}
+
+/* ---------- race chart ---------- */
+#race{width:100%;height:230px;display:block}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;padding:12px 16px 0;font-size:11.5px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.legend i{width:9px;height:9px;border-radius:2px;display:inline-block}
+.legend span.off{opacity:.35}
+
+/* ---------- heatmap ---------- */
+.heat{overflow-x:auto}
+.heat table{border-collapse:collapse;font-size:10.5px;width:100%}
+.heat th{position:sticky;top:0;background:var(--panel);color:var(--muted);font-weight:500;
+  padding:7px 3px;font-size:9px;letter-spacing:.06em;white-space:nowrap}
+.heat th.who{left:0;z-index:3;text-align:left;padding-left:16px;min-width:104px}
+.heat td{padding:0;height:22px;text-align:center;border:1px solid var(--bg)}
+.heat td.who{background:var(--panel);text-align:left;padding-left:16px;position:sticky;left:0;z-index:2;
+  font-size:12px;font-weight:600;white-space:nowrap}
+.heat .hit{background:rgba(74,222,128,.75);color:#04150B}
+.heat .miss{background:rgba(242,85,75,.26);color:#FFD7D4}
+.heat .pend{background:var(--panel2);color:var(--muted)}
+.heat .tie{background:rgba(255,180,84,.3);color:#2A1C06}
+
+/* ---------- game drawer ---------- */
+#drawer{position:fixed;right:0;top:0;bottom:0;width:min(420px,100%);background:var(--panel);
+  border-left:1px solid var(--line2);transform:translateX(102%);transition:transform .24s cubic-bezier(.2,.8,.2,1);
+  z-index:60;display:flex;flex-direction:column;box-shadow:-20px 0 50px rgba(0,0,0,.5)}
+#drawer.on{transform:none}
+#drawer .top{padding:18px 18px calc(18px + env(safe-area-inset-top,0px));border-bottom:1px solid var(--line)}
+#drawer .top .score{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px}
+#drawer .top .score .t{font-size:17px;font-weight:600}
+#drawer .top .score .v{font-family:"Bebas Neue",sans-serif;font-size:34px}
+#drawer .body{overflow:auto;padding:16px 18px}
+#drawer .split{display:flex;height:8px;border-radius:99px;overflow:hidden;margin:6px 0 14px;background:var(--line)}
+#drawer .split i{display:block}
+#drawer ul{list-style:none;margin:0;padding:0;columns:2;font-size:12.5px;color:var(--ink2)}
+#drawer li{padding:2px 0;break-inside:avoid}
+#drawer li.hit{color:var(--win)}
+#drawer li.miss{color:var(--lose)}
+.sectitle{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:16px 0 6px}
+#scrim2{position:fixed;inset:0;background:rgba(3,5,8,.6);z-index:55;opacity:0;pointer-events:none;transition:.2s}
+#scrim2.on{opacity:1;pointer-events:auto}
+
+.empty{padding:34px 16px;text-align:center;color:var(--muted);font-size:13px}
+@media (max-width:640px){
+  .hrow .wk{font-size:32px}
+  main{padding:14px;gap:14px}
+  .lbrow{grid-template-columns:26px 1fr 48px 56px;gap:8px;padding:10px 12px}
+  #drawer ul{columns:1}
+}
+</style>
+</head>
+<body>
+
+<div id="gate"><div class="box">
+  <h1 class="display">Control</h1>
+  <p>Private build · manager passcode</p>
+  <input type="password" id="gpass" placeholder="PASSCODE" autocomplete="off">
+  <button class="go" id="gbtn" style="width:100%">Enter</button>
+  <div class="err" id="gerr"></div>
+</div></div>
+
+<div class="frame" id="frame">
+  <header><div class="hrow">
+    <div class="wk display" id="wk">Week —</div>
+    <div class="sub" id="sub">loading</div>
+    <div class="right">
+      <select id="weekSel"></select>
+      <select id="meSel"><option value="">Highlight…</option></select>
+      <button id="refresh">Refresh</button>
+    </div>
+  </div></header>
+
+  <div class="rail"><div class="inner" id="rail"></div></div>
+
+  <main>
+    <section class="card">
+      <div class="hd"><h2>Leaderboard</h2><div class="r" id="lbNote"></div></div>
+      <div class="bd flush lb" id="lb"></div>
+    </section>
+
+    <section class="card">
+      <div class="hd"><h2>Season Race</h2><div class="r" id="raceNote"></div></div>
+      <div class="bd flush">
+        <svg id="race" viewBox="0 0 600 230" preserveAspectRatio="none" aria-label="Season race"></svg>
+        <div class="legend" id="legend"></div>
+      </div>
+    </section>
+
+    <section class="card span2">
+      <div class="hd"><h2>Pick Matrix</h2><div class="r">green hit · red miss · amber tie</div></div>
+      <div class="bd flush heat" id="heat"></div>
+    </section>
+  </main>
+</div>
+
+<div id="scrim2"></div>
+<div id="drawer"><div class="top" id="drawerTop"></div><div class="body" id="drawerBody"></div></div>
+
+<script>
+const $ = i => document.getElementById(i);
+const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
+const tc = n => String(n ?? "").toLowerCase().replace(/\b[a-z]/g, m => m.toUpperCase());
+const slug = n => String(n).toLowerCase().trim().replace(/[^a-z0-9]+/g, "-");
+
+let pass = localStorage.getItem("pc.pass") || "";
+let week = 0, scores = { games: [] }, pool = null, season = null, selected = null;
+let me = localStorage.getItem("pc.me") || "";
+let hidden = new Set();
+
+async function getJSON(url, opts) {
+  const r = await fetch(url, opts);
+  const t = await r.text();
+  try { return { ok: r.ok, body: JSON.parse(t) }; }
+  catch (e) { return { ok: false, body: { error: `HTTP ${r.status}` } }; }
+}
+
+/* ---------- gate ---------- */
+async function unlock(candidate) {
+  const r = await fetch("/api/pool?auth=1", { method: "POST", headers: { "x-admin-key": candidate } });
+  return r.ok;
+}
+$("gbtn").onclick = async () => {
+  const v = $("gpass").value.trim();
+  $("gerr").textContent = "";
+  if (!v) return;
+  if (!(await unlock(v))) { $("gerr").textContent = "Not recognised."; return; }
+  pass = v; localStorage.setItem("pc.pass", pass);
+  $("gate").style.display = "none"; $("frame").classList.add("on");
+  boot();
+};
+$("gpass").onkeydown = e => { if (e.key === "Enter") $("gbtn").click(); };
+(async () => {
+  if (pass && await unlock(pass)) {
+    $("gate").style.display = "none"; $("frame").classList.add("on"); boot();
+  }
+})();
+
+/* ---------- data ---------- */
+for (let w = 1; w <= 18; w++) {
+  const o = document.createElement("option"); o.value = w; o.textContent = "Week " + w;
+  $("weekSel").appendChild(o);
+}
+$("weekSel").onchange = e => { week = +e.target.value; load(); };
+$("refresh").onclick = () => load();
+$("meSel").onchange = e => { me = e.target.value; localStorage.setItem("pc.me", me); draw(); };
+
+function boot() { load(); loadSeason(); setInterval(() => { if (!document.hidden) load(); }, 30000); }
+
+async function load() {
+  const s = await getJSON(week ? `/api/scores?week=${week}` : "/api/scores");
+  if (s.ok) {
+    scores = s.body;
+    if (!week && s.body.week) { week = +s.body.week; $("weekSel").value = week; }
+  }
+  const p = await getJSON(`/api/pool?week=${week || 1}`);
+  pool = p.ok ? p.body : null;
+  draw();
+}
+async function loadSeason() {
+  const s = await getJSON("/api/season");
+  season = s.ok ? s.body : null;
+  drawRace();
+}
+
+const games = () => scores.games || [];
+const entries = () => pool?.entries || [];
+const winnerOf = g => pool?.manualResults?.[g.id] || g.winner;
+function scoreOf(e) {
+  let c = 0, rem = 0;
+  for (const g of games()) {
+    const w = winnerOf(g), p = e.picks?.[g.id];
+    if (!w) { if (p) rem++; } else if (w !== "TIE" && p === w) c++;
+  }
+  return { c, rem, max: c + rem };
+}
+const ranked = () => entries().map(e => ({ e, s: scoreOf(e) }))
+  .sort((a, b) => b.s.c - a.s.c || a.e.name.localeCompare(b.e.name));
+
+/* ---------- draw ---------- */
+function draw() {
+  const gs = games(), finals = gs.filter(g => winnerOf(g)).length;
+  const live = gs.filter(g => g.state === "in").length;
+  $("wk").textContent = "Week " + (week || "—");
+  $("sub").innerHTML = `${entries().length} entries &nbsp;·&nbsp; ${finals}/${gs.length} final` +
+    (live ? ` &nbsp;·&nbsp; <span style="color:var(--warn)">${live} live</span>` : "");
+
+  const names = entries().map(e => e.name).sort((a, b) => a.localeCompare(b));
+  if ($("meSel").options.length !== names.length + 1)
+    $("meSel").innerHTML = '<option value="">Highlight…</option>' +
+      names.map(n => `<option value="${esc(n)}">${esc(tc(n))}</option>`).join("");
+  $("meSel").value = me;
+
+  drawRail(); drawBoard(); drawHeat();
+}
+
+function drawRail() {
+  const gs = games();
+  $("rail").innerHTML = gs.length ? gs.map(g => {
+    const w = winnerOf(g), done = !!w, live = g.state === "in";
+    const side = (ab, sc, logo) => `<div class="row${done && w !== "TIE" && w !== ab ? " dim" : ""}">
+      <span>${esc(ab)}</span><span class="sc">${g.state === "pre" ? "" : sc}</span></div>`;
+    const meta = live ? `<b>Q${g.period} ${esc(g.clock)}</b>`
+      : done ? (w === "TIE" ? "Final · tie" : "Final")
+      : new Date(g.kickoff).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" });
+    return `<div class="tile${live ? " live" : ""}${selected === g.id ? " sel" : ""}" data-g="${g.id}">
+      ${side(g.away, g.awayScore)}${side(g.home, g.homeScore)}
+      <div class="meta">${meta}</div></div>`;
+  }).join("") : '<div class="empty">No games</div>';
+  $("rail").querySelectorAll("[data-g]").forEach(el => el.onclick = () => openDrawer(el.dataset.g));
+}
+
+function drawBoard() {
+  const rows = ranked();
+  if (!rows.length) { $("lb").innerHTML = '<div class="empty">Nothing published for this week</div>'; return; }
+  const top = rows[0].s.c, maxc = Math.max(top, 1);
+  const allDone = games().length && games().every(g => winnerOf(g));
+  $("lbNote").textContent = allDone ? "final" : `${rows.filter(r => r.s.max >= top).length} alive`;
+  $("lb").innerHTML = rows.map((r, i) => `
+    <div class="lbrow${i === 0 ? " p1" : ""}${r.e.name === me ? " me" : ""}">
+      <div class="bar" style="width:${(r.s.c / maxc * 100).toFixed(1)}%"></div>
+      <div class="pos">${i + 1}</div>
+      <div class="who">${esc(tc(r.e.name))}</div>
+      <div class="n">${r.s.c}</div>
+      <div class="pct${r.s.max < top ? " out" : ""}">${r.s.max < top ? "out" : r.s.rem ? "+" + r.s.rem : "—"}</div>
+    </div>`).join("");
+}
+
+function drawHeat() {
+  const gs = games(), rows = ranked();
+  if (!gs.length || !rows.length) { $("heat").innerHTML = '<div class="empty">No data yet</div>'; return; }
+  $("heat").innerHTML = `<table><thead><tr><th class="who">Player</th>` +
+    gs.map(g => `<th>${esc(g.away)}<br>${esc(g.home)}</th>`).join("") + `</tr></thead><tbody>` +
+    rows.map(r => `<tr><td class="who">${esc(tc(r.e.name))}</td>` +
+      gs.map(g => {
+        const p = r.e.picks?.[g.id], w = winnerOf(g);
+        if (!p) return `<td class="pend"></td>`;
+        if (!w) return `<td class="pend">${esc(p)}</td>`;
+        if (w === "TIE") return `<td class="tie">${esc(p)}</td>`;
+        return `<td class="${p === w ? "hit" : "miss"}">${esc(p)}</td>`;
+      }).join("") + `</tr>`).join("") + `</tbody></table>`;
+}
+
+/* ---------- season race ---------- */
+const PALETTE = ["#C8FF5E","#4ADE80","#58C7F3","#F2554B","#FFB454","#C792EA","#F78FB3","#7DD3C0",
+                 "#E8C14A","#9AA8FF","#6EE7B7","#FCA5A5"];
+function drawRace() {
+  const svg = $("race");
+  if (!season || !season.players?.length || season.weeks.length < 2) {
+    svg.innerHTML = `<text x="300" y="118" fill="#64788F" font-size="12" text-anchor="middle">
+      Two published weeks will draw the race</text>`;
+    $("legend").innerHTML = ""; return;
+  }
+  const ws = season.weeks.map(w => w.week);
+  const top = [...season.players].sort((a, b) => b.total - a.total).slice(0, 8);
+  const cum = p => { let t = 0; return ws.map(w => (t += p.byWeek[w] ?? 0)); };
+  const series = top.map((p, i) => ({ name: p.name, colour: PALETTE[i % PALETTE.length], pts: cum(p) }));
+  const maxY = Math.max(...series.flatMap(s => s.pts), 1);
+  const W = 600, H = 230, padL = 34, padR = 12, padT = 14, padB = 24;
+  const x = i => padL + (i / Math.max(ws.length - 1, 1)) * (W - padL - padR);
+  const y = v => H - padB - (v / maxY) * (H - padT - padB);
+
+  const grid = [0, .25, .5, .75, 1].map(f => {
+    const v = Math.round(maxY * f), yy = y(v);
+    return `<line x1="${padL}" x2="${W - padR}" y1="${yy}" y2="${yy}" stroke="#1C2531"/>
+            <text x="${padL - 6}" y="${yy + 3.5}" fill="#64788F" font-size="9" text-anchor="end">${v}</text>`;
+  }).join("");
+  const xlab = ws.map((w, i) =>
+    `<text x="${x(i)}" y="${H - 7}" fill="#64788F" font-size="9" text-anchor="middle">W${w}</text>`).join("");
+  const lines = series.filter(s => !hidden.has(s.name)).map(s => {
+    const d = s.pts.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+    const last = s.pts.length - 1;
+    const mine = me && slug(s.name) === slug(me);
+    return `<path d="${d}" fill="none" stroke="${s.colour}" stroke-width="${mine ? 3 : 1.7}"
+              stroke-linejoin="round" stroke-linecap="round" opacity="${mine ? 1 : .85}"/>
+            <circle cx="${x(last).toFixed(1)}" cy="${y(s.pts[last]).toFixed(1)}" r="${mine ? 3.6 : 2.6}" fill="${s.colour}"/>`;
+  }).join("");
+  svg.innerHTML = grid + xlab + lines;
+  $("raceNote").textContent = `top ${series.length} · cumulative`;
+  $("legend").innerHTML = series.map(s =>
+    `<span data-n="${esc(s.name)}" class="${hidden.has(s.name) ? "off" : ""}">
+       <i style="background:${s.colour}"></i>${esc(tc(s.name))}</span>`).join("");
+  $("legend").querySelectorAll("[data-n]").forEach(el => el.onclick = () => {
+    const n = el.dataset.n;
+    hidden.has(n) ? hidden.delete(n) : hidden.add(n);
+    drawRace();
+  });
+}
+
+/* ---------- drawer ---------- */
+function openDrawer(id) {
+  const g = games().find(x => x.id === id);
+  if (!g) return;
+  selected = id; drawRail();
+  const w = winnerOf(g);
+  const rows = ranked();
+  const onAway = rows.filter(r => r.e.picks?.[g.id] === g.away);
+  const onHome = rows.filter(r => r.e.picks?.[g.id] === g.home);
+  const tot = Math.max(onAway.length + onHome.length, 1);
+  const line = (ab, sc, side) => `<div class="score">
+    <span class="t" style="${w && w !== "TIE" && w !== ab ? "color:var(--muted)" : ""}">${esc(ab)}</span>
+    <span class="v" style="${w === ab ? "color:var(--win)" : ""}">${g.state === "pre" ? "–" : sc}</span></div>`;
+  $("drawerTop").innerHTML =
+    `<div style="display:flex;justify-content:space-between;align-items:center">
+       <div class="sub" style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)">
+         ${g.state === "in" ? `<span style="color:var(--warn)">Q${g.period} ${esc(g.clock)}</span>`
+           : w ? (w === "TIE" ? "Final · tie" : "Final")
+           : new Date(g.kickoff).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" })}
+       </div>
+       <button onclick="closeDrawer()">Close</button>
+     </div>${line(g.away, g.awayScore)}${line(g.home, g.homeScore)}`;
+  $("drawerBody").innerHTML =
+    `<div class="sectitle">Pool split</div>
+     <div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink2)">
+       <span>${esc(g.away)} ${onAway.length}</span><span>${onHome.length} ${esc(g.home)}</span></div>
+     <div class="split">
+       <i style="width:${onAway.length / tot * 100}%;background:${w === g.away ? "var(--win)" : "var(--line2)"}"></i>
+       <i style="width:${onHome.length / tot * 100}%;background:${w === g.home ? "var(--win)" : "var(--acc)"}"></i></div>
+     <div class="sectitle">${esc(g.away)}</div>
+     <ul>${onAway.map(r => `<li class="${w ? (w === g.away ? "hit" : "miss") : ""}">${esc(tc(r.e.name))}</li>`).join("") || "<li>—</li>"}</ul>
+     <div class="sectitle">${esc(g.home)}</div>
+     <ul>${onHome.map(r => `<li class="${w ? (w === g.home ? "hit" : "miss") : ""}">${esc(tc(r.e.name))}</li>`).join("") || "<li>—</li>"}</ul>`;
+  $("drawer").classList.add("on"); $("scrim2").classList.add("on");
+}
+function closeDrawer() {
+  $("drawer").classList.remove("on"); $("scrim2").classList.remove("on");
+  selected = null; drawRail();
+}
+$("scrim2").onclick = closeDrawer;
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeDrawer(); });
+</script>
+</body>
+</html>

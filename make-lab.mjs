@@ -151,6 +151,11 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
 let html = readFileSync("index.html", "utf8");
 html = html.replace("</style>", LAB_CSS + "\n</style>");
 html = html.replace("<title>League Console</title>", "<title>League Console · Lab</title>");
+// its own manifest, so installing from /lab launches /lab
+html = html.replace('<link rel="manifest" href="/manifest.webmanifest">',
+                    '<link rel="manifest" href="/lab.webmanifest">');
+html = html.replace('<meta name="apple-mobile-web-app-title" content="Pick\'em">',
+                    '<meta name="apple-mobile-web-app-title" content="Pick\'em Lab">');
 html = html.replace('<canvas id="confetti" hidden></canvas>',
   '<div id="labTag"><a href="/">Lab · back to main</a></div>\n<canvas id="confetti" hidden></canvas>');
 html = html.replace(/build-(\d+)/g, "lab-$1");

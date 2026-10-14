@@ -32,7 +32,7 @@ No build step: static `index.html` plus three functions in `/api`.
 See `CHANGELOG.md` for what changed in each build.
 
 ## Two builds
-`/` is the main site. `/lab` is an experimental skin (clean URLs are enabled in
+`/` is the main site. `/lab` is an experimental skin, `/pro` a private control build (manager passcode required) (clean URLs are enabled in
 `vercel.json`; without it the path is `/lab.html`) with the same data and logic —
 regenerate it after editing index.html with `node make-lab.mjs`.
 
