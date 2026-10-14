@@ -181,7 +181,10 @@ main > div:not([hidden]){animation:viewIn .22s ease-out}
 .locked p{margin:0 auto;line-height:1.5}
 .locked .lk{font-size:32px;line-height:1;margin-bottom:10px}
 .locked b{display:block;font-size:17px;margin-bottom:5px}
-.locked .cd{font-family:Oswald,Inter;font-size:30px;font-weight:600;color:var(--brand);margin-top:12px}
+.locked .cd{font-family:Oswald,Inter;font-size:36px;font-weight:600;color:var(--brand);margin-top:14px;
+  font-variant-numeric:tabular-nums;letter-spacing:.01em;display:flex;gap:4px;justify-content:center;align-items:baseline}
+.locked .cd .cdnum{min-width:1.6ch;text-align:right}
+.locked .cd .cdlab{font-size:15px;color:var(--muted);margin-right:9px;font-weight:500}
 
 /* print */
 @media print{
@@ -738,7 +741,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
 </div>
 
 <script>
-const BUILD = "lab-106 (2026-10-12 02:43 UTC)";
+const BUILD = "lab-107 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -1830,9 +1833,14 @@ function picksLocked() {
 }
 
 function untilText(ms) {
-  const m = Math.max(0, Math.floor(ms / 60000)), d = Math.floor(m / 1440),
-        h = Math.floor((m % 1440) / 60), mm = m % 60;
-  return d ? `${d}d ${h}h ${mm}m` : h ? `${h}h ${mm}m` : `${mm}m`;
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const d = Math.floor(total / 86400), h = Math.floor((total % 86400) / 3600),
+        m = Math.floor((total % 3600) / 60), sec = total % 60;
+  const pad = n => String(n).padStart(2, "0");
+  const part = (v, label) => `<span class="cdnum">${v}</span><span class="cdlab">${label}</span>`;
+  if (d) return part(d, "d") + part(pad(h), "h") + part(pad(m), "m") + part(pad(sec), "s");
+  if (h) return part(h, "h") + part(pad(m), "m") + part(pad(sec), "s");
+  return part(m, "m") + part(pad(sec), "s");
 }
 
 function renderMine(rows) {
@@ -1871,6 +1879,7 @@ function renderPicks(rows) {
       <p class="note">Everyone's sheet opens when the week's first game starts, so nobody can
         read the field before turning theirs in.</p>
       <div class="cd" id="lockCd">${untilText(first - Date.now())}</div>
+      <div class="note" style="margin-top:2px">until kickoff</div>
       <p class="note">${esc(new Date(first).toLocaleString([], {weekday:"long", hour:"numeric", minute:"2-digit"}))}</p>
     </div></td></tr></tbody>`;
     clearInterval(window._lockTimer);
@@ -1878,8 +1887,8 @@ function renderPicks(rows) {
       const el = $("lockCd");
       if (!el) return clearInterval(window._lockTimer);
       if (Date.now() >= first) { clearInterval(window._lockTimer); if (pool) render(); return; }
-      el.textContent = untilText(first - Date.now());
-    }, 30000);
+      el.innerHTML = untilText(first - Date.now());       // every second
+    }, 1000);
     return;
   }
   if (!rows.length || !gs.length) { $("pgTbl").innerHTML = ""; $("picksSub").textContent = "Nothing published for this week yet."; return; }
