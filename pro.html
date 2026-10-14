@@ -264,10 +264,10 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
 .lrow.t2 .lr{color:var(--silv2)}.lrow.t3 .lr{color:var(--brz2)}
 .lname{font-family:Teko;font-weight:600;font-size:28px;letter-spacing:.04em;text-transform:uppercase;line-height:1;
   display:flex;align-items:center;gap:10px}
-.pips{display:flex;gap:4px;margin:8px 0 6px;flex-wrap:wrap}
-.lp{width:31px;height:31px;display:grid;place-items:center;border-radius:5px;background:rgba(255,255,255,.06);
+.pips{display:flex;gap:5px;margin:8px 0 6px;flex-wrap:wrap}
+.lp{width:37px;height:37px;display:grid;place-items:center;border-radius:5px;background:rgba(255,255,255,.06);
   font-size:9px;font-weight:700}
-.lp img{width:23px;height:23px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.95)) drop-shadow(0 0 1px rgba(0,0,0,.9))}
+.lp img{width:28px;height:28px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.95)) drop-shadow(0 0 1px rgba(0,0,0,.9))}
 .lp.hit{background:rgba(182,255,59,.26)}
 .lp.miss{background:rgba(255,45,85,.22)}
 .lp.miss img{opacity:.75}
@@ -296,7 +296,7 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
 .sc .odds{font-family:Teko;font-size:28px;text-align:right;color:var(--lime)}
 @media (max-width:640px){
   .lrow{grid-template-columns:38px 1fr 62px 52px;gap:9px;padding:10px 12px}
-  .lr{font-size:30px}.lname{font-size:22px}.lp{width:25px;height:25px}.lp img{width:18px;height:18px}
+  .lr{font-size:30px}.lname{font-size:22px}.lp{width:28px;height:28px}.lp img{width:21px;height:21px}
   .lwin b{font-size:26px}.lpts b{font-size:34px}
   .sc{grid-template-columns:1fr;gap:4px}.sc .odds{text-align:left}
 }
@@ -554,11 +554,10 @@ const TEAM_COLOURS={
   JAX:"#006778",KC:"#E31837",LV:"#000000",LAC:"#0080C6",LAR:"#003594",MIA:"#008E97",MIN:"#4F2683",
   NE:"#002244",NO:"#D3BC8D",NYG:"#0B2265",NYJ:"#115740",PHI:"#004C54",PIT:"#FFB612",SF:"#AA0000",
   SEA:"#002244",TB:"#D50A0A",TEN:"#0C2340",WSH:"#5A1414",WAS:"#5A1414"};
+const DARK_MARKS=new Set(["BAL","CAR","CHI","DAL","HOU","IND","LV","NE","NYG","NYJ","PHI","SEA"]);
 function needsDarkLogo(g,side){
   const ab=String(side==="home"?g.home:g.away||"").toUpperCase();
-  const c=hexToHsl((side==="home"?g.homeColor:g.awayColor)||TEAM_COLOURS[ab]);
-  if(!c) return false;
-  return c.l<0.22 || (c.s<0.18 && c.l<0.5);           // near-black, or dark grey
+  return DARK_MARKS.has(ab);
 }
 function logoFor(g,side){
   const std=side==="home"?g["home"+"Logo"]:g["away"+"Logo"];
@@ -731,7 +730,8 @@ function drawLadder(){
   $("ladder").innerHTML=rows.map((r,i)=>{
       const out=!A.alive.has(r.e.name)&&!done, p=ch(r), isChamp=r.e.name===champ;
       const status = done ? (isChamp?'<span class="st win">WINNER</span>':"")
-        : out ? '<span class="st out">OUT</span>' : r.s.c===top ? '<span class="st lead">LEAD</span>' : "";
+        : out ? '<span class="st out">OUT</span>'
+        : (r.s.c===top && gs.some(g=>winnerOf(g))) ? '<span class="st lead">LEAD</span>' : "";
       const pips=gs.map(g=>{const pk=r.e.picks?.[g.id], w=winnerOf(g);
         const c=!pk?"none":!w?"open":w==="TIE"?"miss":pk===w?"hit":"miss";
         const lg=!pk?"":pk===g.home?logoFor(g,"home"):logoFor(g,"away");
