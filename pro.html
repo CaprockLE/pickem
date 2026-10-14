@@ -33,14 +33,37 @@ select{background:rgba(6,10,18,.9);border:1px solid var(--line);border-radius:3p
   font-family:"Barlow Condensed",sans-serif;font-size:14px;letter-spacing:.07em;text-transform:uppercase}
 
 /* ---------- studio atmosphere ---------- */
-.studio{position:fixed;inset:0;z-index:-3;background:
-  radial-gradient(1200px 700px at 18% -10%, #11315E 0%, transparent 60%),
-  radial-gradient(900px 600px at 86% 8%, #3A0E16 0%, transparent 62%),
-  radial-gradient(1000px 800px at 50% 115%, #0A2A3C 0%, transparent 60%), var(--bg)}
-.sweep{position:fixed;inset:-40% -10%;z-index:-2;pointer-events:none;opacity:.5;
-  background:conic-gradient(from 210deg at 50% 50%, transparent 0deg, rgba(90,150,255,.10) 40deg, transparent 90deg,
-    rgba(232,35,42,.08) 160deg, transparent 220deg);animation:spin 44s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
+/* the shot: crowd in the dark, lit field below, camera haze over the top */
+.studio{position:fixed;inset:0;z-index:-5;background:#060910}
+.crowd{position:fixed;left:0;right:0;top:0;height:46%;z-index:-4;filter:blur(2.5px) brightness(.62);
+  background:
+    radial-gradient(circle at 12% 30%, rgba(255,255,255,.10) 0 2px, transparent 3px),
+    radial-gradient(circle at 34% 58%, rgba(255,210,150,.09) 0 2px, transparent 3px),
+    radial-gradient(circle at 61% 24%, rgba(180,210,255,.08) 0 2px, transparent 3px),
+    radial-gradient(circle at 82% 52%, rgba(255,255,255,.07) 0 2px, transparent 3px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 2px, transparent 2px 7px),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 2px, transparent 2px 9px),
+    linear-gradient(180deg,#0A0F19 0%, #0C1420 60%, #0A1119 100%);
+  background-size:140px 90px,170px 110px,150px 95px,190px 120px,auto,auto,auto}
+.lights{position:fixed;inset:0;z-index:-4;pointer-events:none;
+  background:
+    radial-gradient(420px 220px at 14% 6%, rgba(255,245,215,.16), transparent 70%),
+    radial-gradient(420px 220px at 50% 2%, rgba(255,245,215,.13), transparent 70%),
+    radial-gradient(420px 220px at 86% 6%, rgba(255,245,215,.16), transparent 70%)}
+.pitch{position:fixed;left:-30%;right:-30%;bottom:-18%;height:72%;z-index:-3;
+  transform:perspective(760px) rotateX(63deg);transform-origin:50% 100%;
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.22) 0 3px, transparent 3px 86px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.07) 0 2px, transparent 2px 17px),
+    repeating-linear-gradient(0deg, rgba(0,0,0,.12) 0 60px, transparent 60px 120px),
+    linear-gradient(180deg,#1C5C33 0%, #174E2C 55%, #10381F 100%);
+  box-shadow:inset 0 60px 120px rgba(0,0,0,.55)}
+.pitch::before{content:"";position:absolute;left:0;top:0;bottom:0;width:11%;
+  background:linear-gradient(90deg,#8A1C22,#6E161B);opacity:.75}
+.pitch::after{content:"";position:absolute;right:0;top:0;bottom:0;width:11%;
+  background:linear-gradient(90deg,#17386E,#122C57);opacity:.75}
+.haze{position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background:linear-gradient(180deg, rgba(6,10,18,.72) 0%, rgba(6,10,18,.30) 38%, rgba(4,7,13,.78) 100%)}
 .scan{position:fixed;inset:0;z-index:48;pointer-events:none;opacity:.22;
   background:repeating-linear-gradient(to bottom, rgba(255,255,255,.05) 0 1px, transparent 1px 3px)}
 .vig{position:fixed;inset:0;z-index:47;pointer-events:none;
@@ -92,7 +115,7 @@ select{background:rgba(6,10,18,.9);border:1px solid var(--line);border-radius:3p
 
 /* middle: stage */
 .stage{position:relative;overflow:hidden;min-width:0}
-.seg{position:absolute;inset:0;overflow:auto;padding:18px 20px 22px;display:none}
+.seg{position:absolute;inset:0;overflow:auto;padding:18px 20px 22px 92px;display:none}
 .seg.on{display:block;animation:wipe .42s cubic-bezier(.22,.9,.25,1) both}
 @keyframes wipe{from{clip-path:inset(0 100% 0 0);opacity:.4;transform:translateX(16px)}
   to{clip-path:inset(0 0 0 0);opacity:1;transform:none}}
@@ -107,7 +130,8 @@ select{background:rgba(6,10,18,.9);border:1px solid var(--line);border-radius:3p
 
 /* scorebug cards */
 .gamewall{display:grid;grid-template-columns:repeat(auto-fill,minmax(282px,1fr));gap:12px}
-.gcard{border:1px solid var(--line);background:linear-gradient(180deg,rgba(12,19,32,.9),rgba(7,11,19,.86));
+.gcard{border:1px solid var(--line);background:linear-gradient(180deg,rgba(8,13,22,.94),rgba(5,8,14,.92));
+  backdrop-filter:blur(6px);
   cursor:pointer;position:relative;overflow:hidden;transition:.15s}
 .gcard:hover{border-color:rgba(255,255,255,.3);transform:translateY(-2px)}
 .gcard .band{height:3px;background:linear-gradient(90deg,var(--cy1),var(--net))}
@@ -128,7 +152,8 @@ select{background:rgba(6,10,18,.9);border:1px solid var(--line);border-radius:3p
   font-size:10.5px;color:var(--muted)}
 
 /* leaderboard as broadcast graphic */
-.lb{border:1px solid var(--line);background:linear-gradient(180deg,rgba(12,19,32,.92),rgba(7,11,19,.9))}
+.lb{border:1px solid var(--line);background:linear-gradient(180deg,rgba(8,13,22,.94),rgba(5,8,14,.93));
+  backdrop-filter:blur(6px)}
 .lbr{display:grid;grid-template-columns:44px 1fr 92px 64px;align-items:center;gap:10px;
   padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.06);position:relative;cursor:pointer}
 .lbr:last-child{border-bottom:0}
@@ -147,7 +172,8 @@ select{background:rgba(6,10,18,.9);border:1px solid var(--line);border-radius:3p
 .lbr.out{opacity:.45}
 
 /* matrix */
-.wall{overflow:auto;border:1px solid var(--line);max-height:calc(100vh - 290px)}
+.wall{overflow:auto;border:1px solid var(--line);max-height:calc(100vh - 290px);
+  background:rgba(5,8,14,.9);backdrop-filter:blur(6px)}
 .wall table{border-collapse:separate;border-spacing:2px;width:100%;font-family:"Barlow Condensed";font-size:13px}
 .wall th{position:sticky;top:0;z-index:3;background:rgba(6,10,18,.96);padding:5px 2px;color:var(--muted);
   font-weight:500;letter-spacing:.06em}
@@ -162,7 +188,6 @@ select{background:rgba(6,10,18,.9);border:1px solid var(--line);border-radius:3p
 .wall td.pend{background:rgba(255,255,255,.04);color:var(--muted)}
 
 /* season chart */
-#chart{width:100%;height:360px;display:block}
 
 /* bottom: ticker */
 .ticker{min-width:0;border-top:1px solid var(--line);background:linear-gradient(180deg,rgba(6,10,18,.92),rgba(4,6,11,.98));
@@ -179,7 +204,7 @@ select{background:rgba(6,10,18,.9);border:1px solid var(--line);border-radius:3p
 .ticker:hover .run{animation-play-state:paused}
 
 /* rundown / segment buttons */
-.rundown{display:flex;gap:6px;flex-wrap:wrap}
+.rundown{display:flex;flex-direction:column;gap:5px}
 .rundown button{position:relative;padding:6px 13px}
 .rundown button .n{color:var(--net2);margin-right:7px;font-weight:700}
 .rundown button.on{background:linear-gradient(90deg,var(--cy1),var(--cy2));border-color:transparent;color:#fff}
@@ -199,6 +224,10 @@ select{background:rgba(6,10,18,.9);border:1px solid var(--line);border-radius:3p
   align-items:center;min-width:92px}
 #lower .stat .v{font-family:"Barlow Condensed";font-weight:700;font-size:32px;line-height:1}
 #lower .stat .k{font-family:"Barlow Condensed";font-size:11px;letter-spacing:.18em;color:var(--muted)}
+#lower #l3x{pointer-events:auto;border:0;border-left:1px solid rgba(255,255,255,.14);border-radius:0;
+  background:rgba(4,8,16,.95);color:var(--muted);padding:0 14px;font-size:13px}
+#lower #l3x:hover{background:var(--net);color:#fff}
+#lower .l3{pointer-events:auto}
 
 /* drawer */
 #scrim{position:fixed;inset:0;background:rgba(2,4,8,.66);z-index:55;opacity:0;pointer-events:none;transition:.2s}
@@ -224,6 +253,9 @@ select{background:rgba(6,10,18,.9);border:1px solid var(--line);border-radius:3p
   .bug .net .nm,.bug .clock{display:none}
   .bug .mid .wk{font-size:21px}
   .seg{padding:14px 12px 18px}
+  .rundown{position:fixed!important;left:0!important;right:0;top:auto!important;bottom:calc(60px + env(safe-area-inset-bottom,0px))!important;
+    transform:none!important;flex-direction:row!important;overflow-x:auto;padding:0 10px;gap:6px}
+  .rundown button{white-space:nowrap}
   .gamewall{grid-template-columns:1fr}
   .lbr{grid-template-columns:34px 1fr 64px 48px}
   #lower{bottom:58px}
@@ -233,7 +265,8 @@ select{background:rgba(6,10,18,.9);border:1px solid var(--line);border-radius:3p
 </style>
 </head>
 <body>
-<div class="studio"></div><div class="sweep"></div><div class="scan"></div><div class="vig"></div>
+<div class="studio"></div><div class="crowd"></div><div class="lights"></div>
+<div class="pitch"></div><div class="haze"></div><div class="scan"></div><div class="vig"></div>
 
 <div id="gate">
   <div class="bars">
@@ -281,13 +314,8 @@ select{background:rgba(6,10,18,.9);border:1px solid var(--line);border-radius:3p
     </div></div>
 
     <div class="seg" id="s-season"><div class="inner">
-      <div class="chyron"><span class="l">SEASON</span><span class="r">Points Through the Year</span></div>
-      <svg id="chart" viewBox="0 0 900 360"></svg>
-    </div></div>
-
-    <div class="seg" id="s-totals"><div class="inner">
-      <div class="chyron"><span class="l">SEASON</span><span class="r">Overall Standings</span></div>
-      <div class="lb" id="totals"></div>
+      <div class="chyron"><span class="l">SEASON</span><span class="r">Standings to Date</span></div>
+      <div class="wall" id="seasonTbl"></div>
     </div></div>
   </div>
 
@@ -300,13 +328,13 @@ select{background:rgba(6,10,18,.9);border:1px solid var(--line);border-radius:3p
 <div id="lower"><div class="l3"><div class="bar"></div>
   <div class="main"><div class="k" id="l3k">Now</div><div class="t" id="l3t">—</div><div class="s" id="l3s"></div></div>
   <div class="stat"><div class="v" id="l3v">0</div><div class="k" id="l3l">PTS</div></div>
+  <button id="l3x" title="Clear">✕</button>
 </div></div>
 
 <div id="scrim"></div>
 <div id="dock"><div class="hd" id="dHd"></div><div class="bd" id="dBd"></div></div>
 
-<div style="position:fixed;left:14px;bottom:calc(66px + env(safe-area-inset-bottom,0px));z-index:46"
-     class="rundown" id="rundown"></div>
+<div style="position:fixed;left:12px;top:50%;transform:translateY(-50%);z-index:46" class="rundown" id="rundown"></div>
 
 <script>
 const $=i=>document.getElementById(i);
@@ -316,10 +344,10 @@ const up=n=>String(n??"").toUpperCase();
 const slug=n=>String(n).toLowerCase().trim().replace(/[^a-z0-9]+/g,"-");
 
 let pass=localStorage.getItem("pc.pass")||"", week=0, scores={games:[]}, pool=null, season=null;
-let me=localStorage.getItem("pc.me")||"", seg="wall", auto=false, autoTimer=null;
+let me=localStorage.getItem("pc.me")||"", seg="wall", auto=false, autoTimer=null, lowerShown=false;
 
 const SEGS=[["wall","Around the League"],["board","Leaderboard"],["matrix","Every Pick"],
-            ["season","Season Chart"],["totals","Overall"]];
+            ["season","Season Standings"]];
 
 async function getJSON(u,o){const r=await fetch(u,o);const t=await r.text();
   try{return{ok:r.ok,body:JSON.parse(t)};}catch(e){return{ok:false,body:{}};}}
@@ -337,7 +365,7 @@ $("gpass").onkeydown=e=>{if(e.key==="Enter")$("gbtn").click();};
 
 for(let w=1;w<=18;w++){const o=document.createElement("option");o.value=w;o.textContent="WK "+w;$("weekSel").appendChild(o);}
 $("weekSel").onchange=e=>{week=+e.target.value;load();};
-$("meSel").onchange=e=>{me=e.target.value;localStorage.setItem("pc.me",me);render();};
+$("meSel").onchange=e=>{ me=e.target.value; localStorage.setItem("pc.me",me); lowerShown=false; render(); };
 
 $("rundown").innerHTML=SEGS.map(([k,l],i)=>
   `<button data-s="${k}" class="${k===seg?"on":""}"><span class="n">${i+1}</span>${up(l)}<i class="autoind"></i></button>`).join("");
@@ -401,9 +429,8 @@ function render(){
   if(seg==="wall")drawWall();
   if(seg==="board")drawBoard();
   if(seg==="matrix")drawMatrix();
-  if(seg==="season")drawChart();
-  if(seg==="totals")drawTotals();
-  if(me)showLower();
+  if(seg==="season")drawSeason();
+  if(me && !lowerShown){ lowerShown=true; showLower(); }
 }
 
 function drawCrawl(){
@@ -457,63 +484,34 @@ function drawBoard(){
   $("board").innerHTML=rows.map((r,i)=>lbRow(i,r.e.name,r.s.c,top,"",r.s.max<top)).join("");
   $("board").querySelectorAll("[data-p]").forEach(el=>el.onclick=()=>openPlayer(el.dataset.p));
 }
-function drawTotals(){
-  if(!season||!season.players?.length){$("totals").innerHTML='<div class="empty">No season data</div>';return;}
-  const ps=[...season.players].sort((a,b)=>b.total-a.total);
-  $("totals").innerHTML=ps.map((p,i)=>lbRow(i,p.name,p.total,ps[0].total,"",false)).join("");
-  $("totals").querySelectorAll("[data-p]").forEach(el=>el.onclick=()=>openPlayer(el.dataset.p));
-}
-
-function drawMatrix(){
-  const gs=games(),rows=ranked();
-  if(!gs.length||!rows.length){$("matrix").innerHTML='<div class="empty">Nothing on file</div>';return;}
-  $("matrix").innerHTML=`<table><thead><tr><th class="who">Player</th>`+
-    gs.map(g=>`<th>${g.awayLogo?`<img src="${esc(g.awayLogo)}" alt="${esc(g.away)}">`:esc(g.away)}
-      ${g.homeLogo?`<img src="${esc(g.homeLogo)}" alt="${esc(g.home)}">`:esc(g.home)}</th>`).join("")+
-    `<th>TOT</th></tr></thead><tbody>`+
-    rows.map(r=>`<tr><td class="who" data-p="${esc(r.e.name)}">${esc(up(r.e.name))}</td>`+
-      gs.map(g=>{const p=r.e.picks?.[g.id],w=winnerOf(g);
-        if(!p)return`<td class="pend"></td>`;
-        if(!w)return`<td class="pend">${esc(p)}</td>`;
-        if(w==="TIE")return`<td class="tie">${esc(p)}</td>`;
-        return`<td class="${p===w?"hit":"miss"}">${esc(p)}</td>`;}).join("")+
-      `<td style="font-weight:700">${r.s.c}</td></tr>`).join("")+`</tbody>`;
-  $("matrix").querySelectorAll("[data-p]").forEach(el=>el.onclick=()=>openPlayer(el.dataset.p));
-}
-
-function drawChart(){
-  const svg=$("chart");
-  if(!season||!season.players?.length||(season.weeks||[]).length<2){
-    svg.innerHTML=`<text x="450" y="180" text-anchor="middle" fill="#6C809A" font-family="Barlow Condensed"
-      font-size="18" letter-spacing="3">TWO WEEKS NEEDED</text>`;return;}
+function drawSeason(){
+  if(!season||!season.players?.length){ $("seasonTbl").innerHTML='<div class="empty">No season data yet</div>'; return; }
   const ws=season.weeks.map(w=>w.week);
-  const top=[...season.players].sort((a,b)=>b.total-a.total).slice(0,8);
-  const cum=p=>{let t=0;return ws.map(w=>(t+=p.byWeek[w]??0));};
-  const S=top.map(p=>({name:p.name,pts:cum(p)}));
-  const maxY=Math.max(...S.flatMap(s=>s.pts),1);
-  const W=900,H=360,L=46,R=136,T=18,B=34;
-  const x=i=>L+(i/Math.max(ws.length-1,1))*(W-L-R), y=v=>H-B-(v/maxY)*(H-T-B);
-  const PAL=["#FFC72C","#3C8DFF","#39E27E","#FF5A52","#B07CFF","#5EE2FF","#FF6FB5","#C8FF5E"];
-  const grid=[0,.25,.5,.75,1].map(f=>{const v=Math.round(maxY*f),yy=y(v);
-    return`<line x1="${L}" x2="${W-R}" y1="${yy}" y2="${yy}" stroke="rgba(255,255,255,.08)"/>
-      <text x="${L-8}" y="${yy+4}" text-anchor="end" fill="#6C809A" font-family="IBM Plex Mono" font-size="10">${v}</text>`;}).join("");
-  const xl=ws.map((w,i)=>`<text x="${x(i)}" y="${H-10}" text-anchor="middle" fill="#6C809A"
-    font-family="Barlow Condensed" font-size="13" letter-spacing="1">W${w}</text>`).join("");
-  const body=S.map((s,k)=>{const c=PAL[k%PAL.length],mine=me&&slug(s.name)===slug(me);
-    const d=s.pts.map((v,i)=>`${i?"L":"M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
-    const last=s.pts.length-1;
-    return`<path d="${d}" fill="none" stroke="${c}" stroke-width="${mine?4:2.2}" stroke-linecap="round"
-        style="filter:drop-shadow(0 0 7px ${c}70)"/>
-      <circle cx="${x(last)}" cy="${y(s.pts[last])}" r="${mine?5:3.4}" fill="${c}"/>
-      <text x="${x(last)+10}" y="${y(s.pts[last])+5}" fill="${c}" font-family="Barlow Condensed"
-        font-size="16" letter-spacing="1">${esc(up(s.name))} ${s.pts[last]}</text>`;}).join("");
-  svg.innerHTML=grid+xl+body;
+  const ps=[...season.players].sort((a,b)=>b.total-a.total||a.name.localeCompare(b.name));
+  const winnersOf=w=>(season.weeks.find(x=>x.week===w)?.winners)||[];
+  $("seasonTbl").innerHTML=`<table><thead><tr>
+      <th class="who">Player</th><th>Total</th><th>Avg</th><th>Weeks</th><th>Won</th>`+
+      ws.map(w=>`<th>W${w}</th>`).join("")+`</tr></thead><tbody>`+
+    ps.map((p,i)=>`<tr><td class="who" data-p="${esc(p.name)}">
+        <span style="color:var(--muted);margin-right:8px">${i+1}</span>${esc(up(p.name))}</td>
+      <td style="font-weight:700;font-size:17px">${p.total}</td>
+      <td>${(p.total/Math.max(p.weeks,1)).toFixed(1)}</td>
+      <td>${p.weeks}/${ws.length}</td>
+      <td style="color:${p.wins?"var(--net2)":"var(--muted)"};font-weight:${p.wins?700:400}">${p.wins||"—"}</td>`+
+      ws.map(w=>{ const v=p.byWeek[w];
+        const won=winnersOf(w).some(n=>slug(n)===slug(p.name));
+        return `<td class="${won?"hit":v==null?"pend":""}">${v??"·"}</td>`; }).join("")+
+      `</tr>`).join("")+`</tbody>`;
+  $("seasonTbl").querySelectorAll("[data-p]").forEach(el=>el.onclick=()=>openPlayer(el.dataset.p));
 }
 
 /* lower third follows the player you're tracking */
+let lowerTimer=null;
+function hideLower(){ $("lower").classList.remove("on"); clearTimeout(lowerTimer); }
 function showLower(){
+  if(!me){ hideLower(); return; }
   const row=ranked().find(r=>slug(r.e.name)===slug(me));
-  if(!row){$("lower").classList.remove("on");return;}
+  if(!row){ hideLower(); return; }
   const rows=ranked(), pos=rows.findIndex(r=>slug(r.e.name)===slug(me))+1;
   const sp=season?.players?.find(p=>slug(p.name)===slug(me));
   $("l3k").textContent=`Tracking · Week ${week}`;
@@ -522,6 +520,8 @@ function showLower(){
     (row.s.rem?` · ${row.s.rem} games still open`:"") + (sp?` · ${sp.total} on the season`:"");
   $("l3v").textContent=row.s.c;
   $("lower").classList.add("on");
+  clearTimeout(lowerTimer);
+  lowerTimer=setTimeout(()=>$("lower").classList.remove("on"), 9000);   // graphics don't sit on screen
 }
 const ordinalWord=n=>{const r=n%100;if(r>=11&&r<=13)return n+"th";return n+(["th","st","nd","rd"][n%10]||"th");};
 
@@ -576,6 +576,7 @@ function openPlayer(name){
 function openDock(){$("dock").classList.add("on");$("scrim").classList.add("on");}
 function closeDock(){$("dock").classList.remove("on");$("scrim").classList.remove("on");}
 $("scrim").onclick=closeDock;
+$("l3x").onclick=()=>{ me=""; localStorage.removeItem("pc.me"); $("meSel").value=""; hideLower(); render(); };
 </script>
 </body>
 </html>
