@@ -533,6 +533,39 @@ function playedIn(w){
   if(!wk) return 0;
   return wk.complete ? (wk.games||0) : (wk.finals||0);
 }
+/* ── logo variant ─────────────────────────────────────────────────────
+   ESPN's standard marks are drawn for light backgrounds. For teams whose
+   primary colour is near-black, the standard logo vanishes on a dark panel,
+   so those teams get ESPN's dark-background variant instead. Everyone else
+   keeps their full-colour mark. Pro is always dark, so the check is the
+   team colour alone.                                                       */
+function hexToHsl(hex){
+  const m=/^#?([0-9a-f]{6})$/i.exec(String(hex||"")); if(!m) return null;
+  const n=parseInt(m[1],16), r=((n>>16)&255)/255, g=((n>>8)&255)/255, b=(n&255)/255;
+  const mx=Math.max(r,g,b), mn=Math.min(r,g,b), l=(mx+mn)/2;
+  if(mx===mn) return {h:0,s:0,l};
+  const d=mx-mn, sat=l>.5?d/(2-mx-mn):d/(mx+mn);
+  const h=mx===r?((g-b)/d+(g<b?6:0)):mx===g?(b-r)/d+2:(r-g)/d+4;
+  return {h:h*60,s:sat,l};
+}
+const TEAM_COLOURS={
+  ARI:"#97233F",ATL:"#A71930",BAL:"#241773",BUF:"#00338D",CAR:"#0085CA",CHI:"#0B162A",CIN:"#FB4F14",
+  CLE:"#311D00",DAL:"#002244",DEN:"#FB4F14",DET:"#0076B6",GB:"#203731",HOU:"#03202F",IND:"#002C5F",
+  JAX:"#006778",KC:"#E31837",LV:"#000000",LAC:"#0080C6",LAR:"#003594",MIA:"#008E97",MIN:"#4F2683",
+  NE:"#002244",NO:"#D3BC8D",NYG:"#0B2265",NYJ:"#115740",PHI:"#004C54",PIT:"#FFB612",SF:"#AA0000",
+  SEA:"#002244",TB:"#D50A0A",TEN:"#0C2340",WSH:"#5A1414",WAS:"#5A1414"};
+function needsDarkLogo(g,side){
+  const ab=String(side==="home"?g.home:g.away||"").toUpperCase();
+  const c=hexToHsl((side==="home"?g.homeColor:g.awayColor)||TEAM_COLOURS[ab]);
+  if(!c) return false;
+  return c.l<0.22 || (c.s<0.18 && c.l<0.5);           // near-black, or dark grey
+}
+function logoFor(g,side){
+  const std=side==="home"?g["home"+"Logo"]:g["away"+"Logo"];
+  const dark=side==="home"?g.homeLogoDark:g.awayLogoDark;
+  if(needsDarkLogo(g,side)) return dark||std||"";
+  return std||dark||"";
+}
 const colourOf=(g,side)=>(side==="home"?g.homeColor:g.awayColor)||"#2A3648";
 
 function render(){
@@ -575,7 +608,7 @@ function drawVs(){
       :w?`<span class="st">${w==="TIE"?"TIE":"FINAL"}</span>`
       :`<span class="st">${up(new Date(g.kickoff).toLocaleString([],{weekday:"short",hour:"numeric",minute:"2-digit"}))}</span>`;
     return `<div class="vs${live?" live":""}" data-g="${esc(g.id)}">
-      ${side("a",g.away,g.awayLogo,g.awayScore,ca)}${side("h",g.home,g.homeLogo,g.homeScore,ch)}
+      ${side("a",g.away,logoFor(g,"away"),g.awayScore,ca)}${side("h",g.home,logoFor(g,"home"),g.homeScore,ch)}
       <div class="mid"><div class="v">VS</div></div>
       <div class="clk">${st}</div>
       ${live&&g.downDistance?`<div class="ddrow"><span class="dd">${esc(g.downDistance)}</span></div>`:""}
@@ -701,7 +734,7 @@ function drawLadder(){
         : out ? '<span class="st out">OUT</span>' : r.s.c===top ? '<span class="st lead">LEAD</span>' : "";
       const pips=gs.map(g=>{const pk=r.e.picks?.[g.id], w=winnerOf(g);
         const c=!pk?"none":!w?"open":w==="TIE"?"miss":pk===w?"hit":"miss";
-        const lg=!pk?"":pk===g.home?g.homeLogo:g.awayLogo;
+        const lg=!pk?"":pk===g.home?logoFor(g,"home"):logoFor(g,"away");
         return `<span class="lp ${c}" title="${esc(g.away)} at ${esc(g.home)}: ${esc(pk||"no pick")}">${
           lg?`<img src="${esc(lg)}" alt="${esc(pk)}">`:esc(pk||"")}</span>`;}).join("");
       const tier=i===0?"t1":i===1?"t2":i===2?"t3":"";
@@ -755,14 +788,14 @@ function drawGrid(){
   const gs=games(),rows=ranked();
   if(!gs.length||!rows.length){$("grid").innerHTML='<div class="empty">NOTHING ON FILE</div>';return;}
   $("grid").innerHTML=`<table><thead><tr><th class="who">Player</th>`+
-    gs.map(g=>`<th>${g.awayLogo?`<img src="${esc(g.awayLogo)}" alt="${esc(g.away)}">`:esc(g.away)}
+    gs.map(g=>`<th>${logoFor(g,"away")?`<img src="${esc(logoFor(g,"away"))}" alt="${esc(g.away)}">`:esc(g.away)}
       <span class="at">at</span>
-      ${g.homeLogo?`<img src="${esc(g.homeLogo)}" alt="${esc(g.home)}">`:esc(g.home)}</th>`).join("")+
+      ${logoFor(g,"home")?`<img src="${esc(logoFor(g,"home"))}" alt="${esc(g.home)}">`:esc(g.home)}</th>`).join("")+
     `<th class="sum tb">TB</th><th class="sum pts">PTS</th></tr></thead><tbody>`+
     rows.map(r=>`<tr><td class="who" data-p="${esc(r.e.name)}">${esc(r.e.name)}</td>`+
       gs.map(g=>{const p=r.e.picks?.[g.id],w=winnerOf(g);
         if(!p)return`<td class="pend"></td>`;
-        const img=p===g.home?g.homeLogo:g.awayLogo;
+        const img=p===g.home?logoFor(g,"home"):logoFor(g,"away");
         const cell=img?`<img src="${esc(img)}" alt="${esc(p)}">`:esc(p);
         if(!w)return`<td class="pend">${cell}</td>`;
         if(w==="TIE")return`<td class="tie">${cell}</td>`;
@@ -786,11 +819,11 @@ function openGame(id){
         :w?(w==="TIE"?"FINAL · TIE":"FINAL")
         :up(new Date(g.kickoff).toLocaleString([],{weekday:"long",hour:"numeric",minute:"2-digit"}))}</div>
     <div class="dhead" style="display:flex;align-items:center;gap:12px;margin-top:12px">
-      ${g.awayLogo?`<div class="dsc"><img src="${esc(g.awayLogo)}" alt=""></div>`:""}
+      ${logoFor(g,"away")?`<div class="dsc"><img src="${esc(logoFor(g,"away"))}" alt=""></div>`:""}
       <span class="teko" style="font-size:56px;${w===g.away?"color:var(--lime)":""}">${g.state==="pre"?"–":g.awayScore}</span>
       <span class="teko" style="font-size:22px;color:var(--muted);margin:0 auto">AT</span>
       <span class="teko" style="font-size:56px;${w===g.home?"color:var(--lime)":""}">${g.state==="pre"?"–":g.homeScore}</span>
-      ${g.homeLogo?`<div class="dsc"><img src="${esc(g.homeLogo)}" alt=""></div>`:""}
+      ${logoFor(g,"home")?`<div class="dsc"><img src="${esc(logoFor(g,"home"))}" alt=""></div>`:""}
     </div>`;
   $("dBd").innerHTML=`
     ${!w?`<div class="dlab">Win probability${live&&g.possession?` · ${esc(g.possession)} ball`:""}</div>
@@ -822,7 +855,7 @@ function openPlayer(name){
     ${row?`<div class="dlab">Week ${week} card · tiebreaker ${row.e.tiebreaker??"–"}</div>
     <div class="dpicks">${gs.map(g=>{const p=row.e.picks?.[g.id],w=winnerOf(g);
       if(!p) return `<div class="dpick">–</div>`;
-      const img=p===g.home?g.homeLogo:g.awayLogo, cls=!w?"":w==="TIE"?"miss":p===w?"hit":"miss";
+      const img=p===g.home?logoFor(g,"home"):logoFor(g,"away"), cls=!w?"":w==="TIE"?"miss":p===w?"hit":"miss";
       return `<div class="dpick ${cls}">${img?`<div class="dsc"><img src="${esc(img)}" alt="${esc(p)}"></div>`:esc(p)}</div>`;}).join("")}</div>`:""}
     ${sp?`<div class="dlab">Season · correct out of games played</div>${ws.map(w=>{
       const v=sp.byWeek[w], n=playedIn(w);
