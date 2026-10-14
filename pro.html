@@ -102,15 +102,17 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
   clip-path:polygon(16px 0,100% 0,calc(100% - 16px) 100%,0 100%);transition:transform .15s}
 .vs:hover{transform:translateY(-3px)}
 .vs .side{position:absolute;top:0;bottom:0;width:58%;display:flex;align-items:center}
-.vs .side.a{left:0;justify-content:flex-start;padding-left:26px;
+.vs .side.a{left:0;justify-content:flex-start;padding-left:22px;
   clip-path:polygon(0 0,100% 0,82% 100%,0 100%)}
-.vs .side.h{right:0;justify-content:flex-end;padding-right:26px;
+.vs .side.h{right:0;justify-content:flex-end;padding-right:22px;
   clip-path:polygon(18% 0,100% 0,100% 100%,0 100%)}
-.vs .side img{width:68px;height:68px;object-fit:contain;
+.vs .side img{width:58px;height:58px;object-fit:contain;
   filter:drop-shadow(0 0 1px rgba(255,255,255,.9)) drop-shadow(0 0 10px rgba(255,255,255,.28)) drop-shadow(0 8px 18px rgba(0,0,0,.55))}
-.vs .side .ab{position:absolute;bottom:10px;font-family:Teko;font-weight:700;font-size:26px;letter-spacing:.06em;
-  color:rgba(255,255,255,.92);text-shadow:0 2px 10px rgba(0,0,0,.6)}
-.vs .side.a .ab{left:26px}.vs .side.h .ab{right:26px}
+.vs .stack{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;min-width:78px}
+.vs .side .ab{font-family:Teko;font-weight:700;font-size:25px;letter-spacing:.06em;line-height:1;
+  color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.65)}
+.vs .side .wpv{font-family:Teko;font-weight:600;font-size:19px;line-height:1;color:#fff;
+  background:rgba(0,0,0,.55);padding:1px 8px;letter-spacing:.04em}
 .vs .side .big{position:absolute;top:8px;font-family:Teko;font-weight:700;font-size:48px;color:#fff;
   text-shadow:0 3px 14px rgba(0,0,0,.7)}
 .vs .side.a .big{right:30%}.vs .side.h .big{left:30%}
@@ -118,21 +120,15 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
 .vs .mid{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;text-align:center}
 .vs .mid .v{font-family:Teko;font-weight:700;font-size:28px;font-style:italic;color:#fff;
   text-shadow:0 0 14px rgba(255,45,85,.8),0 2px 0 #000}
-.vs .mid .st{font-weight:700;font-size:11px;letter-spacing:.16em;color:#fff;background:rgba(0,0,0,.6);
-  padding:2px 9px;margin-top:-4px;display:inline-block}
-.vs .mid .st.live{background:var(--hot)}
-.vs .tug{position:absolute;left:0;right:0;bottom:0;height:7px;display:flex;z-index:4}
+.vs .mid .st{font-weight:700;font-size:11.5px;letter-spacing:.16em;color:#fff;background:#000;
+  padding:3px 10px;margin-top:-2px;display:inline-block;box-shadow:0 2px 10px rgba(0,0,0,.5)}
+.vs .mid .st.live{color:#FF5A7A}
+.vs .tug{position:absolute;left:0;right:0;bottom:0;height:6px;display:flex;z-index:4}
 .vs .tug i{display:block}
 .vs.live{box-shadow:0 0 0 2px var(--hot),0 0 30px rgba(255,45,85,.35)}
-.vs .ball{position:absolute;top:10px;z-index:4;font-size:16px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.7))}
-.vs .side.a .ball{left:12px}.vs .side.h .ball{right:12px}
-.vs .side .rz{position:absolute;top:12px;font-weight:700;font-size:10px;letter-spacing:.14em;color:#fff;
-  background:var(--hot);padding:1px 6px}
-.vs .side.a .rz{left:34px}.vs .side.h .rz{right:34px}
-.vs .wp{position:absolute;left:0;right:0;bottom:7px;height:16px;z-index:4;display:flex;align-items:center;
-  justify-content:space-between;padding:0 10px;font-weight:700;font-size:11px;letter-spacing:.08em;
-  color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9)}
-.vs .dd{font-size:10px;letter-spacing:.1em;color:#fff;opacity:.85;margin-top:2px}
+.vs .ball{position:absolute;top:-2px;right:-6px;z-index:4;font-size:17px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.8))}
+.vs .dd{display:inline-block;font-weight:700;font-size:10.5px;letter-spacing:.12em;color:#fff;background:#000;
+  padding:1px 8px;margin-top:3px}
 
 /* ===== collectible cards ===== */
 .deck{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:20px}
@@ -161,12 +157,10 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
 .card .pos{font-weight:700;font-size:13px;letter-spacing:.14em;margin-top:2px}
 .card .tier{position:absolute;right:14px;top:16px;font-weight:700;font-size:10px;letter-spacing:.2em;
   border:1.5px solid currentColor;padding:2px 7px;opacity:.85}
-.card .crest{position:absolute;right:12px;top:40px;width:64px;height:64px;border-radius:50%;display:grid;place-items:center;
-  font-family:Teko;font-weight:700;font-size:34px;background:rgba(0,0,0,.18);box-shadow:inset 0 0 0 2px rgba(255,255,255,.25)}
-.card .nm{position:absolute;left:0;right:0;top:44%;text-align:center;font-family:Teko;font-weight:700;
+.card .nm{position:absolute;left:0;right:0;top:36%;text-align:center;font-family:Teko;font-weight:700;
   font-size:30px;letter-spacing:.04em;text-transform:uppercase;padding:0 10px;line-height:1;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.card .line{position:absolute;left:14%;right:14%;top:calc(44% + 32px);height:1.5px;background:currentColor;opacity:.4}
+.card .line{position:absolute;left:14%;right:14%;top:calc(36% + 32px);height:1.5px;background:currentColor;opacity:.4}
 .card .stats{position:absolute;left:12px;right:12px;bottom:12px;display:grid;grid-template-columns:repeat(3,1fr);
   gap:6px 6px;text-align:center}
 .card .stats b{display:block;font-family:Teko;font-weight:700;font-size:23px;line-height:.9}
@@ -204,18 +198,26 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
 .grid th{position:sticky;top:0;z-index:3;background:rgba(8,12,19,.97);padding:6px 2px}
 .grid th img{width:20px;height:20px;object-fit:contain;display:block;margin:0 auto}
 .grid th .at{display:block;font-size:9px;letter-spacing:.1em;color:var(--muted);line-height:1.4}
-.grid th.tb,.grid td.tb{border-left:1px solid rgba(255,255,255,.14);min-width:56px;font-family:Teko;font-size:22px}
+/* the summary block: pinned on the right, its own panel, reads as part of the table */
+.grid th.sum,.grid td.sum{position:sticky;z-index:2;background:#111A28;text-align:center;
+  font-family:Teko;font-weight:700;border-radius:0}
+.grid th.sum{z-index:4;font-family:Rajdhani;font-size:10px;letter-spacing:.18em;color:var(--muted);
+  vertical-align:bottom;padding:6px 8px 7px;line-height:1.2}
+.grid .sum.tb{right:64px;min-width:68px;font-size:22px;color:var(--ink2);
+  box-shadow:inset 1px 0 0 rgba(255,255,255,.12)}
+.grid .sum.pts{right:0;min-width:64px;font-size:28px;color:#fff;background:#152238}
+.grid td.sum.pts.lead{color:var(--lime)}
 .grid th.who,.grid td.who{position:sticky;left:0;z-index:2;background:rgba(8,12,19,.97);text-align:left;
   padding-left:12px;min-width:112px;font-family:Teko;font-size:21px;letter-spacing:.04em;text-transform:uppercase;cursor:pointer}
 .grid th.who{z-index:4;font-family:Rajdhani;font-size:11px;letter-spacing:.18em;color:var(--muted)}
 .grid td{height:28px;text-align:center}
 .grid td img{width:20px;height:20px;object-fit:contain;vertical-align:middle}
-.grid td.hit{background:linear-gradient(180deg,rgba(182,255,59,.42),rgba(182,255,59,.12));
-  clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
-.grid td.miss{background:rgba(255,45,85,.13)}
+.grid td{border-radius:5px}
+.grid td.hit{background:rgba(182,255,59,.13);box-shadow:inset 0 -3px 0 var(--lime)}
+.grid td.miss{background:rgba(255,45,85,.09);box-shadow:inset 0 -3px 0 rgba(255,45,85,.75)}
 .grid td.miss img{opacity:.78}
-.grid td.tie{background:rgba(255,122,26,.2)}
-.grid td.pend{background:rgba(255,255,255,.03)}
+.grid td.tie{background:rgba(255,122,26,.12);box-shadow:inset 0 -3px 0 var(--hot2)}
+.grid td.pend{background:rgba(255,255,255,.035)}
 
 #scrim{position:fixed;inset:0;background:rgba(2,3,6,.7);z-index:55;opacity:0;pointer-events:none;transition:.2s}
 #scrim.on{opacity:1;pointer-events:auto}
@@ -236,9 +238,31 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
   clip-path:polygon(5px 0,100% 0,calc(100% - 5px) 100%,0 100%)}
 .dpick img{width:22px;height:22px;object-fit:contain}
 .dpick.hit{background:rgba(182,255,59,.3)}.dpick.miss{background:rgba(255,45,85,.18)}
-.rung.lad2,.ladhead.lad2{grid-template-columns:54px 1fr 80px 74px 92px 60px}
-.rung.champ{background:linear-gradient(90deg,rgba(227,174,58,.32),rgba(255,255,255,.02))}
-.rung .c small{font-size:15px;color:var(--muted)}
+/* ladder rows: rank, the card as pips, chance, points */
+.lrow{display:grid;grid-template-columns:62px 1fr 100px 86px;align-items:center;gap:16px;cursor:pointer;
+  padding:12px 18px;margin-bottom:8px;position:relative;
+  background:linear-gradient(90deg,rgba(255,255,255,.075),rgba(255,255,255,.015));
+  clip-path:polygon(14px 0,100% 0,calc(100% - 14px) 100%,0 100%);transition:.14s}
+.lrow:hover{background:linear-gradient(90deg,rgba(0,224,255,.16),rgba(255,255,255,.02))}
+.lrow.out{opacity:.42}
+.lrow.champ{background:linear-gradient(90deg,rgba(227,174,58,.34),rgba(255,255,255,.02))}
+.lr{font-family:Teko;font-weight:700;font-size:40px;text-align:center;line-height:1;color:var(--muted)}
+.lrow.t1 .lr{color:var(--gold2);text-shadow:0 0 18px rgba(227,174,58,.45)}
+.lrow.t2 .lr{color:var(--silv2)}.lrow.t3 .lr{color:var(--brz2)}
+.lname{font-family:Teko;font-weight:600;font-size:28px;letter-spacing:.04em;text-transform:uppercase;line-height:1;
+  display:flex;align-items:center;gap:10px}
+.pips{display:flex;gap:3px;margin:7px 0 5px;flex-wrap:wrap}
+.pip{width:14px;height:8px;display:block;background:rgba(255,255,255,.12)}
+.pip.hit{background:var(--lime);box-shadow:0 0 8px rgba(182,255,59,.45)}
+.pip.miss{background:var(--hot)}
+.pip.open{background:rgba(255,255,255,.28)}
+.pip.none{background:transparent;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+.lmeta{font-weight:600;font-size:11px;letter-spacing:.14em;color:var(--muted)}
+.lwin,.lpts{text-align:right;line-height:.9}
+.lwin b,.lpts b{font-family:Teko;font-weight:700;display:block}
+.lwin b{font-size:36px;color:var(--cy)}.lwin b small{font-size:18px}
+.lpts b{font-size:46px}
+.lwin span,.lpts span{font-weight:700;font-size:9.5px;letter-spacing:.2em;color:var(--muted)}
 .st{font-weight:700;font-size:11px;letter-spacing:.16em;padding:2px 8px;display:inline-block}
 .st.lead{color:#06120A;background:var(--lime)}
 .st.out{color:var(--hot);border:1px solid var(--hot)}
@@ -255,7 +279,9 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
 .sc .note{display:block;font-size:10.5px;letter-spacing:.16em;color:var(--muted);margin-top:2px}
 .sc .odds{font-family:Teko;font-size:28px;text-align:right;color:var(--lime)}
 @media (max-width:640px){
-  .rung.lad2,.ladhead.lad2{grid-template-columns:34px 1fr 54px 50px 58px 40px;gap:6px}
+  .lrow{grid-template-columns:38px 1fr 62px 52px;gap:9px;padding:10px 12px}
+  .lr{font-size:30px}.lname{font-size:22px}.pip{width:10px}
+  .lwin b{font-size:26px}.lpts b{font-size:34px}
   .sc{grid-template-columns:1fr;gap:4px}.sc .odds{text-align:left}
 }
 .empty{padding:50px 20px;text-align:center;font-family:Teko;font-size:28px;letter-spacing:.1em;color:var(--muted)}
@@ -263,8 +289,7 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
   .tab{font-size:21px;padding:2px 9px 0}
   .vsgrid{grid-template-columns:1fr}
   .deck{grid-template-columns:repeat(2,1fr);gap:12px}
-  .card .ovr{font-size:46px}.card .nm{font-size:24px}.card .crest{width:50px;height:50px;font-size:26px}
-  .rung{grid-template-columns:40px 1fr 54px 52px;gap:8px}
+  .card .ovr{font-size:46px}.card .nm{font-size:24px}  .rung{grid-template-columns:40px 1fr 54px 52px;gap:8px}
 }
 @media (prefers-reduced-motion:reduce){.speed,#gate .press{animation:none}.pane.on{animation:none}}
 </style>
@@ -509,21 +534,24 @@ function drawVs(){
   $("vs").innerHTML=gs.map(g=>{
     const w=winnerOf(g),live=g.state==="in",sp=splitOf(g);
     const ca=colourOf(g,"away"),ch=colourOf(g,"home");
-    const side=(cls,ab,logo,sc,col)=>`<div class="side ${cls}${w&&w!=="TIE"&&w!==ab?" lost":""}"
-      style="background:linear-gradient(${cls==="a"?"100deg":"260deg"},${col} 0%,${col}CC 46%,#0B111B 100%)">
-      ${live&&g.possession===ab?`<span class="ball">🏈</span>${g.redZone?'<span class="rz">RZ</span>':""}`:""}
-      ${logo?`<img src="${esc(logo)}" alt="">`:""}<span class="ab">${esc(ab)}</span>
-      ${g.state==="pre"?"":`<span class="big">${sc}</span>`}</div>`;
+    const ph0=homeWinProb(g);
+    const side=(cls,ab,logo,sc,col)=>{
+      const pct=Math.round((cls==="h"?ph0:1-ph0)*100);
+      return `<div class="side ${cls}${w&&w!=="TIE"&&w!==ab?" lost":""}"
+        style="background:linear-gradient(${cls==="a"?"100deg":"260deg"},${col} 0%,${col}CC 46%,#0B111B 100%)">
+        <div class="stack">
+          ${live&&g.possession===ab?'<span class="ball">🏈</span>':""}
+          ${logo?`<img src="${esc(logo)}" alt="">`:""}
+          <span class="ab">${esc(ab)}</span>
+          ${live?`<span class="wpv">${pct}%</span>`:""}
+        </div>
+        ${g.state==="pre"?"":`<span class="big">${sc}</span>`}</div>`;};
     const st=live?`<span class="st live">Q${g.period} ${esc(g.clock)}</span>`
       :w?`<span class="st">${w==="TIE"?"TIE":"FINAL"}</span>`
       :`<span class="st">${up(new Date(g.kickoff).toLocaleString([],{weekday:"short",hour:"numeric",minute:"2-digit"}))}</span>`;
-    const ph=homeWinProb(g);
-    const wp=live?`<div class="wp"><span>${Math.round((1-ph)*100)}%</span><span>WIN PROB</span>
-      <span>${Math.round(ph*100)}%</span></div>`:"";
     return `<div class="vs${live?" live":""}" data-g="${esc(g.id)}">
       ${side("a",g.away,g.awayLogo,g.awayScore,ca)}${side("h",g.home,g.homeLogo,g.homeScore,ch)}
-      <div class="mid"><div class="v">VS</div>${st}${live&&g.downDistance?`<div class="dd">${esc(g.downDistance)}</div>`:""}</div>
-      ${wp}
+      <div class="mid"><div class="v">VS</div>${st}${live&&g.downDistance?`<div><span class="dd">${esc(g.downDistance)}</span></div>`:""}</div>
       <div class="tug"><i style="width:${sp.a/sp.tot*100}%;background:${ca}"></i>
         <i style="width:${sp.h/sp.tot*100}%;background:${ch}"></i></div></div>`;
   }).join("");
@@ -537,11 +565,13 @@ function drawVs(){
    that consistency turned into a win.                                   */
 const WIN_BONUS = 3;
 const powerOf = p => (p?.total || 0) + WIN_BONUS * (p?.wins || 0);
+// Rating is power relative to the season's best: missed weeks cost you (fewer
+// points), wins lift you, and a higher rating always means a higher rank.
 function ratingFor(name){
   const sp=season?.players?.find(p=>slug(p.name)===slug(name));
-  if(!sp||!sp.weeks) return {ovr:60,sp:null,pwr:0};
-  const avg=sp.total/sp.weeks, winRate=(sp.wins||0)/sp.weeks;
-  const ovr=Math.max(50,Math.min(99,Math.round(40+avg*4.6+winRate*20)));
+  if(!sp||!sp.weeks) return {ovr:55,sp:null,pwr:0};
+  const best=Math.max(1,...(season?.players||[]).map(powerOf));
+  const ovr=Math.max(50,Math.min(99,Math.round(55+44*(powerOf(sp)/best))));
   return {ovr,sp,pwr:powerOf(sp)};
 }
 const byPower=(a,b)=> powerOf(b)-powerOf(a) ||
@@ -569,7 +599,6 @@ function drawDeck(){
       <div class="face t-${t}"><div class="skin"></div>
         <div class="ovr">${ovr}</div><div class="pos">#${i+1}</div>
         <div class="tier">${t==="elite"?"MVP":up(t)}</div>
-        <div class="crest">${esc(initials(name))}</div>
         <div class="nm">${esc(name)}</div><div class="line"></div>
         <div class="stats">
           <div><b>${sp?.total??"–"}</b><span>PTS</span></div>
@@ -617,19 +646,27 @@ function drawLadder(){
   $("ladderSub").textContent = done
     ? (actual!=null?`FINAL · TIEBREAKER ${actual}`:"FINAL")
     : `${A.alive.size} ALIVE · ${openN} OPEN${proj&&proj.sd>.5?` · TB PROJ ${Math.round(proj.mean)} ±${Math.round(proj.sd)}`:""}`;
-  $("ladder").innerHTML=`<div class="ladhead lad2"><span></span><span>PLAYER</span><span>WIN %</span>
-      <span>TB</span><span>STATUS</span><span>PTS</span></div>`+
-    rows.map((r,i)=>{
-      const out=!A.alive.has(r.e.name), p=ch(r);
-      const status = done ? (r.e.name===champ?'<span class="st win">WINNER</span>':"")
-        : out ? '<span class="st out">OUT</span>'
-        : r.s.c===top ? '<span class="st lead">LEAD</span>' : "";
-      const cls=i===0?"g":i===1?"s":i===2?"b":"";
-      return `<div class="rung lad2 ${cls}${out&&!done?" out":""}${r.e.name===champ?" champ":""}" data-p="${esc(r.e.name)}">
-        <div class="r">${i+1}</div><div class="n">${esc(r.e.name)}</div>
-        <div class="c">${done?"":p>=.995?"100%":p<.0005?"–":(p*100).toFixed(p<.095?1:0)+"%"}</div>
-        <div class="c">${r.e.tiebreaker??"–"}${actual!=null&&r.e.tiebreaker!=null?`<small> ·${Math.abs(r.e.tiebreaker-actual)}</small>`:""}</div>
-        <div>${status}</div><div class="v">${r.s.c}</div></div>`;}).join("");
+  const gs=games();
+  $("ladder").innerHTML=rows.map((r,i)=>{
+      const out=!A.alive.has(r.e.name)&&!done, p=ch(r), isChamp=r.e.name===champ;
+      const status = done ? (isChamp?'<span class="st win">WINNER</span>':"")
+        : out ? '<span class="st out">OUT</span>' : r.s.c===top ? '<span class="st lead">LEAD</span>' : "";
+      const pips=gs.map(g=>{const pk=r.e.picks?.[g.id], w=winnerOf(g);
+        const c=!pk?"none":!w?"open":w==="TIE"?"miss":pk===w?"hit":"miss";
+        return `<i class="pip ${c}" title="${esc(g.away)} at ${esc(g.home)}: ${esc(pk||"no pick")}"></i>`;}).join("");
+      const tier=i===0?"t1":i===1?"t2":i===2?"t3":"";
+      const pct=done?"":p>=.995?"100":p<.0005?"":(p*100).toFixed(p<.095?1:0);
+      return `<div class="lrow ${tier}${out?" out":""}${isChamp?" champ":""}" data-p="${esc(r.e.name)}">
+        <div class="lr">${i+1}</div>
+        <div class="lmain">
+          <div class="lname">${esc(r.e.name)} ${status}</div>
+          <div class="pips">${pips}</div>
+          <div class="lmeta">TB ${r.e.tiebreaker??"–"}${actual!=null&&r.e.tiebreaker!=null?` · OFF ${Math.abs(r.e.tiebreaker-actual)}`:""}
+            ${!done&&r.s.rem?` · ${r.s.rem} OPEN`:""}</div>
+        </div>
+        <div class="lwin">${pct?`<b>${pct}<small>%</small></b><span>TO WIN</span>`:`<span>${done?"":"—"}</span>`}</div>
+        <div class="lpts"><b>${r.s.c}</b><span>PTS</span></div>
+      </div>`;}).join("");
   $("ladder").querySelectorAll("[data-p]").forEach(el=>el.onclick=()=>openPlayer(el.dataset.p));
   drawScenarios(A);
 }
@@ -670,7 +707,7 @@ function drawGrid(){
     gs.map(g=>`<th>${g.awayLogo?`<img src="${esc(g.awayLogo)}" alt="${esc(g.away)}">`:esc(g.away)}
       <span class="at">at</span>
       ${g.homeLogo?`<img src="${esc(g.homeLogo)}" alt="${esc(g.home)}">`:esc(g.home)}</th>`).join("")+
-    `<th class="tb">TB</th><th>PTS</th></tr></thead><tbody>`+
+    `<th class="sum tb">TIE<br>BREAKER</th><th class="sum pts">PTS</th></tr></thead><tbody>`+
     rows.map(r=>`<tr><td class="who" data-p="${esc(r.e.name)}">${esc(r.e.name)}</td>`+
       gs.map(g=>{const p=r.e.picks?.[g.id],w=winnerOf(g);
         if(!p)return`<td class="pend"></td>`;
@@ -679,7 +716,7 @@ function drawGrid(){
         if(!w)return`<td class="pend">${cell}</td>`;
         if(w==="TIE")return`<td class="tie">${cell}</td>`;
         return`<td class="${p===w?"hit":"miss"}">${cell}</td>`;}).join("")+
-      `<td class="tb">${r.e.tiebreaker??"–"}</td><td style="font-family:Teko;font-size:24px">${r.s.c}</td></tr>`).join("")+`</tbody>`;
+      `<td class="sum tb">${r.e.tiebreaker??"–"}</td><td class="sum pts${r.s.c===rows[0].s.c&&r.s.c>0?" lead":""}">${r.s.c}</td></tr>`).join("")+`</tbody>`;
   $("grid").querySelectorAll("td[data-p]").forEach(el=>el.onclick=()=>openPlayer(el.dataset.p));
 }
 
