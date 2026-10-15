@@ -33,10 +33,11 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
   radial-gradient(900px 520px at 50% -8%, rgba(0,224,255,.20), transparent 62%),
   radial-gradient(700px 500px at 0% 100%, rgba(255,45,85,.22), transparent 62%),
   radial-gradient(700px 500px at 100% 100%, rgba(255,122,26,.18), transparent 62%), var(--bg)}
-.speed{position:fixed;inset:-20%;z-index:-2;opacity:.11;pointer-events:none;
+.speed{position:fixed;inset:-20%;z-index:-2;opacity:.11;pointer-events:none;transition:opacity .6s;
   background:repeating-linear-gradient(115deg, #fff 0 1px, transparent 1px 34px);animation:rush 6s linear infinite}
 @keyframes rush{to{transform:translateX(-68px)}}
-.hexes{position:fixed;inset:0;z-index:-2;opacity:.06;pointer-events:none;
+body.inapp .speed{opacity:0}
+.hexes{position:fixed;inset:0;z-index:-2;opacity:.035;pointer-events:none;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='48'%3E%3Cpath d='M14 0h28l14 24-14 24H14L0 24z' fill='none' stroke='%23fff' stroke-width='1'/%3E%3C/svg%3E")}
 
 /* ===== gate ===== */
@@ -186,9 +187,9 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
 /* ===== ladder ===== */
 .ladder{display:flex;flex-direction:column;gap:7px}
 .rung{display:grid;grid-template-columns:54px 1fr 74px 70px;align-items:center;gap:12px;cursor:pointer;
-  background:linear-gradient(90deg,rgba(255,255,255,.07),rgba(255,255,255,.015));padding:8px 14px;
+  background:linear-gradient(90deg,rgba(255,255,255,.07),rgba(255,255,255,.015)) #0C121C;padding:8px 14px;
   clip-path:polygon(12px 0,100% 0,calc(100% - 12px) 100%,0 100%);transition:.14s}
-.rung:hover{background:linear-gradient(90deg,rgba(255,45,85,.22),rgba(255,255,255,.02))}
+.rung:hover{background:linear-gradient(90deg,rgba(255,45,85,.22),rgba(255,255,255,.02)) #0C121C}
 .rung .r{font-family:Teko;font-weight:700;font-size:30px;text-align:center;color:var(--muted)}
 .rung.g .r{color:var(--gold2)}.rung.s .r{color:var(--silv2)}.rung.b .r{color:var(--brz2)}
 .rung .n{font-family:Teko;font-weight:600;font-size:26px;letter-spacing:.04em;text-transform:uppercase}
@@ -203,7 +204,7 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
 .ladhead span:nth-child(n+3){text-align:right}
 
 /* ===== picks grid ===== */
-.grid{overflow:auto;max-height:80vh;background:rgba(8,12,19,.85);border:1px solid rgba(255,255,255,.08)}
+.grid{overflow:auto;max-height:80vh;background:#080C13;border:1px solid rgba(255,255,255,.08)}
 .grid table{border-collapse:separate;border-spacing:4px;width:100%}
 .grid th{position:sticky;top:0;z-index:3;background:rgba(8,12,19,.97);padding:6px 2px}
 .grid th img{width:28px;height:28px;object-fit:contain;display:block;margin:0 auto;filter:drop-shadow(0 1px 2px rgba(0,0,0,.95)) drop-shadow(0 0 1px rgba(0,0,0,.9))}
@@ -231,6 +232,17 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
 .grid td.miss img{opacity:.8}
 .grid td.tie{background:rgba(255,122,26,.22)}
 .grid td.pend{background:rgba(255,255,255,.035)}
+/* pool split row: away count over home count, matching the header's logo stack */
+.grid tr.splitrow td{background:#111A28;height:auto;padding:5px 0}
+.grid tr.splitrow td.who{font-family:Rajdhani;font-size:10.5px;font-weight:700;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--muted);box-shadow:inset 3px 0 0 rgba(255,255,255,.18);background:#111A28}
+.grid tr.splitrow td.sum{background:#111A28}
+.splitn{display:flex;flex-direction:column;align-items:center;line-height:1}
+.splitn span{font-family:Teko;font-weight:600;font-size:19px;color:var(--muted)}
+.splitn span.maj{color:#fff}
+.splitn span.won{color:var(--lime)}
+.splitn i{display:block;width:14px;height:1px;background:rgba(255,255,255,.18);margin:2px 0}
+.grid tbody tr.splitrow:hover td{filter:none}
 
 #scrim{position:fixed;inset:0;background:rgba(2,3,6,.7);z-index:55;opacity:0;pointer-events:none;transition:.2s}
 #scrim.on{opacity:1;pointer-events:auto}
@@ -246,7 +258,7 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
 .dlab{font-weight:700;font-size:10.5px;letter-spacing:.2em;color:var(--muted);margin:16px 0 7px;text-transform:uppercase}
 .dnames{list-style:none;margin:0;padding:0;columns:2;font-family:Teko;font-size:21px;letter-spacing:.03em}
 .dnames li.hit{color:var(--lime)}.dnames li.miss{color:var(--hot);opacity:.85}
-.dpicks{display:grid;grid-template-columns:repeat(auto-fill,minmax(48px,1fr));gap:6px}
+.dpips{gap:6px;margin-top:4px}
 .dpick{text-align:center;padding:6px 0;background:rgba(255,255,255,.05);
   clip-path:polygon(5px 0,100% 0,calc(100% - 5px) 100%,0 100%)}
 .dpick img{width:22px;height:22px;object-fit:contain}
@@ -258,11 +270,11 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
 /* ladder rows: rank, the card as pips, chance, points */
 .lrow{display:grid;grid-template-columns:62px 1fr 100px 86px;align-items:center;gap:16px;cursor:pointer;
   padding:12px 18px;margin-bottom:8px;position:relative;
-  background:linear-gradient(90deg,rgba(255,255,255,.075),rgba(255,255,255,.015));
+  background:linear-gradient(90deg,rgba(255,255,255,.075),rgba(255,255,255,.015)) #0C121C;
   clip-path:polygon(14px 0,100% 0,calc(100% - 14px) 100%,0 100%);transition:.14s}
-.lrow:hover{background:linear-gradient(90deg,rgba(0,224,255,.16),rgba(255,255,255,.02))}
+.lrow:hover{background:linear-gradient(90deg,rgba(0,224,255,.16),rgba(255,255,255,.02)) #0C121C}
 .lrow.out{opacity:.42}
-.lrow.champ{background:linear-gradient(90deg,rgba(227,174,58,.34),rgba(255,255,255,.02))}
+.lrow.champ{background:linear-gradient(90deg,rgba(227,174,58,.34),rgba(255,255,255,.02)) #0C121C}
 .lr{font-family:Teko;font-weight:700;font-size:40px;text-align:center;line-height:1;color:var(--muted)}
 .lrow.t1 .lr{color:var(--gold2);text-shadow:0 0 18px rgba(227,174,58,.45)}
 .lrow.t2 .lr{color:var(--silv2)}.lrow.t3 .lr{color:var(--brz2)}
@@ -289,7 +301,7 @@ select{background:rgba(10,14,22,.9);border:1px solid rgba(255,255,255,.14);paddi
 .st.win{color:#2A1A02;background:linear-gradient(90deg,var(--gold1),var(--gold2))}
 .scens{display:flex;flex-direction:column;gap:8px}
 .sc{display:grid;grid-template-columns:1.1fr 1.4fr 64px;gap:14px;align-items:center;padding:11px 16px;
-  background:linear-gradient(90deg,rgba(255,255,255,.06),rgba(255,255,255,.015));
+  background:linear-gradient(90deg,rgba(255,255,255,.06),rgba(255,255,255,.015)) #0C121C;
   clip-path:polygon(12px 0,100% 0,calc(100% - 12px) 100%,0 100%)}
 .sc .lbl{display:inline-block;font-family:Teko;font-size:19px;color:#06120A;background:var(--cy);
   padding:0 8px;margin-right:10px;letter-spacing:.08em}
@@ -503,10 +515,10 @@ $("gbtn").onclick=async()=>{
   if(!v)return;
   if(!(await unlock(v))){$("gerr").textContent="INVALID CODE";return;}
   pass=v;localStorage.setItem("pc.pass",pass);
-  $("gate").style.display="none";$("ui").classList.add("on");boot();
+  $("gate").style.display="none";$("ui").classList.add("on");document.body.classList.add("inapp");boot();
 };
 $("gpass").onkeydown=e=>{if(e.key==="Enter")$("gbtn").click();};
-(async()=>{if(pass&&await unlock(pass)){$("gate").style.display="none";$("ui").classList.add("on");boot();}})();
+(async()=>{if(pass&&await unlock(pass)){$("gate").style.display="none";$("ui").classList.add("on");document.body.classList.add("inapp");boot();}})();
 
 for(let w=1;w<=18;w++){const o=document.createElement("option");o.value=w;o.textContent="WEEK "+w;$("weekSel").appendChild(o);}
 $("weekSel").onchange=e=>{week=+e.target.value;load();};
@@ -899,6 +911,13 @@ function drawGrid(){
       <span class="at">at</span>
       ${logoFor(g,"home")?`<img src="${esc(logoFor(g,"home"))}" alt="${esc(g.home)}">`:esc(g.home)}</th>`).join("")+
     `<th class="sum tb">TB</th><th class="sum pts">PTS</th></tr></thead><tbody>`+
+    `<tr class="splitrow"><td class="who">Pool Split</td>`+
+      gs.map(g=>{ const sp=splitOf(g), w=winnerOf(g);
+        const cls=(n,other,team)=> (w && w!=="TIE" && w===team) ? "won" : n>other ? "maj" : "";
+        return `<td class="split" title="${sp.a} took ${esc(g.away)} · ${sp.h} took ${esc(g.home)}"><div class="splitn">
+          <span class="${cls(sp.a,sp.h,g.away)}">${sp.a}</span><i></i><span class="${cls(sp.h,sp.a,g.home)}">${sp.h}</span>
+        </div></td>`; }).join("")+
+      `<td class="sum tb"></td><td class="sum pts"></td></tr>`+
     rows.map(r=>`<tr><td class="who" data-p="${esc(r.e.name)}">${esc(r.e.name)}</td>`+
       gs.map(g=>{const p=r.e.picks?.[g.id],w=winnerOf(g);
         if(!p)return`<td class="pend"></td>`;
@@ -960,10 +979,11 @@ function openPlayer(name){
     </div>`;
   $("dBd").innerHTML=`
     ${row?`<div class="dlab">Week ${week} card · tiebreaker ${row.e.tiebreaker??"–"}</div>
-    <div class="dpicks">${gs.map(g=>{const p=row.e.picks?.[g.id],w=winnerOf(g);
-      if(!p) return `<div class="dpick">–</div>`;
-      const img=p===g.home?logoFor(g,"home"):logoFor(g,"away"), cls=!w?"":w==="TIE"?"miss":p===w?"hit":"miss";
-      return `<div class="dpick ${cls}">${img?`<div class="dsc"><img src="${esc(img)}" alt="${esc(p)}"></div>`:esc(p)}</div>`;}).join("")}</div>`:""}
+    <div class="pips dpips">${gs.map(g=>{const p=row.e.picks?.[g.id],w=winnerOf(g);
+      if(!p) return `<span class="lp none" title="${esc(g.away)} at ${esc(g.home)}: no pick"></span>`;
+      const img=p===g.home?logoFor(g,"home"):logoFor(g,"away"), cls=!w?"open":w==="TIE"?"miss":p===w?"hit":"miss";
+      return `<span class="lp ${cls}" title="${esc(g.away)} at ${esc(g.home)}: ${esc(p)}">${
+        img?`<img src="${esc(img)}" alt="${esc(p)}">`:esc(p)}</span>`;}).join("")}</div>`:""}
     ${sp?`<div class="dlab">Season · correct out of games played</div>${ws.map(w=>{
       const v=sp.byWeek[w], n=playedIn(w);
       const pct=v!=null&&n?Math.min(100,v/n*100):0;
