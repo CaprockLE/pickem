@@ -3,6 +3,15 @@
 Reconstructed from the build history. Newest first.
 Each entry is the build number shown at the bottom of the sidebar.
 
+## build-137 — sheet archive and share card logos
+- Fixed: importing a week's sheets in several uploads archived only the last upload's photos.
+  Each upload now adds to the photos waiting to be saved
+- Archive stores one photo per key and saves them one request at a time, so a full week
+  can no longer outgrow a single save. Older weeks are split up automatically on first view
+- Add Photos to Archive button, for backfilling sheets without re-importing picks
+- Share card draws team logos instead of abbreviations, via a new /api/logo endpoint
+  (a canvas can't be downloaded if it's drawn with images from another site)
+
 ## build-132 — browser QA pass
 - Tested every view of the main site and Pro in headless Chromium at 1440px, 390px and 360px
 - Fixed: phone standings hid the Tiebreaker column and showed Paid (columns were hidden by

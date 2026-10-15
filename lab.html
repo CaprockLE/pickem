@@ -697,6 +697,9 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
         <p class="note" style="margin:0 0 10px">Photos of this week's sheets, kept as the receipt if anyone disputes a pick.
           Saved automatically when you publish.</p>
         <div class="sheetgrid" id="archGrid"></div>
+        <div style="margin-top:10px" id="archAddWrap"><button id="archAdd">Add Photos to Archive</button>
+          <input type="file" id="archFile" accept="image/*,application/pdf,.pdf" multiple hidden>
+          <span class="note" style="margin-left:8px">Adds photos only; doesn't read or change any picks.</span></div>
         <div class="bar" style="margin:12px -16px -16px" id="archBar" hidden>
           <button id="archSave" class="primary">Save Photos to Archive</button>
           <span class="note" id="archMsg"></span>
@@ -740,7 +743,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
 </div>
 
 <script>
-const BUILD = "lab-136 (2026-10-12 02:43 UTC)";
+const BUILD = "lab-137 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -1033,6 +1036,7 @@ let buyin = Number(localStorage.getItem("pc.buyin") || 10);
 let roster = [];
 let archive = [];            // {id,label,uploadedAt,data}
 let pendingShots = [];       // photos from the current import, saved on publish
+let shotBatch = 0;           // which upload a waiting photo came from
 let pendingWeek = null;      // week number read off the sheet itself
 let mePlayer = localStorage.getItem("pc.me") || "";
 let liveWeek = null;         // the week the league is actually in right now
@@ -1227,34 +1231,41 @@ async function loadArchive() {
   renderArchive();
 }
 
-// push whatever photos are waiting into the archive
+// push whatever photos are waiting into the archive, one per request so no single
+// save can grow too large, then any name changes
 async function saveArchive() {
   if (!authed) { toast("Manager passcode required", "bad"); return false; }
   if (!pendingShots.length && !archiveDirty) { toast("Nothing new to archive", "bad"); return false; }
-  $("archMsg").textContent = "Saving…";
-  const merged = [...archive, ...pendingShots].slice(-24);
-  try {
-    const r = await fetch(`/api/sheets?week=${week}`, {
-      method: "POST", headers: { "content-type": "application/json", "x-admin-key": pass },
-      body: JSON.stringify({ sheets: merged }),
-    });
-    const body = await r.text();
-    if (!r.ok) {
-      const why = /^\s*[{[]/.test(body) ? (JSON.parse(body).error || r.status) : `HTTP ${r.status}`;
-      $("archMsg").textContent = ""; toast("Photo archive failed: " + why, "bad");
-      return false;
-    }
-    archive = (JSON.parse(body).sheets) || merged;
-    pendingShots = []; archiveDirty = false;
-    $("archMsg").textContent = "";
-    renderArchive();
-    toast("Sheet photos archived", "ok");
-    return true;
-  } catch (e) {
-    $("archMsg").textContent = ""; toast("Photo archive failed: " + (e.message || e), "bad");
-    return false;
+  const post = body => fetch(`/api/sheets?week=${week}`, {
+    method: "POST", headers: { "content-type": "application/json", "x-admin-key": pass }, body: JSON.stringify(body) });
+  const failed = [];
+  const total = pendingShots.length;
+  for (let i = 0; i < pendingShots.length; i++) {
+    const shot = pendingShots[i];
+    $("archMsg").textContent = `Saving ${i + 1} of ${total}…`;
+    try {
+      const r = await post({ add: shot });
+      if (r.ok) { archive = (await r.json()).sheets || archive; shot.saved = true; }
+      else { const b = await r.text(); failed.push(`${shot.label || "photo"}: ${/^\s*{/.test(b) ? JSON.parse(b).error : "HTTP " + r.status}`); }
+    } catch (e) { failed.push(`${shot.label || "photo"}: ${e.message || e}`); }
   }
+  pendingShots = pendingShots.filter(s => !s.saved);
+  if (archiveDirty) {
+    try {
+      const labels = Object.fromEntries(archive.map(s => [s.id, s.label || ""]));
+      const r = await post({ labels });
+      if (r.ok) { archive = (await r.json()).sheets || archive; archiveDirty = false; }
+      else failed.push("name changes");
+    } catch (e) { failed.push("name changes"); }
+  }
+  $("archMsg").textContent = "";
+  renderArchive();
+  if (failed.length) { toast(`Archive: ${failed.length} didn't save — ${failed[0]}`, "bad"); return false; }
+  toast(total ? `${total} sheet photo${total === 1 ? "" : "s"} archived` : "Archive updated", "ok");
+  return true;
 }
+
+const archiveSrc = sh => `/api/sheets?week=${encodeURIComponent(week)}&img=${encodeURIComponent(sh.id)}`;
 
 function renderArchive() {
   if (!$("archGrid")) return;
@@ -1270,8 +1281,8 @@ function renderArchive() {
   $("archGrid").innerHTML = archive.length
     ? archive.map(sh => `<div class="sheetcard">
         ${sh.kind === "pdf"
-          ? `<a href="${esc(sh.data)}" target="_blank" rel="noopener" class="pdftile">PDF</a>`
-          : `<img src="${esc(sh.data)}" alt="${esc(sh.label || "Pick sheet")}" loading="lazy" data-img="${esc(sh.id)}">`}
+          ? `<a href="${esc(archiveSrc(sh))}" target="_blank" rel="noopener" class="pdftile">PDF</a>`
+          : `<img src="${esc(archiveSrc(sh))}" alt="${esc(sh.label || "Pick sheet")}" loading="lazy" data-img="${esc(sh.id)}">`}
         <div class="cap">
           ${authed
             ? `<input type="text" data-label="${esc(sh.id)}" value="${esc(sh.label || "")}" placeholder="Player name"
@@ -1283,7 +1294,7 @@ function renderArchive() {
   $("archGrid").querySelectorAll("img[data-img]").forEach(el => el.onclick = () => {
     const sh = archive.find(x => x.id === el.dataset.img);
     if (!sh) return;
-    $("lbImg").src = sh.data; $("lightbox").hidden = false;
+    $("lbImg").src = archiveSrc(sh); $("lightbox").hidden = false;
   });
   $("archGrid").querySelectorAll("input[data-label]").forEach(inp => inp.oninput = () => {
     const sh = archive.find(x => x.id === inp.dataset.label);
@@ -2040,6 +2051,20 @@ function drawShare(mode) {
   return mode === "grid" ? drawGridShare() : drawStandingsShare();
 }
 
+// Logos come through our own /api/logo, because a canvas drawn with images from another
+// site can't be downloaded or copied. Each logo loads once and is reused.
+const shareLogos = new Map();
+function shareLogo(url) {
+  if (!url) return Promise.resolve(null);
+  if (!shareLogos.has(url)) shareLogos.set(url, new Promise(res => {
+    const im = new Image();
+    im.onload = () => res(im); im.onerror = () => res(null);
+    im.src = "/api/logo?u=" + encodeURIComponent(url);
+  }));
+  return shareLogos.get(url);
+}
+let shareDrawId = 0;
+
 const SHARE_DARK = { ink:"#0A111B", panel:"#131F2D", alt:"#101A26", line:"#263445", text:"#E9EEF5",
                      muted:"#8696A8", brand:"#39B28E", brandBg:"#11322A", miss:"#FF4D4D", missBg:"#3B1012",
                      gold:"#D4AC54" };
@@ -2050,9 +2075,21 @@ const SHARE_LIGHT = { ink:"#FFFFFF", panel:"#F6F8FB", alt:"#FFFFFF", line:"#D9E0
 let SH = SHARE_DARK;
 function shareTheme() { SH = darkMode() ? SHARE_DARK : SHARE_LIGHT; }
 
-function drawGridShare() {
+async function drawGridShare() {
   const cv = $("shareCanvas"), x = cv.getContext("2d");
   const gs = games();
+  const myDraw = ++shareDrawId;
+  const logos = new Map();
+  await Promise.all(gs.flatMap(g => ["away", "home"].map(async side => {
+    const u = logoFor(g, side); logos.set(g[side], await shareLogo(u));
+  })));
+  if (myDraw !== shareDrawId) return;                 // a newer draw started while logos loaded
+  const L = 26;                                       // logo size in the image
+  const putLogo = (team, cx, cy, alpha = 1) => {
+    const im = logos.get(team); if (!im) return false;
+    x.save(); x.globalAlpha = alpha; x.drawImage(im, cx - L / 2, cy - L / 2, L, L); x.restore();
+    return true;
+  };
   const finals = gs.filter(g => winnerOf(g)).length;
   const showCorrect = finals > 0;                     // nothing to show before kickoff
   const order = ($("shareOrder") && $("shareOrder").value) || "az";
@@ -2060,7 +2097,7 @@ function drawGridShare() {
   if (order === "az") rows = [...rows].sort((a, b) => a.e.name.localeCompare(b.e.name, undefined, { sensitivity: "base" }));
   else if (order === "correct") rows = [...rows].sort((a, b) => b.s.correct - a.s.correct || a.e.name.localeCompare(b.e.name));
   const paidW = 68;
-  const nameW = 190, colW = 58, tbW = 86, corW = showCorrect ? 72 : 0, rowH = 38, headH = 148, colHead = 56;
+  const nameW = 190, colW = 58, tbW = 86, corW = showCorrect ? 72 : 0, rowH = 38, headH = 148, colHead = 80;
   const W = nameW + gs.length * colW + tbW + corW + paidW + 56;
   const H = headH + colHead + rows.length * rowH + 76;
   cv.width = W; cv.height = H;
@@ -2080,15 +2117,17 @@ function drawGridShare() {
   let cx = 28 + nameW;
   x.textAlign = "center"; x.font = "600 17px Inter, sans-serif";
   gs.forEach(g => {
-    x.fillStyle = SH.muted; x.fillText(g.away, cx + colW / 2, headH + 18);
-    x.fillStyle = SH.line; x.fillText("at", cx + colW / 2, headH + 33);
-    x.fillStyle = SH.muted; x.fillText(g.home, cx + colW / 2, headH + 48);
+    const mid = cx + colW / 2;
+    if (!putLogo(g.away, mid, headH + 14)) { x.fillStyle = SH.muted; x.fillText(g.away, mid, headH + 20); }
+    x.fillStyle = SH.muted; x.font = "600 13px Inter, sans-serif"; x.fillText("at", mid, headH + 39);
+    x.font = "600 17px Inter, sans-serif";
+    if (!putLogo(g.home, mid, headH + 60)) { x.fillStyle = SH.muted; x.fillText(g.home, mid, headH + 66); }
     cx += colW;
   });
   x.fillStyle = SH.muted; x.font = "600 15px Inter, sans-serif";
-  x.fillText("Tie", cx + tbW / 2, headH + 25); x.fillText("Breaker", cx + tbW / 2, headH + 42);
-  if (showCorrect) x.fillText("Correct", cx + tbW + corW / 2, headH + 34);
-  x.fillText("Paid", cx + tbW + corW + paidW / 2, headH + 34);
+  x.fillText("Tie", cx + tbW / 2, headH + 35); x.fillText("Breaker", cx + tbW / 2, headH + 52);
+  if (showCorrect) x.fillText("Correct", cx + tbW + corW / 2, headH + 44);
+  x.fillText("Paid", cx + tbW + corW + paidW / 2, headH + 44);
   x.textAlign = "left";
 
   let y = headH + colHead;
@@ -2105,13 +2144,16 @@ function drawGridShare() {
     x.textAlign = "center"; x.font = "600 17px Inter, sans-serif";
     gs.forEach(g => {
       const p = r.e.picks?.[g.id] || "", w = winnerOf(g);
+      let good = true;
       if (p && w) {
-        const good = w !== "TIE" && p === w;
+        good = w !== "TIE" && p === w;
         x.fillStyle = good ? SH.brandBg : SH.missBg;
         x.fillRect(c + 3, y + 3, colW - 6, rowH - 9);
         x.fillStyle = good ? SH.brand : SH.miss;
       } else x.fillStyle = p ? SH.text : SH.line;
-      x.fillText(p || "·", c + colW / 2, y + 25);
+      // the pick's logo; a miss is drawn a little faded. Text only if the logo didn't load.
+      if (!p || !putLogo(p, c + colW / 2, y + (rowH - 3) / 2, (p && w && !good) ? .55 : 1))
+        x.fillText(p || "·", c + colW / 2, y + 25);
       c += colW;
     });
     x.fillStyle = champ ? SH.gold : SH.text; x.font = "700 19px Oswald, Inter, sans-serif";
@@ -2199,6 +2241,22 @@ document.addEventListener("keydown", e => {
   if (!$("lightbox").hidden) $("lightbox").hidden = true;
 });
 $("lbClose").onclick = () => { $("lightbox").hidden = true; };
+$("archAdd").onclick = () => { if (!authed) { toast("Manager passcode required", "bad"); return; } $("archFile").click(); };
+$("archFile").onchange = async e => {
+  const files = [...e.target.files]; e.target.value = "";
+  for (const f of files) {
+    const label = (f.name || "sheet").replace(/\.[^.]+$/, "").slice(0, 40);
+    const isPdf = f.type === "application/pdf" || /\.pdf$/i.test(f.name || "");
+    try {
+      const data = isPdf
+        ? await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(f); })
+        : await shrinkImage(f);
+      pendingShots.push({ id: Date.now() + "-" + Math.random().toString(36).slice(2, 8), label,
+        kind: isPdf ? "pdf" : "image", uploadedAt: new Date().toISOString(), data });
+    } catch (err) { toast(`Couldn't read ${label}`, "bad"); }
+  }
+  await saveArchive();
+};
 $("lightbox").addEventListener("click", e => { if (e.target === $("lightbox")) $("lightbox").hidden = true; });
 $("shareMode").onchange = e => drawShare(e.target.value);
 $("shareOrder").onchange = () => drawShare($("shareMode").value);
@@ -2284,8 +2342,9 @@ async function readFiles(files) {
   const mb = images.reduce((n, i) => n + i.data.length, 0) / 1048576;
   $("readMsg").textContent = `Reading ${images.length} file${images.length>1?"s":""} (${mb.toFixed(1)} MB)…`;
 
-  // keep a compact copy of each photo for the archive
-  pendingShots = [];
+  // keep a compact copy of each photo for the archive. Added to what's already waiting,
+  // since a week is usually imported in several batches before it's published.
+  const thisBatch = ++shotBatch;
   for (let i = 0; i < files.length; i++) {
     const f = files[i];
     const label = (f.name || `sheet-${i + 1}`).replace(/\.[^.]+$/, "").slice(0, 40);
@@ -2296,7 +2355,7 @@ async function readFiles(files) {
         const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(f);
       });
       if (raw.length < 650000) {
-        pendingShots.push({ id: Date.now() + "-" + i, label, kind: "pdf",
+        pendingShots.push({ id: Date.now() + "-" + i + "-" + Math.random().toString(36).slice(2, 6), label, batch: thisBatch, kind: "pdf",
           uploadedAt: new Date().toISOString(), data: raw });
       } else {
         toast(`Read ${label}, but the PDF is too large to archive`, "bad");
@@ -2304,7 +2363,7 @@ async function readFiles(files) {
       continue;
     }
     try {
-      pendingShots.push({ id: Date.now() + "-" + i, label,
+      pendingShots.push({ id: Date.now() + "-" + i + "-" + Math.random().toString(36).slice(2, 6), label, batch: thisBatch,
         uploadedAt: new Date().toISOString(), data: await shrinkImage(f) });
     } catch (err) {
       // some phone formats won't decode into a canvas; keep the original if it's small enough
@@ -2312,7 +2371,7 @@ async function readFiles(files) {
         const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(f);
       });
       if (raw.length < 650000) {
-        pendingShots.push({ id: Date.now() + "-" + i, label,
+        pendingShots.push({ id: Date.now() + "-" + i + "-" + Math.random().toString(36).slice(2, 6), label, batch: thisBatch,
           uploadedAt: new Date().toISOString(), data: raw });
       } else {
         toast(`Couldn't archive ${label} — image too large`, "bad");
@@ -2419,11 +2478,12 @@ function renderReview() {
       else pool.entries.push(p);
     }
     // name the queued photos after the players they were assigned to
-    if (pendingShots.length && names.length) {
-      if (pendingShots.length === names.length) {
-        pendingShots.forEach((shot, i) => { shot.label = names[i]; });
-      } else if (pendingShots.length === 1) {
-        pendingShots[0].label = names.length <= 3 ? names.join(", ") : `${names.length} entries`;
+    const batch = pendingShots.filter(sh => sh.batch === shotBatch);
+    if (batch.length && names.length) {
+      if (batch.length === names.length) {
+        batch.forEach((shot, i) => { shot.label = names[i]; });
+      } else if (batch.length === 1) {
+        batch[0].label = names.length <= 3 ? names.join(", ") : `${names.length} entries`;
       }
       renderArchive();
     }
