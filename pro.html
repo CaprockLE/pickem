@@ -659,6 +659,12 @@ function needsDarkLogo(g,side){
   const ab=String(side==="home"?g.home:g.away||"").toUpperCase();
   return DARK_MARKS.has(ab);
 }
+const MATCHUP_STANDARD=new Set(["NYJ"]);
+function logoForCard(g,side){
+  const ab=String(side==="home"?g.home:g.away||"").toUpperCase();
+  if(MATCHUP_STANDARD.has(ab)) return (side==="home"?g["home"+"Logo"]:g["away"+"Logo"])||logoFor(g,side);
+  return logoFor(g,side);
+}
 function logoFor(g,side){
   const std=side==="home"?g["home"+"Logo"]:g["away"+"Logo"];
   const dark=side==="home"?g.homeLogoDark:g.awayLogoDark;
@@ -707,7 +713,7 @@ function drawVs(){
       :w?`<span class="st">${w==="TIE"?"TIE":"FINAL"}</span>`
       :`<span class="st">${up(new Date(g.kickoff).toLocaleString([],{weekday:"short",hour:"numeric",minute:"2-digit"}))}</span>`;
     return `<div class="vs${live?" live":""}" data-g="${esc(g.id)}">
-      ${side("a",g.away,logoFor(g,"away"),g.awayScore,ca)}${side("h",g.home,logoFor(g,"home"),g.homeScore,ch)}
+      ${side("a",g.away,logoForCard(g,"away"),g.awayScore,ca)}${side("h",g.home,logoForCard(g,"home"),g.homeScore,ch)}
       <div class="mid"><div class="v">VS</div></div>
       <div class="clk">${st}</div>
       ${live&&g.downDistance?`<div class="ddrow"><span class="dd">${esc(g.downDistance)}</span></div>`:""}
