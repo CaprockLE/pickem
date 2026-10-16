@@ -599,7 +599,7 @@ ul.why b{color:var(--ink)}
 </div>
 
 <script>
-const BUILD = "build-137 (2026-10-12 02:43 UTC)";
+const BUILD = "build-138 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -822,10 +822,12 @@ function darkMode() {
 // ESPN's dark variant is usually an all-white silhouette — right for teams whose
 // normal mark is near-black, wrong for everyone else. Only reach for it when the
 // standard logo would disappear against a dark card.
+// Marks that disappear on a dark background, so dark mode uses ESPN's light version.
+// A fixed list (the same one /pro uses): judging by team colour missed the Giants and
+// Colts, whose navies sit just above any sensible cut-off.
+const DARK_MARKS = new Set(["BAL","CAR","CHI","DAL","HOU","IND","LV","NE","NYG","NYJ","PHI","SEA"]);
 function needsDarkLogo(g, side) {
-  const c = hexToHsl(side === "home" ? g.homeColor : g.awayColor);
-  if (!c) return false;
-  return c.l < 0.22 || (c.s < 0.18 && c.l < 0.5);     // near-black, or dark grey
+  return DARK_MARKS.has(String(side === "home" ? g.home : g.away || "").toUpperCase());
 }
 const logoFor = (g, side) => {
   const std = side === "home" ? g.homeLogo : g.awayLogo;
