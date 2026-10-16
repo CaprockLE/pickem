@@ -608,42 +608,49 @@ function tiebreakerShares(tied,g){
   if(mass>0) for(const [k,v] of out) out.set(k,v/mass);
   return out;
 }
-// every way the open games can land, weighted by live odds
+// every way the open games can land, weighted by live odds. Each combination is a
+// number (bit i set = home side of open game i wins), so a full week runs quickly
+// from before kickoff. Scenario rows are only built once 3 or fewer games are left.
+function bitCount(v){ v=v-((v>>>1)&0x55555555); v=(v&0x33333333)+((v>>>2)&0x33333333);
+  return (((v+(v>>>4))&0x0F0F0F0F)*0x01010101)>>>24; }
 function analyseWeek(){
   const rows=ranked(), field=rows.filter(r=>!pool?.requirePaid||r.e.paid);
   const open=games().filter(g=>!winnerOf(g)).sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff));
-  const chance=new Map(), alive=new Set();
-  if(!field.length) return {chance,alive,open,combos:[]};
+  const chance=new Map(), alive=new Set(), combos=[];
+  if(!field.length) return {chance,alive,open,combos};
   if(!open.length){
     const top=Math.max(...field.map(r=>r.s.c));
     const tied=field.filter(r=>r.s.c===top).map(r=>r.e);
     const sh=tiebreakerShares(tied,tbGame());
     tied.forEach(e=>{ alive.add(e.name); chance.set(e.name, sh.size?(sh.get(e.name)||0):1/tied.length); });
-    return {chance,alive,open,combos:[]};
+    return {chance,alive,open,combos};
   }
-  if(open.length>10){ field.forEach(r=>alive.add(r.e.name)); return {chance,alive,open,combos:[]}; }
-  let combos=[{picks:{},p:1}];
-  for(const g of open){ const ph=homeWinProb(g);
-    combos=combos.flatMap(c=>[{picks:{...c.picks,[g.id]:g.home},p:c.p*ph},{picks:{...c.picks,[g.id]:g.away},p:c.p*(1-ph)}]); }
-  const results=combos.map(c=>{
-    let best=-1; const sc=[];
-    for(const r of field){ let n=r.s.c; for(const g of open) if(r.e.picks?.[g.id]===c.picks[g.id]) n++;
-      sc.push([r.e,n]); if(n>best) best=n; }
-    const top=sc.filter(([,n])=>n===best).map(([e])=>e);
-    top.forEach(e=>alive.add(e.name));
-    if(c.p>0){
-      if(top.length===1) chance.set(top[0].name,(chance.get(top[0].name)||0)+c.p);
-      else { const sh=tiebreakerShares(top,tbGame());
-        top.forEach(e=>chance.set(e.name,(chance.get(e.name)||0)+c.p*(sh.size?(sh.get(e.name)||0):1/top.length))); }
+  if(open.length>20){ field.forEach(r=>alive.add(r.e.name)); return {chance,alive,open,combos}; }
+  const players=field.map(r=>{ let home=0,picked=0;
+    open.forEach((g,i)=>{ const p=r.e.picks?.[g.id];
+      if(p===g.home){home|=1<<i;picked|=1<<i;} else if(p===g.away) picked|=1<<i; });
+    return {e:r.e,base:r.s.c,home,picked}; });
+  const ph=open.map(homeWinProb), tb=tbGame(), shareCache=new Map(), total=1<<open.length;
+  for(let mask=0;mask<total;mask++){
+    let best=-1, top=[];
+    for(const p of players){ const sc=p.base+bitCount(p.picked&~(mask^p.home));
+      if(sc>best){best=sc;top=[p];} else if(sc===best) top.push(p); }
+    top.forEach(p=>alive.add(p.e.name));
+    let pr=1; for(let i=0;i<open.length;i++) pr*=((mask>>i)&1)?ph[i]:1-ph[i];
+    if(pr>0){
+      if(top.length===1) chance.set(top[0].e.name,(chance.get(top[0].e.name)||0)+pr);
+      else {
+        const key=top.map(t=>t.e.name).sort().join("|");
+        let sh=shareCache.get(key); if(!sh){ sh=tiebreakerShares(top.map(t=>t.e),tb); shareCache.set(key,sh); }
+        top.forEach(t=>chance.set(t.e.name,(chance.get(t.e.name)||0)+pr*(sh.size?(sh.get(t.e.name)||0):1/top.length)));
+      }
     }
-    return {picks:c.picks,p:c.p,best,top};
-  });
-  return {chance,alive,open,combos:results};
-}
-function playedIn(w){
-  const wk=season?.weeks?.find(x=>x.week===w);
-  if(!wk) return 0;
-  return wk.complete ? (wk.games||0) : (wk.finals||0);
+    if(open.length<=3){
+      const picks={}; open.forEach((g,i)=>{ picks[g.id]=((mask>>i)&1)?g.home:g.away; });
+      combos.push({picks,p:pr,best,top:top.map(t=>t.e)});
+    }
+  }
+  return {chance,alive,open,combos};
 }
 /* ── logo variant ─────────────────────────────────────────────────────
    ESPN's standard marks are drawn for light backgrounds. For teams whose

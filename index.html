@@ -599,7 +599,7 @@ ul.why b{color:var(--ink)}
 </div>
 
 <script>
-const BUILD = "build-138 (2026-10-12 02:43 UTC)";
+const BUILD = "build-140 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -1476,69 +1476,93 @@ function weekOutcome(rows) {
   return { complete, champs, tied, top, actual, tbGame, open:open.length };
 }
 
-// Names that can still finish top in at least one combination of the open games.
-function stillAlive(rows) {
+// ── every way the open games can finish ─────────────────────────────────────
+// Each combination of open-game results is a number: bit i set = the home side of
+// open game i wins. A player's picks become two masks (which games they picked, and
+// which of those they picked the home side in), so their score in any combination is
+// a bit count. That makes a full 16-game week (65,536 combinations) quick enough to
+// run from before kickoff, instead of only once a few games were left.
+function weekModel(rows) {
   const open = games().filter(g => !winnerOf(g));
   const field = rows.filter(r => !pool.requirePaid || r.e.paid);
-  if (!field.length) return new Set();
-  if (!open.length) {
-    const t = Math.max(...field.map(r => r.s.correct));
-    return new Set(field.filter(r => r.s.correct === t).map(r => r.e.name));
-  }
-  if (open.length > 12) return new Set(field.map(r => r.e.name));   // too many to enumerate
-  let combos = [[]];
-  for (const g of open) combos = combos.flatMap(c => [[...c, g.away], [...c, g.home]]);
-  const alive = new Set();
-  for (const combo of combos) {
-    const hypo = Object.fromEntries(open.map((g, i) => [g.id, combo[i]]));
-    let best = -1; const scores = [];
-    for (const r of field) {
-      let c = r.s.correct;
-      for (const g of open) if (r.e.picks?.[g.id] === hypo[g.id]) c++;
-      scores.push([r.e.name, c]);
-      if (c > best) best = c;
+  const players = field.map(r => {
+    let home = 0, picked = 0;
+    open.forEach((g, i) => {
+      const p = r.e.picks?.[g.id];
+      if (p === g.home) { home |= 1 << i; picked |= 1 << i; }
+      else if (p === g.away) picked |= 1 << i;
+    });
+    return { e: r.e, base: r.s.correct, home, picked };
+  });
+  return { open, field, players, n: open.length };
+}
+function bitCount(v) { v = v - ((v >>> 1) & 0x55555555); v = (v & 0x33333333) + ((v >>> 2) & 0x33333333);
+  return (((v + (v >>> 4)) & 0x0F0F0F0F) * 0x01010101) >>> 24; }
+// calls fn(mask, topPlayers, bestScore) for every combination
+function eachOutcome(M, fn) {
+  const total = 1 << M.n;
+  for (let mask = 0; mask < total; mask++) {
+    let best = -1, top = [];
+    for (const p of M.players) {
+      const sc = p.base + bitCount(p.picked & ~(mask ^ p.home));
+      if (sc > best) { best = sc; top = [p]; } else if (sc === best) top.push(p);
     }
-    for (const [n, c] of scores) if (c === best) alive.add(n);
+    fn(mask, top, best);
   }
+}
+
+// Both answers only change when a result, the odds or the picks change, so each is kept
+// until its inputs do (a full week takes ~150 ms; no reason to redo it every refresh).
+const weekCache = { alive: { key: null, val: null }, chance: { key: null, val: null } };
+function weekKey(rows) {
+  const open = games().filter(g => !winnerOf(g));
+  return [week, open.map(g => g.id + ":" + homeWinProb(g).toFixed(4)).join(","),
+          rows.map(r => r.e.name + ":" + r.s.correct + ":" + (r.e.paid ? 1 : 0) + ":" + (r.e.tiebreaker ?? "")).join(","),
+          pool.requirePaid ? 1 : 0, (() => { const p = projectedTotal(tbGame()); return p ? p.mean.toFixed(1) + "/" + p.sd.toFixed(1) : ""; })()].join("|");
+}
+function cached(slot, rows, fn) {
+  const key = weekKey(rows), c = weekCache[slot];
+  if (c.key !== key) { c.key = key; c.val = fn(rows); }
+  return c.val;
+}
+
+// Names that can still finish top in at least one combination of the open games.
+function stillAlive(rows) { return cached("alive", rows, stillAliveNow); }
+function winChances(rows) { return cached("chance", rows, winChancesNow); }
+function stillAliveNow(rows) {
+  const M = weekModel(rows);
+  if (!M.field.length) return new Set();
+  if (!M.n) {
+    const t = Math.max(...M.field.map(r => r.s.correct));
+    return new Set(M.field.filter(r => r.s.correct === t).map(r => r.e.name));
+  }
+  if (M.n > 20) return new Set(M.field.map(r => r.e.name));   // never happens in a real week
+  const alive = new Set();
+  eachOutcome(M, (mask, top) => { for (const p of top) alive.add(p.e.name); });
   return alive;
 }
 
 // chance each player tops the week, weighting every outcome by live game odds
-function winChances(rows) {
-  const open = games().filter(g => !winnerOf(g));
-  const field = rows.filter(r => !pool.requirePaid || r.e.paid);
-  const out = new Map();
-  if (!field.length) return out;
-  if (open.length > 10) return out;                       // too many branches to enumerate
-  let combos = [{ picks: {}, p: 1 }];
-  for (const g of open) {
-    const ph = homeWinProb(g);
-    combos = combos.flatMap(c => [
-      { picks: { ...c.picks, [g.id]: g.home }, p: c.p * ph },
-      { picks: { ...c.picks, [g.id]: g.away }, p: c.p * (1 - ph) },
-    ]);
-  }
-  for (const c of combos) {
-    if (c.p <= 0) continue;
-    let best = -1; const sc = [];
-    for (const r of field) {
-      let n = r.s.correct;
-      for (const g of open) if (r.e.picks?.[g.id] === c.picks[g.id]) n++;
-      sc.push([r.e.name, n]); if (n > best) best = n;
+function winChancesNow(rows) {
+  const M = weekModel(rows), out = new Map();
+  if (!M.field.length || M.n > 20) return out;
+  const ph = M.open.map(homeWinProb);
+  const tb = tbGame(), shareCache = new Map();
+  eachOutcome(M, (mask, top) => {
+    let p = 1;
+    for (let i = 0; i < M.n; i++) p *= (mask >> i) & 1 ? ph[i] : 1 - ph[i];
+    if (p <= 0) return;
+    if (top.length === 1) { out.set(top[0].e.name, (out.get(top[0].e.name) || 0) + p); return; }
+    // the same group often ties in many combinations; work out its tiebreaker split once
+    const key = top.map(t => t.e.name).sort().join("|");
+    let shares = shareCache.get(key);
+    if (!shares) { shares = tiebreakerShares(top.map(t => t.e), tb); shareCache.set(key, shares); }
+    // A name missing from `shares` lost the tiebreaker outright: that's zero, not an equal split.
+    for (const t of top) {
+      const share = shares.size ? (shares.get(t.e.name) || 0) : 1 / top.length;
+      out.set(t.e.name, (out.get(t.e.name) || 0) + p * share);
     }
-    const top = sc.filter(([, n]) => n === best);
-    if (top.length === 1) out.set(top[0][0], (out.get(top[0][0]) || 0) + c.p);
-    else {
-      const tiedEntries = top.map(([nm]) => field.find(r => r.e.name === nm).e);
-      const shares = tiebreakerShares(tiedEntries, tbGame());
-      // A name missing from `shares` lost the tiebreaker outright — that's zero,
-      // not an equal split. The old fallback handed losers an even share.
-      for (const [nm] of top) {
-        const share = shares.size ? (shares.get(nm) || 0) : 1 / top.length;
-        out.set(nm, (out.get(nm) || 0) + c.p * share);
-      }
-    }
-  }
+  });
   return out;
 }
 
@@ -1925,10 +1949,10 @@ let shareDrawId = 0;
 
 const SHARE_DARK = { ink:"#0A111B", panel:"#131F2D", alt:"#101A26", line:"#263445", text:"#E9EEF5",
                      muted:"#8696A8", brand:"#39B28E", brandBg:"#11322A", miss:"#FF4D4D", missBg:"#3B1012",
-                     gold:"#D4AC54" };
-const SHARE_LIGHT = { ink:"#FFFFFF", panel:"#F6F8FB", alt:"#FFFFFF", line:"#D9E0E9", text:"#101A27",
+                     gold:"#D4AC54", cell:"#1B2A3C", cellEdge:null };
+const SHARE_LIGHT = { ink:"#FFFFFF", panel:"#F3F6FA", alt:"#FFFFFF", line:"#D9E0E9", text:"#101A27",
                       muted:"#64748B", brand:"#0B6B57", brandBg:"#E3F1EC", miss:"#C01616", missBg:"#FCE7E7",
-                      gold:"#9A7318" };
+                      gold:"#9A7318", cell:"#EEF2F7", cellEdge:"#DCE3EC" };
 // resolved per draw so the image matches whatever theme is on screen
 let SH = SHARE_DARK;
 function shareTheme() { SH = darkMode() ? SHARE_DARK : SHARE_LIGHT; }
@@ -2003,12 +2027,21 @@ async function drawGridShare() {
     gs.forEach(g => {
       const p = r.e.picks?.[g.id] || "", w = winnerOf(g);
       let good = true;
+      const cx0 = c + 4, cy0 = y + 3, cw = colW - 8, ch = rowH - 9;
+      const cell = fill => {
+        x.fillStyle = fill; x.beginPath();
+        if (x.roundRect) x.roundRect(cx0, cy0, cw, ch, 6); else x.rect(cx0, cy0, cw, ch);
+        x.fill();
+        if (SH.cellEdge) { x.strokeStyle = SH.cellEdge; x.lineWidth = 1; x.stroke(); }
+      };
       if (p && w) {
         good = w !== "TIE" && p === w;
-        x.fillStyle = good ? SH.brandBg : SH.missBg;
-        x.fillRect(c + 3, y + 3, colW - 6, rowH - 9);
+        cell(good ? SH.brandBg : SH.missBg);
         x.fillStyle = good ? SH.brand : SH.miss;
-      } else x.fillStyle = p ? SH.text : SH.line;
+      } else {
+        cell(SH.cell);
+        x.fillStyle = p ? SH.text : SH.line;
+      }
       // the pick's logo; a miss is drawn a little faded. Text only if the logo didn't load.
       if (!p || !putLogo(p, c + colW / 2, y + (rowH - 3) / 2, (p && w && !good) ? .55 : 1))
         x.fillText(p || "·", c + colW / 2, y + 25);

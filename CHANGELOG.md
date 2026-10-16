@@ -3,6 +3,15 @@
 Reconstructed from the build history. Newest first.
 Each entry is the build number shown at the bottom of the sidebar.
 
+## build-140 — win % and elimination all week
+- Win % and OUT tags now run from before the first kickoff (previously only once 10 or
+  12 games were left). Combinations are counted as bitmasks instead of built as objects,
+  so a full 16-game week takes ~150 ms; results are cached until a score, the odds or
+  the picks change. Verified identical to the old method on 40 random weeks
+- Same in /pro, whose numbers match the main site exactly
+- Share card: every pick in its own cell (edged on the light card); fixed dark-logo list
+  on the main site (builds 138–139)
+
 ## build-137 — sheet archive and share card logos
 - Fixed: importing a week's sheets in several uploads archived only the last upload's photos.
   Each upload now adds to the photos waiting to be saved
