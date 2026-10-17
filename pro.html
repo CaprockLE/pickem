@@ -652,6 +652,12 @@ function analyseWeek(){
   }
   return {chance,alive,open,combos};
 }
+// games that counted in a given week: everything once it's complete, the finished ones while it runs
+function playedIn(w){
+  const wk=season?.weeks?.find(x=>x.week===w);
+  if(!wk) return 0;
+  return wk.complete ? (wk.games||0) : (wk.finals||0);
+}
 /* ── logo variant ─────────────────────────────────────────────────────
    ESPN's standard marks are drawn for light backgrounds. For teams whose
    primary colour is near-black, the standard logo vanishes on a dark panel,
