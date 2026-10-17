@@ -3,6 +3,14 @@
 Reconstructed from the build history. Newest first.
 Each entry is the build number shown at the bottom of the sidebar.
 
+## build-146 — Share Card in Pro
+- New share.js draws the picks grid and standings cards for every site; the main site and
+  /pro both use it. Who-won-the-week logic moved into core.js
+- /pro: Share Card button in the tab bar, with Picks Grid / Standings, A–Z / By Correct /
+  As Standings, and a Dark / Light card choice; Download and Copy
+- Verified: the main site's card is pixel-for-pixel identical to before the move, and
+  /pro's card is pixel-for-pixel identical to the main site's, in both themes
+
 ## build-145 — shared core
 - New core.js holds the win-probability model, tiebreaker projection, who's-still-alive and
   win-chance math, and logo choice. /, /lab and /pro all load it instead of keeping their

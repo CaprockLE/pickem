@@ -176,6 +176,27 @@
     return std || light || "";
   }
 
+  /* ── Who won the week ─────────────────────────────────────────────────
+     players: [{ e: entry, base: correct picks }]. Once every game is final, the top score
+     wins; a tie goes to the tiebreaker guess closest to the tiebreaker game's real total. */
+  function weekOutcome({ games, winnerOf, players, tbGame }) {
+    const open = games.filter(g => !winnerOf(g)).length;
+    const complete = games.length > 0 && open === 0 && players.length > 0;
+    if (!players.length) return { complete: false, champs: new Set(), tiedNames: new Set(), top: 0, actual: null, tbGame: null, open };
+    const top = Math.max(...players.map(p => p.base));
+    const tied = players.filter(p => p.base === top);
+    const actual = complete && tbGame && tbGame.final ? tbGame.homeScore + tbGame.awayScore : null;
+    const champs = new Set();
+    if (complete) {
+      if (tied.length === 1) champs.add(tied[0].e.name);
+      else if (actual != null) {
+        const d = tied.map(p => ({ n: p.e.name, d: Math.abs((p.e.tiebreaker ?? 9999) - actual) })).sort((a, b) => a.d - b.d);
+        d.filter(x => x.d === d[0].d).forEach(x => champs.add(x.n));
+      }
+    }
+    return { complete, champs, tiedNames: new Set(tied.map(p => p.e.name)), top, actual, tbGame, open };
+  }
+
   root.PickCore = { normCdf, minutesLeft, homeWinProb, projectedTotal, tiebreakerShares,
-                    bitCount, analyse, DARK_MARKS, needsLightLogo, logoFor };
+                    bitCount, analyse, weekOutcome, DARK_MARKS, needsLightLogo, logoFor };
 })(typeof window !== "undefined" ? window : globalThis);

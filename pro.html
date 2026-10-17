@@ -322,6 +322,27 @@ body.inapp .speed{opacity:0}
   font-family:Teko;font-size:18px;letter-spacing:.08em;padding:2px 12px 0}
 .modesw button+button{border-left:0}
 .modesw button.on{background:linear-gradient(90deg,var(--hot),var(--hot2));color:#0A0207;border-color:transparent}
+/* share card panel */
+.tab.sharetab{margin-left:auto;color:var(--ink2)}
+.tab.sharetab:hover{color:var(--lime)}
+#shWrap{position:fixed;inset:0;z-index:90;background:rgba(2,3,6,.78);display:grid;place-items:center;padding:16px}
+#shWrap[hidden]{display:none}
+.shbox{position:relative;width:min(760px,100%);max-height:94vh;display:flex;flex-direction:column;background:linear-gradient(180deg,#0C1220,#06080D);
+  border:1px solid rgba(255,255,255,.12);border-top:3px solid var(--hot)}
+.shhd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 58px 12px 14px;border-bottom:1px solid rgba(255,255,255,.1)}
+.shhd b{font-family:Teko;font-weight:600;font-size:26px;letter-spacing:.04em;margin-right:auto}
+.shhd .tag2{font-family:Teko;font-weight:700;font-size:17px;letter-spacing:.12em;color:#0A0207;
+  background:linear-gradient(90deg,var(--hot),var(--hot2));padding:2px 12px 0;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%)}
+#shClose{position:absolute;top:12px;right:14px;background:transparent;border:1px solid rgba(255,255,255,.2);color:var(--ink2);padding:4px 10px;cursor:pointer}
+#shClose:hover{background:var(--hot);border-color:var(--hot);color:#fff}
+.shbd{overflow:auto;padding:14px}
+#shCanvas{width:100%;display:block;border:1px solid rgba(255,255,255,.1)}
+.shft{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;border-top:1px solid rgba(255,255,255,.1)}
+.shft button{cursor:pointer;font-family:Teko;font-size:20px;letter-spacing:.08em;padding:4px 16px 0;border:1px solid rgba(255,255,255,.2);
+  background:transparent;color:var(--ink)}
+.shft button.shgo{border:0;color:#0A0207;background:linear-gradient(90deg,var(--hot),var(--hot2))}
+.shft button:hover{filter:brightness(1.15)}
+#shMsg{font-weight:600;font-size:12px;letter-spacing:.1em;color:var(--lime)}
 .empty{padding:50px 20px;text-align:center;font-family:Teko;font-size:28px;letter-spacing:.1em;color:var(--muted)}
 /* ================= PHONE ================= */
 html,body{max-width:100%;overflow-x:hidden}
@@ -344,6 +365,7 @@ html,body{max-width:100%;overflow-x:hidden}
   .tabs::-webkit-scrollbar{display:none}
   .bump{display:none}
   .tab.mlink{display:inline-block;color:var(--muted);opacity:.8}
+  .tab.sharetab{margin-left:0}
   .tab{font-size:20px;padding:2px 11px 0;white-space:nowrap;flex:none}
 
   /* section headers wrap instead of pushing sideways */
@@ -467,7 +489,8 @@ html,body{max-width:100%;overflow-x:hidden}
       <button class="bump" id="rb">RB</button>
       <a class="tab mlink" href="/?v=import" target="_blank" style="text-decoration:none">Import ↗</a>
       <a class="tab mlink" href="/?v=money" target="_blank" style="text-decoration:none">Payments ↗</a>
-      <button class="bump" id="demo" style="margin-left:auto;font-size:15px">SIM LIVE</button>
+      <button class="tab sharetab" id="shareBtn">Share Card</button>
+      <button class="bump" id="demo" style="font-size:15px">SIM LIVE</button>
     </div>
   </div>
 
@@ -500,10 +523,21 @@ html,body{max-width:100%;overflow-x:hidden}
   </div>
 </div>
 
+<div id="shWrap" hidden><div class="shbox">
+  <div class="shhd"><span class="tag2">SHARE</span><b>Share Card</b>
+    <select id="shMode"><option value="grid">Picks Grid</option><option value="final">Standings</option></select>
+    <select id="shOrder"><option value="az">A → Z</option><option value="correct">By Correct</option><option value="rank">As Standings</option></select>
+    <select id="shTheme"><option value="dark">Dark card</option><option value="light">Light card</option></select>
+    <button id="shClose" title="Close">✕</button></div>
+  <div class="shbd"><canvas id="shCanvas"></canvas></div>
+  <div class="shft"><button id="shDl" class="shgo">Download Image</button><button id="shCopy">Copy Image</button><span id="shMsg"></span></div>
+</div></div>
+
 <div id="scrim"></div>
 <div id="dock"><div class="hd" id="dHd"></div><div class="bd" id="dBd"></div></div>
 
 <script src="/core.js"></script>
+<script src="/share.js"></script>
 <script>
 const $=i=>document.getElementById(i);
 const esc=s=>String(s??"").replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -918,6 +952,44 @@ function openPlayer(name){
     }).join("")}`:""}`;
   openDock();
 }
+/* ---------- share card (drawn by share.js, identical to the main site's) ---------- */
+function shareData(){
+  const dark=$("shTheme").value!=="light";
+  const rows=ranked().map(r=>({e:r.e,s:{correct:r.s.c}}));
+  const field=rows.filter(r=>!pool?.requirePaid||r.e.paid);
+  const outcome=PickCore.weekOutcome({games:games(),winnerOf,tbGame:tbGame(),
+    players:field.map(r=>({e:r.e,base:r.s.correct}))});
+  return {week,games:games(),winnerOf,rows,outcome,tbGame:tbGame(),dark,
+    logoFor:(g,side)=>PickCore.logoFor(g,side,dark),order:$("shOrder").value};
+}
+function drawShare(){
+  if(!pool) return;
+  const d=shareData();
+  return $("shMode").value==="grid"?PickShare.drawGrid($("shCanvas"),d):PickShare.drawStandings($("shCanvas"),d);
+}
+$("shareBtn").onclick=()=>{
+  if(!pool){ return; }
+  $("shMode").value="grid";
+  $("shOrder").value=games().some(g=>winnerOf(g))?"correct":"az";
+  $("shWrap").hidden=false; drawShare();
+};
+$("shClose").onclick=()=>{ $("shWrap").hidden=true; $("shMsg").textContent=""; };
+$("shWrap").addEventListener("click",e=>{ if(e.target===$("shWrap")) $("shClose").click(); });
+["shMode","shOrder","shTheme"].forEach(id=>$(id).onchange=drawShare);
+$("shDl").onclick=()=>{
+  const a=document.createElement("a");
+  a.download=`week-${week}-${$("shMode").value==="grid"?"picks":"standings"}-${$("shOrder").value}.png`;
+  a.href=$("shCanvas").toDataURL("image/png"); a.click();
+};
+$("shCopy").onclick=async()=>{
+  try{ const blob=await new Promise(res=>$("shCanvas").toBlob(res,"image/png"));
+    await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);
+    $("shMsg").textContent="COPIED — PASTE IT IN THE GROUP CHAT"; }
+  catch(e){ $("shMsg").textContent="COPY BLOCKED — USE DOWNLOAD"; }
+  setTimeout(()=>$("shMsg").textContent="",2600);
+};
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("shWrap").hidden) $("shClose").click(); });
+
 function openDock(){ $("dock").classList.add("on"); $("scrim").classList.add("on"); }
 function closeDock(){ $("dock").classList.remove("on"); $("scrim").classList.remove("on"); }
 $("scrim").onclick=closeDock;
