@@ -761,25 +761,34 @@ const powerOf = p => (p?.total || 0) + WIN_BONUS * (p?.wins || 0);
 let rankMode = localStorage.getItem("pc.rankmode") || "season";
 const perWeekOf = p => p?.weeks ? powerOf(p) / p.weeks : 0;
 const scoreOf2 = p => rankMode === "week" ? perWeekOf(p) : powerOf(p);
+// Per Week needs enough weeks to mean anything: at least half the weeks so far (min 2),
+// or one great week puts a part-timer on top. Below that, a card is shown but unranked.
+const minWeeks = () => Math.max(2, Math.ceil((season?.weeks?.length || 0) / 2));
+const qualifies = p => rankMode !== "week" || (p?.weeks || 0) >= minWeeks();
 const fmtScore = p => rankMode === "week" ? perWeekOf(p).toFixed(1) : String(powerOf(p));
 // Rating is power relative to the season's best: missed weeks cost you (fewer
 // points), wins lift you, and a higher rating always means a higher rank.
 function ratingFor(name){
   const sp=season?.players?.find(p=>slug(p.name)===slug(name));
-  if(!sp||!sp.weeks) return {ovr:55,sp:null,pwr:0};
-  const best=Math.max(.0001,...(season?.players||[]).map(scoreOf2));
-  const ovr=Math.max(50,Math.min(99,Math.round(55+44*(scoreOf2(sp)/best))));
-  return {ovr,sp,pwr:fmtScore(sp)};
+  if(!sp||!sp.weeks) return {ovr:55,sp:null,pwr:0,unranked:false};
+  const all=season?.players||[], ranked=all.filter(qualifies);
+  const rate=p=>Math.max(50,Math.min(99,Math.round(55+44*(scoreOf2(p)/Math.max(.0001,...ranked.map(scoreOf2))))));
+  let ovr=rate(sp);
+  const unranked=!qualifies(sp);
+  // an unranked card never out-rates a ranked one
+  if(unranked && ranked.length) ovr=Math.min(ovr, Math.min(...ranked.map(rate))-1);
+  return {ovr:Math.max(50,ovr),sp,pwr:fmtScore(sp),unranked};
 }
-const byPower=(a,b)=> scoreOf2(b)-scoreOf2(a) || powerOf(b)-powerOf(a) || a.name.localeCompare(b.name);
+const byPower=(a,b)=> (qualifies(b)-qualifies(a)) || scoreOf2(b)-scoreOf2(a) || powerOf(b)-powerOf(a) || a.name.localeCompare(b.name);
 function tierFor(i,total){ if(i===0) return "elite"; if(i<3) return "gold";
   if(i<Math.ceil(total*.4)) return "silver"; if(i<Math.ceil(total*.75)) return "bronze"; return "base"; }
 
 function syncMode(){
   document.querySelectorAll(".modesw button").forEach(b=>b.classList.toggle("on",b.dataset.m===rankMode));
+  const thru = season?.weeks?.length ? ` · season through week ${Math.max(...season.weeks.map(w=>w.week))}` : "";
   const note = rankMode==="week"
-    ? "per week played · missed weeks don't count against you"
-    : "season total · correct picks + 3 per week won";
+    ? `per week played · ranked after ${minWeeks()} weeks played${thru}`
+    : `season total · correct picks + 3 per week won${thru}`;
   if($("deckSub")) $("deckSub").textContent=note+" · tap a card to flip";
   if($("seasonSub")) $("seasonSub").textContent=note;
 }
@@ -799,7 +808,8 @@ function drawDeck(){
   const ws=season?.weeks?.map(w=>w.week)||[];
   const winners=w=>(season?.weeks?.find(x=>x.week===w)?.winners)||[];
   $("deck").innerHTML=list.map((name,i)=>{
-    const {ovr,sp,pwr}=ratingFor(name), t=tierFor(i,list.length);
+    const {ovr,sp,pwr,unranked}=ratingFor(name);
+    const t=unranked?"base":tierFor(i,list.filter(n=>!ratingFor(n).unranked).length);
     const wr=weekRows.find(r=>slug(r.e.name)===slug(name));
     const back=ws.map(w=>{const v=sp?.byWeek?.[w], n=playedIn(w);
       const won=winners(w).some(x=>slug(x)===slug(name));
@@ -808,8 +818,8 @@ function drawDeck(){
         <div class="bar"><i style="width:${pct.toFixed(1)}%"></i></div><span>${v??"–"}</span></div>`;}).join("");
     return `<div class="card" data-n="${esc(name)}"><div class="in">
       <div class="face t-${t}"><div class="skin"></div>
-        <div class="ovr">${ovr}</div><div class="pos">#${i+1}</div>
-        <div class="tier">${t==="elite"?"MVP":up(t)}</div>
+        <div class="ovr">${ovr}</div><div class="pos">${unranked?"UNRANKED":"#"+(i+1)}</div>
+        <div class="tier">${unranked?`${sp?.weeks||0} WK${(sp?.weeks||0)===1?"":"S"}`:t==="elite"?"MVP":up(t)}</div>
         <div class="nm">${esc(name)}</div><div class="line"></div>
         <div class="stats">
           <div><b>${sp?.total??"–"}</b><span>PTS</span></div>
@@ -908,8 +918,8 @@ function drawSeason(){
   const nW=season.weeks.length;
   $("season").innerHTML=`<div class="ladhead"><span></span><span>PLAYER · ${ps.length}</span>
       <span>${rankMode==="week"?"PER WK":"POWER"}</span><span>TOTAL</span><span>WKS</span><span>WON</span></div>`+
-    ps.map((p,i)=>{const cls=i===0?"g":i===1?"s":i===2?"b":"";
-      return `<div class="rung wide ${cls}" data-p="${esc(p.name)}"><div class="r">${i+1}</div>
+    ps.map((p,i)=>{const nr=!qualifies(p), cls=nr?"out":i===0?"g":i===1?"s":i===2?"b":"";
+      return `<div class="rung wide ${cls}" data-p="${esc(p.name)}"><div class="r">${nr?"–":i+1}</div>
         <div class="n">${esc(p.name)}</div><div class="v">${fmtScore(p)}</div>
         <div class="c">${p.total}</div>
         <div class="c">${p.weeks}/${nW}</div>
