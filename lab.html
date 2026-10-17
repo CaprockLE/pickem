@@ -750,8 +750,9 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
   </div>
 </div>
 
+<script src="/core.js"></script>
 <script>
-const BUILD = "lab-143 (2026-10-12 02:43 UTC)";
+const BUILD = "lab-145 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -766,113 +767,17 @@ async function getJSON(url) {
   }
 }
 
-/* ── Live win probability ───────────────────────────────────────────
-   Final NFL margins scatter with a standard deviation near 13.5 points
-   over a full game. Shrink that with the clock: sd ≈ 1.74 * √(minutes
-   left). A lead of 8 with 2:30 left is then worth far more than the
-   same lead in the first quarter. Pre-game we lean on the betting line
-   when the feed has one, otherwise a small home-field nudge. */
-function normCdf(z) {
-  const t = 1 / (1 + 0.2316419 * Math.abs(z));
-  const d = 0.3989423 * Math.exp(-z * z / 2);
-  let p = d * t * (1.330274 * t ** 4 - 1.821256 * t ** 3 + 1.781478 * t * t - 0.356538 * t + 0.3193815);
-  return z > 0 ? 1 - p : p;
-}
-
-function minutesLeft(g) {
-  if (g.state === "pre") return 60;
-  if (g.final) return 0;
-  const per = g.period || 1;
-  const secs = g.clockSeconds == null ? 0 : g.clockSeconds;
-  if (per >= 5) return Math.max(secs / 60, 0.1);              // overtime
-  const quartersLeft = Math.max(0, 4 - per);
-  return quartersLeft * 15 + secs / 60;
-}
-
-// probability the HOME team wins, 0..1
-function homeWinProb(g) {
-  const w = winnerOf(g);
-  if (w) return w === "TIE" ? 0.5 : (w === g.home ? 1 : 0);
-  const mins = minutesLeft(g);
-  const margin = (g.homeScore || 0) - (g.awayScore || 0);
-  if (g.state === "pre") {
-    const line = typeof g.spread === "number" ? -g.spread : 1.6;   // home spread -3 → +3 edge
-    return normCdf(line / 13.5);
-  }
-  // variance from the clock, plus a floor: football scores in chunks, so even
-  // a two-score lead in the last minutes isn't settled (touchdown + two-point try).
-  const sd = Math.sqrt(1.74 ** 2 * Math.max(mins, 0) + 9);
-  let expected = margin + (mins / 60) * 1.6;                        // residual home edge
-  // Having the ball is worth little early and a lot late, when there may be
-  // only one possession left. Red zone adds to that.
-  if (g.possession) {
-    const late = Math.min(1, Math.max(0, 1 - mins / 15));
-    const bonus = (0.9 + 1.7 * late) + (g.redZone ? 1.6 : 0);
-    expected += g.possession === g.home ? bonus : -bonus;
-  }
-  return Math.min(0.98, Math.max(0.02, normCdf(expected / sd)));
-}
+/* ── The model lives in core.js, shared with /lab and /pro ─────────────
+   These keep the names the rest of this page already uses. */
+function normCdf(z) { return PickCore.normCdf(z); }
+function minutesLeft(g) { return PickCore.minutesLeft(g); }
+function homeWinProb(g) { return PickCore.homeWinProb(g, winnerOf(g)); }   // probability the HOME team wins
+function projectedTotal(g) { return PickCore.projectedTotal(g); }
+function tiebreakerShares(entries, g) { return PickCore.tiebreakerShares(entries, g); }
 
 function probFor(g, team) {
   const p = homeWinProb(g);
   return team === g.home ? p : team === g.away ? 1 - p : 0;
-}
-
-/* ── Projected final total for the tiebreaker game ──────────────────
-   Pre-game we take the market over/under. Once it's running we blend
-   the market's scoring rate with the rate actually being produced,
-   trusting the observed pace more as the game goes on — 28 points in
-   the first quarter nudges the projection up, it doesn't quadruple it.
-   Uncertainty shrinks with the clock.                                */
-function projectedTotal(g) {
-  if (!g) return null;
-  const market = typeof g.overUnder === "number" ? g.overUnder : 44;
-  if (g.final) return { mean: g.homeScore + g.awayScore, sd: 0 };
-  if (g.state === "pre") return { mean: market, sd: 13.2 };
-  const mins = minutesLeft(g);
-  const elapsed = Math.max(60 - mins, 0.1);
-  const scored = (g.homeScore || 0) + (g.awayScore || 0);
-  const marketRate = market / 60;
-  const seenRate = scored / elapsed;
-  const trustSeen = Math.min(0.75, elapsed / 60);        // never fully abandon the market
-  const rate = marketRate * (1 - trustSeen) + seenRate * trustSeen;
-  return { mean: scored + rate * mins, sd: Math.max(13.2 * Math.sqrt(mins / 60), 0.8) };
-}
-
-// chance each tied player's guess ends up closest to the real total
-function tiebreakerShares(entries, g) {
-  const proj = projectedTotal(g);
-  const floor = g && !g.final ? (g.homeScore || 0) + (g.awayScore || 0) : null;
-  const out = new Map();
-  if (!entries.length) return out;
-  if (!proj || proj.sd < 0.5) {                           // total already known
-    const actual = proj ? proj.mean : null;
-    if (actual == null) { entries.forEach(e => out.set(e.name, 1 / entries.length)); return out; }
-    let best = Infinity, winners = [];
-    entries.forEach(e => {
-      const d = Math.abs((e.tiebreaker ?? 9999) - actual);
-      if (d < best) { best = d; winners = [e.name]; } else if (d === best) winners.push(e.name);
-    });
-    winners.forEach(n => out.set(n, 1 / winners.length));
-    return out;
-  }
-  // walk plausible totals, hand each one to whoever guessed closest
-  const lo = Math.max(floor != null ? floor : 0, Math.round(proj.mean - 4 * proj.sd));
-  const hi = Math.round(proj.mean + 4 * proj.sd);
-  let mass = 0;
-  for (let t = lo; t <= hi; t++) {
-    const z = (t - proj.mean) / proj.sd;
-    const w = Math.exp(-z * z / 2);
-    let best = Infinity, winners = [];
-    for (const e of entries) {
-      const d = Math.abs((e.tiebreaker ?? 9999) - t);
-      if (d < best) { best = d; winners = [e.name]; } else if (d === best) winners.push(e.name);
-    }
-    winners.forEach(n => out.set(n, (out.get(n) || 0) + w / winners.length));
-    mass += w;
-  }
-  if (mass > 0) for (const [k, v] of out) out.set(k, v / mass);
-  return out;
 }
 
 // ── live ring colours ───────────────────────────────────────────────
@@ -974,19 +879,9 @@ function darkMode() {
 // ESPN's dark variant is usually an all-white silhouette — right for teams whose
 // normal mark is near-black, wrong for everyone else. Only reach for it when the
 // standard logo would disappear against a dark card.
-// Marks that disappear on a dark background, so dark mode uses ESPN's light version.
-// A fixed list (the same one /pro uses): judging by team colour missed the Giants and
-// Colts, whose navies sit just above any sensible cut-off.
-const DARK_MARKS = new Set(["BAL","CAR","CHI","DAL","HOU","IND","LV","NE","NYG","NYJ","PHI","SEA"]);
-function needsDarkLogo(g, side) {
-  return DARK_MARKS.has(String(side === "home" ? g.home : g.away || "").toUpperCase());
-}
-const logoFor = (g, side) => {
-  const std = side === "home" ? g.homeLogo : g.awayLogo;
-  const dark = side === "home" ? g.homeLogoDark : g.awayLogoDark;
-  if (darkMode() && needsDarkLogo(g, side)) return dark || std || "";
-  return std || dark || "";
-};
+// which version of a logo to show: core.js decides, from whether the page is dark
+function needsDarkLogo(g, side) { return PickCore.needsLightLogo(side === "home" ? g.home : g.away); }
+const logoFor = (g, side) => PickCore.logoFor(g, side, darkMode());
 
 function toast(msg, kind) {
   const el = document.createElement("div");
@@ -1628,95 +1523,31 @@ function weekOutcome(rows) {
   return { complete, champs, tied, top, actual, tbGame, open:open.length };
 }
 
-// ── every way the open games can finish ─────────────────────────────────────
-// Each combination of open-game results is a number: bit i set = the home side of
-// open game i wins. A player's picks become two masks (which games they picked, and
-// which of those they picked the home side in), so their score in any combination is
-// a bit count. That makes a full 16-game week (65,536 combinations) quick enough to
-// run from before kickoff, instead of only once a few games were left.
-function weekModel(rows) {
-  const open = games().filter(g => !winnerOf(g));
-  const field = rows.filter(r => !pool.requirePaid || r.e.paid);
-  const players = field.map(r => {
-    let home = 0, picked = 0;
-    open.forEach((g, i) => {
-      const p = r.e.picks?.[g.id];
-      if (p === g.home) { home |= 1 << i; picked |= 1 << i; }
-      else if (p === g.away) picked |= 1 << i;
-    });
-    return { e: r.e, base: r.s.correct, home, picked };
-  });
-  return { open, field, players, n: open.length };
-}
-function bitCount(v) { v = v - ((v >>> 1) & 0x55555555); v = (v & 0x33333333) + ((v >>> 2) & 0x33333333);
-  return (((v + (v >>> 4)) & 0x0F0F0F0F) * 0x01010101) >>> 24; }
-// calls fn(mask, topPlayers, bestScore) for every combination
-function eachOutcome(M, fn) {
-  const total = 1 << M.n;
-  for (let mask = 0; mask < total; mask++) {
-    let best = -1, top = [];
-    for (const p of M.players) {
-      const sc = p.base + bitCount(p.picked & ~(mask ^ p.home));
-      if (sc > best) { best = sc; top = [p]; } else if (sc === best) top.push(p);
-    }
-    fn(mask, top, best);
-  }
-}
-
-// Both answers only change when a result, the odds or the picks change, so each is kept
-// until its inputs do (a full week takes ~150 ms; no reason to redo it every refresh).
-const weekCache = { alive: { key: null, val: null }, chance: { key: null, val: null } };
+// ── who can still win, and how likely ───────────────────────────────────
+// Worked out in core.js. The answer only changes when a result, the odds or the picks
+// change, so it's kept until its inputs do.
 function weekKey(rows) {
   const open = games().filter(g => !winnerOf(g));
+  const p = projectedTotal(tbGame());
   return [week, open.map(g => g.id + ":" + homeWinProb(g).toFixed(4)).join(","),
           rows.map(r => r.e.name + ":" + r.s.correct + ":" + (r.e.paid ? 1 : 0) + ":" + (r.e.tiebreaker ?? "")).join(","),
-          pool.requirePaid ? 1 : 0, (() => { const p = projectedTotal(tbGame()); return p ? p.mean.toFixed(1) + "/" + p.sd.toFixed(1) : ""; })()].join("|");
+          pool.requirePaid ? 1 : 0, p ? p.mean.toFixed(1) + "/" + p.sd.toFixed(1) : ""].join("|");
 }
-function cached(slot, rows, fn) {
-  const key = weekKey(rows), c = weekCache[slot];
-  if (c.key !== key) { c.key = key; c.val = fn(rows); }
-  return c.val;
-}
-
-// Names that can still finish top in at least one combination of the open games.
-function stillAlive(rows) { return cached("alive", rows, stillAliveNow); }
-function winChances(rows) { return cached("chance", rows, winChancesNow); }
-function stillAliveNow(rows) {
-  const M = weekModel(rows);
-  if (!M.field.length) return new Set();
-  if (!M.n) {
-    const t = Math.max(...M.field.map(r => r.s.correct));
-    return new Set(M.field.filter(r => r.s.correct === t).map(r => r.e.name));
+const weekCache = { key: null, val: null };
+function weekAnalysis(rows) {
+  const key = weekKey(rows);
+  if (weekCache.key !== key) {
+    const open = games().filter(g => !winnerOf(g));
+    const players = rows.filter(r => !pool.requirePaid || r.e.paid).map(r => ({ e: r.e, base: r.s.correct }));
+    weekCache.key = key;
+    weekCache.val = PickCore.analyse({ open, players, tbGame: tbGame() });
   }
-  if (M.n > 20) return new Set(M.field.map(r => r.e.name));   // never happens in a real week
-  const alive = new Set();
-  eachOutcome(M, (mask, top) => { for (const p of top) alive.add(p.e.name); });
-  return alive;
+  return weekCache.val;
 }
-
+// Names that can still finish top in at least one combination of the open games.
+function stillAlive(rows) { return weekAnalysis(rows).alive; }
 // chance each player tops the week, weighting every outcome by live game odds
-function winChancesNow(rows) {
-  const M = weekModel(rows), out = new Map();
-  if (!M.field.length || M.n > 20) return out;
-  const ph = M.open.map(homeWinProb);
-  const tb = tbGame(), shareCache = new Map();
-  eachOutcome(M, (mask, top) => {
-    let p = 1;
-    for (let i = 0; i < M.n; i++) p *= (mask >> i) & 1 ? ph[i] : 1 - ph[i];
-    if (p <= 0) return;
-    if (top.length === 1) { out.set(top[0].e.name, (out.get(top[0].e.name) || 0) + p); return; }
-    // the same group often ties in many combinations; work out its tiebreaker split once
-    const key = top.map(t => t.e.name).sort().join("|");
-    let shares = shareCache.get(key);
-    if (!shares) { shares = tiebreakerShares(top.map(t => t.e), tb); shareCache.set(key, shares); }
-    // A name missing from `shares` lost the tiebreaker outright: that's zero, not an equal split.
-    for (const t of top) {
-      const share = shares.size ? (shares.get(t.e.name) || 0) : 1 / top.length;
-      out.set(t.e.name, (out.get(t.e.name) || 0) + p * share);
-    }
-  });
-  return out;
-}
+function winChances(rows) { return weekAnalysis(rows).chance; }
 
 function renderStandings(rows) {
   if (!rows.length) {
@@ -2423,24 +2254,52 @@ async function readFiles(files) {
   }
   renderArchive();
 
-  try {
-    const r = await fetch("/api/read-sheet", {method:"POST",
-      headers:{"content-type":"application/json","x-admin-key":pass},
-      body: JSON.stringify({images, games: games().map(g=>({id:g.id,away:g.away,home:g.home}))})});
-    const bodyText = await r.text();
-    const out = (() => { try { return JSON.parse(bodyText); }
-      catch (e) { return { error: `HTTP ${r.status}: ` +
-        bodyText.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 120) }; } })();
-    if (!r.ok) {
-      $("readMsg").innerHTML = `<span class="err">${esc(out.error || `HTTP ${r.status}`)}</span>`;
-      toast(out.error || `Upload failed (HTTP ${r.status})`, "bad");
-      renderArchive(); return;
+  // One photo per request. A batch of six sheets could run past the server's 60-second
+  // limit or Claude's reply length; one sheet never does, and a hiccup only costs that
+  // sheet. Errors that can succeed on a second try are retried automatically.
+  const gameList = games().map(g => ({ id: g.id, away: g.away, home: g.home }));
+  const RETRYABLE = [429, 500, 502, 503, 504, 529];
+  const all = [], failed = [];
+  let detectedWeek = null;
+  for (let i = 0; i < images.length; i++) {
+    const tag = images.length > 1 ? `Sheet ${i + 1} of ${images.length}` : "Sheet";
+    $("readMsg").textContent = `${tag}: reading…`;
+    let out = null, lastErr = "";
+    for (let attempt = 1; attempt <= 3 && !out; attempt++) {
+      try {
+        const r = await fetch("/api/read-sheet", { method: "POST",
+          headers: { "content-type": "application/json", "x-admin-key": pass },
+          body: JSON.stringify({ images: [images[i]], games: gameList }) });
+        const bodyText = await r.text();
+        const parsed = (() => { try { return JSON.parse(bodyText); }
+          catch (e) { return { error: `HTTP ${r.status}: ` +
+            bodyText.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 120) }; } })();
+        if (r.ok) { out = parsed; break; }
+        lastErr = parsed.error || `HTTP ${r.status}`;
+        if (r.status === 504) lastErr = "took too long to read";
+        if (!RETRYABLE.includes(r.status)) break;          // e.g. wrong passcode: retrying won't help
+      } catch (e) { lastErr = "network error"; }
+      if (attempt < 3) {
+        $("readMsg").textContent = `${tag}: ${lastErr}, trying again (${attempt + 1} of 3)…`;
+        await new Promise(res => setTimeout(res, 2500 * attempt));
+      }
     }
-    pending = out.entries || [];
-    pendingWeek = out.week ?? null;
-    $("readMsg").textContent = `Read ${pending.length} entries — confirm below.`;
-    renderReview(); renderArchive();
-  } catch (e) { $("readMsg").innerHTML = '<span class="err">Upload failed.</span>'; }
+    if (out) {
+      all.push(...(out.entries || []));
+      if (out.week != null && detectedWeek == null) detectedWeek = out.week;
+    } else failed.push(`${tag.toLowerCase()}: ${lastErr}`);
+  }
+  if (!all.length) {
+    const msg = failed.length ? `Couldn't read ${failed.join("; ")}` : "No entries found on the sheet.";
+    $("readMsg").innerHTML = `<span class="err">${esc(msg)}</span>`;
+    toast(msg, "bad"); renderArchive(); return;
+  }
+  pending = all;
+  pendingWeek = detectedWeek;
+  $("readMsg").innerHTML = `Read ${pending.length} entries — confirm below.` +
+    (failed.length ? ` <span class="err">Not read: ${esc(failed.join("; "))}. Upload ${failed.length === 1 ? "that photo" : "those photos"} again.</span>` : "");
+  if (failed.length) toast(`${failed.length} photo${failed.length > 1 ? "s" : ""} couldn't be read`, "bad");
+  renderReview(); renderArchive();
 }
 
 function renderReview() {

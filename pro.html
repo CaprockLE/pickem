@@ -503,6 +503,7 @@ html,body{max-width:100%;overflow-x:hidden}
 <div id="scrim"></div>
 <div id="dock"><div class="hd" id="dHd"></div><div class="bd" id="dBd"></div></div>
 
+<script src="/core.js"></script>
 <script>
 const $=i=>document.getElementById(i);
 const esc=s=>String(s??"").replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -565,99 +566,21 @@ const ranked=()=>entries().map(e=>({e,s:scoreOf(e)})).sort((a,b)=>b.s.c-a.s.c||a
 const splitOf=g=>{const r=entries();
   const a=r.filter(e=>e.picks?.[g.id]===g.away).length,h=r.filter(e=>e.picks?.[g.id]===g.home).length;
   return{a,h,tot:Math.max(a+h,1)};};
-function normCdf(z){const t=1/(1+0.2316419*Math.abs(z));const d=0.3989423*Math.exp(-z*z/2);
-  let p=d*t*(1.330274*t**4-1.821256*t**3+1.781478*t*t-0.356538*t+0.3193815);return z>0?1-p:p;}
-function minutesLeft(g){ if(g.state==="pre")return 60; if(g.final)return 0;
-  const per=g.period||1, secs=g.clockSeconds==null?0:g.clockSeconds;
-  if(per>=5) return Math.max(secs/60,.1); return Math.max(0,4-per)*15+secs/60; }
-function homeWinProb(g){
-  const w=winnerOf(g); if(w) return w==="TIE"?.5:(w===g.home?1:0);
-  const mins=minutesLeft(g), margin=(g.homeScore||0)-(g.awayScore||0);
-  if(g.state==="pre"){ const line=typeof g.spread==="number"?-g.spread:1.6; return normCdf(line/13.5); }
-  const sd=Math.sqrt(1.74**2*Math.max(mins,0)+9);
-  let exp=margin+(mins/60)*1.6;
-  if(g.possession){ const late=Math.min(1,Math.max(0,1-mins/15)); const b=(0.9+1.7*late)+(g.redZone?1.6:0);
-    exp+=g.possession===g.home?b:-b; }
-  return Math.min(.98,Math.max(.02,normCdf(exp/sd)));
-}
+/* ── The model lives in core.js, shared with / and /lab ─────────────────
+   These keep the names the rest of this page already uses. */
+function normCdf(z){ return PickCore.normCdf(z); }
+function minutesLeft(g){ return PickCore.minutesLeft(g); }
+function homeWinProb(g){ return PickCore.homeWinProb(g, winnerOf(g)); }
+function projectedTotal(g){ return PickCore.projectedTotal(g); }
+function tiebreakerShares(tied,g){ return PickCore.tiebreakerShares(tied,g); }
 const tbGame=()=>{const gs=games(); if(!gs.length) return null;
   return gs.find(g=>g.id===pool?.tiebreakerGameId)||gs[gs.length-1];};
-// projected final total for the tiebreaker game: market line pre-game, blended with live pace
-function projectedTotal(g){
-  if(!g) return null;
-  const market=typeof g.overUnder==="number"?g.overUnder:44;
-  if(g.final) return {mean:g.homeScore+g.awayScore,sd:0};
-  if(g.state==="pre") return {mean:market,sd:13.2};
-  const mins=minutesLeft(g), elapsed=Math.max(60-mins,.1), scored=(g.homeScore||0)+(g.awayScore||0);
-  const trust=Math.min(.75,elapsed/60), rate=(market/60)*(1-trust)+(scored/elapsed)*trust;
-  return {mean:scored+rate*mins, sd:Math.max(13.2*Math.sqrt(mins/60),.8)};
-}
-function tiebreakerShares(tied,g){
-  const proj=projectedTotal(g), out=new Map();
-  if(!tied.length) return out;
-  const floor=g&&!g.final?(g.homeScore||0)+(g.awayScore||0):null;
-  if(!proj||proj.sd<.5){
-    if(!proj){ tied.forEach(e=>out.set(e.name,1/tied.length)); return out; }
-    let best=Infinity,win=[];
-    tied.forEach(e=>{const d=Math.abs((e.tiebreaker??9999)-proj.mean);
-      if(d<best){best=d;win=[e.name];} else if(d===best) win.push(e.name);});
-    win.forEach(n=>out.set(n,1/win.length)); return out;
-  }
-  const lo=Math.max(floor??0,Math.round(proj.mean-4*proj.sd)), hi=Math.round(proj.mean+4*proj.sd);
-  let mass=0;
-  for(let t=lo;t<=hi;t++){
-    const z=(t-proj.mean)/proj.sd, w=Math.exp(-z*z/2);
-    let best=Infinity,win=[];
-    for(const e of tied){const d=Math.abs((e.tiebreaker??9999)-t);
-      if(d<best){best=d;win=[e.name];} else if(d===best) win.push(e.name);}
-    win.forEach(n=>out.set(n,(out.get(n)||0)+w/win.length)); mass+=w;
-  }
-  if(mass>0) for(const [k,v] of out) out.set(k,v/mass);
-  return out;
-}
-// every way the open games can land, weighted by live odds. Each combination is a
-// number (bit i set = home side of open game i wins), so a full week runs quickly
-// from before kickoff. Scenario rows are only built once 3 or fewer games are left.
-function bitCount(v){ v=v-((v>>>1)&0x55555555); v=(v&0x33333333)+((v>>>2)&0x33333333);
-  return (((v+(v>>>4))&0x0F0F0F0F)*0x01010101)>>>24; }
+// who can still win, each player's chance, and (3 or fewer games left) every combination
 function analyseWeek(){
-  const rows=ranked(), field=rows.filter(r=>!pool?.requirePaid||r.e.paid);
+  const field=ranked().filter(r=>!pool?.requirePaid||r.e.paid);
   const open=games().filter(g=>!winnerOf(g)).sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff));
-  const chance=new Map(), alive=new Set(), combos=[];
-  if(!field.length) return {chance,alive,open,combos};
-  if(!open.length){
-    const top=Math.max(...field.map(r=>r.s.c));
-    const tied=field.filter(r=>r.s.c===top).map(r=>r.e);
-    const sh=tiebreakerShares(tied,tbGame());
-    tied.forEach(e=>{ alive.add(e.name); chance.set(e.name, sh.size?(sh.get(e.name)||0):1/tied.length); });
-    return {chance,alive,open,combos};
-  }
-  if(open.length>20){ field.forEach(r=>alive.add(r.e.name)); return {chance,alive,open,combos}; }
-  const players=field.map(r=>{ let home=0,picked=0;
-    open.forEach((g,i)=>{ const p=r.e.picks?.[g.id];
-      if(p===g.home){home|=1<<i;picked|=1<<i;} else if(p===g.away) picked|=1<<i; });
-    return {e:r.e,base:r.s.c,home,picked}; });
-  const ph=open.map(homeWinProb), tb=tbGame(), shareCache=new Map(), total=1<<open.length;
-  for(let mask=0;mask<total;mask++){
-    let best=-1, top=[];
-    for(const p of players){ const sc=p.base+bitCount(p.picked&~(mask^p.home));
-      if(sc>best){best=sc;top=[p];} else if(sc===best) top.push(p); }
-    top.forEach(p=>alive.add(p.e.name));
-    let pr=1; for(let i=0;i<open.length;i++) pr*=((mask>>i)&1)?ph[i]:1-ph[i];
-    if(pr>0){
-      if(top.length===1) chance.set(top[0].e.name,(chance.get(top[0].e.name)||0)+pr);
-      else {
-        const key=top.map(t=>t.e.name).sort().join("|");
-        let sh=shareCache.get(key); if(!sh){ sh=tiebreakerShares(top.map(t=>t.e),tb); shareCache.set(key,sh); }
-        top.forEach(t=>chance.set(t.e.name,(chance.get(t.e.name)||0)+pr*(sh.size?(sh.get(t.e.name)||0):1/top.length)));
-      }
-    }
-    if(open.length<=3){
-      const picks={}; open.forEach((g,i)=>{ picks[g.id]=((mask>>i)&1)?g.home:g.away; });
-      combos.push({picks,p:pr,best,top:top.map(t=>t.e)});
-    }
-  }
-  return {chance,alive,open,combos};
+  const res=PickCore.analyse({ open, players: field.map(r=>({e:r.e, base:r.s.c})), tbGame: tbGame(), scenarios: true });
+  return { chance: res.chance, alive: res.alive, open, combos: res.combos };
 }
 // games that counted in a given week: everything once it's complete, the finished ones while it runs
 function playedIn(w){
@@ -665,43 +588,14 @@ function playedIn(w){
   if(!wk) return 0;
   return wk.complete ? (wk.games||0) : (wk.finals||0);
 }
-/* ── logo variant ─────────────────────────────────────────────────────
-   ESPN's standard marks are drawn for light backgrounds. For teams whose
-   primary colour is near-black, the standard logo vanishes on a dark panel,
-   so those teams get ESPN's dark-background variant instead. Everyone else
-   keeps their full-colour mark. Pro is always dark, so the check is the
-   team colour alone.                                                       */
-function hexToHsl(hex){
-  const m=/^#?([0-9a-f]{6})$/i.exec(String(hex||"")); if(!m) return null;
-  const n=parseInt(m[1],16), r=((n>>16)&255)/255, g=((n>>8)&255)/255, b=(n&255)/255;
-  const mx=Math.max(r,g,b), mn=Math.min(r,g,b), l=(mx+mn)/2;
-  if(mx===mn) return {h:0,s:0,l};
-  const d=mx-mn, sat=l>.5?d/(2-mx-mn):d/(mx+mn);
-  const h=mx===r?((g-b)/d+(g<b?6:0)):mx===g?(b-r)/d+2:(r-g)/d+4;
-  return {h:h*60,s:sat,l};
-}
-const TEAM_COLOURS={
-  ARI:"#97233F",ATL:"#A71930",BAL:"#241773",BUF:"#00338D",CAR:"#0085CA",CHI:"#0B162A",CIN:"#FB4F14",
-  CLE:"#311D00",DAL:"#002244",DEN:"#FB4F14",DET:"#0076B6",GB:"#203731",HOU:"#03202F",IND:"#002C5F",
-  JAX:"#006778",KC:"#E31837",LV:"#000000",LAC:"#0080C6",LAR:"#003594",MIA:"#008E97",MIN:"#4F2683",
-  NE:"#002244",NO:"#D3BC8D",NYG:"#0B2265",NYJ:"#115740",PHI:"#004C54",PIT:"#FFB612",SF:"#AA0000",
-  SEA:"#002244",TB:"#D50A0A",TEN:"#0C2340",WSH:"#5A1414",WAS:"#5A1414"};
-const DARK_MARKS=new Set(["BAL","CAR","CHI","DAL","HOU","IND","LV","NE","NYG","NYJ","PHI","SEA"]);
-function needsDarkLogo(g,side){
-  const ab=String(side==="home"?g.home:g.away||"").toUpperCase();
-  return DARK_MARKS.has(ab);
-}
+// Pro is always dark, so logos come from core.js with a dark background. Matchup cards sit
+// on the team's own colour, where some standard marks read better than the light version.
 const MATCHUP_STANDARD=new Set(["NYJ"]);
+function logoFor(g,side){ return PickCore.logoFor(g,side,true); }
 function logoForCard(g,side){
   const ab=String(side==="home"?g.home:g.away||"").toUpperCase();
-  if(MATCHUP_STANDARD.has(ab)) return (side==="home"?g["home"+"Logo"]:g["away"+"Logo"])||logoFor(g,side);
+  if(MATCHUP_STANDARD.has(ab)) return (side==="home"?g.homeLogo:g.awayLogo)||logoFor(g,side);
   return logoFor(g,side);
-}
-function logoFor(g,side){
-  const std=side==="home"?g["home"+"Logo"]:g["away"+"Logo"];
-  const dark=side==="home"?g.homeLogoDark:g.awayLogoDark;
-  if(needsDarkLogo(g,side)) return dark||std||"";
-  return std||dark||"";
 }
 const colourOf=(g,side)=>(side==="home"?g.homeColor:g.awayColor)||"#2A3648";
 

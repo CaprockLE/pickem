@@ -3,6 +3,22 @@
 Reconstructed from the build history. Newest first.
 Each entry is the build number shown at the bottom of the sidebar.
 
+## build-145 — shared core
+- New core.js holds the win-probability model, tiebreaker projection, who's-still-alive and
+  win-chance math, and logo choice. /, /lab and /pro all load it instead of keeping their
+  own copies, so a fix or feature is written once and the sites can't disagree
+- No visible change. Verified: identical results to the original method on 40 random
+  weeks, /pro matches the main site to 0.000 points for every player, and every screen of
+  all three sites loads with no errors on desktop and phone
+
+## build-144 — sheet reading that doesn't need retries
+- The import reads one photo per request instead of the whole batch at once, so no
+  request can run past the server's 60-second limit or Claude's reply length
+- Timeouts, overloaded and rate-limit errors retry automatically, up to 3 tries per photo
+- If a photo still can't be read, the others are kept and the failed one is named
+- Also: theme-matched scrollbars on all three sites; Top Score shows "of games final";
+  Per Week ranking needs half the weeks played (builds 142–143)
+
 ## build-140 — win % and elimination all week
 - Win % and OUT tags now run from before the first kickoff (previously only once 10 or
   12 games were left). Combinations are counted as bitmasks instead of built as objects,
