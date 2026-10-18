@@ -754,7 +754,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
 <script src="/share.js"></script>
 <script src="/importer.js"></script>
 <script>
-const BUILD = "lab-151 (2026-10-12 02:43 UTC)";
+const BUILD = "lab-154 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -1355,7 +1355,12 @@ function render() {
     ["Games final", `${finals}<small>/${games().length}</small>`, ""],
     ["In progress", `${live}`, live ? "hot" : ""],
     ["Entries", `${entries().length}`, ""],
-    ["Top score", rows.length ? `${rows[0].s.correct}<small>/${finals}</small>` : "—", ""],
+    // how many players still have a mathematical path to winning the week
+    // once every game is final the tiebreaker has decided it, so count the actual winner(s)
+    ["Can still win", rows.length ? (() => { const field = rows.filter(r => !pool.requirePaid || r.e.paid);
+        const o = weekOutcome(rows);
+        const n = o.complete && o.champs.size ? o.champs.size : stillAlive(rows).size;
+        return `${n}<small>/${field.length}</small>`; })() : "—", ""],
     [(() => { const o = weekOutcome(rows); return o.complete && o.champs.size ? "Winner" : "Leader"; })(), (() => {
       if (!rows.length) return "—";
       const oc = weekOutcome(rows);

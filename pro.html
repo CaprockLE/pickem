@@ -81,11 +81,15 @@ body.inapp .speed{opacity:0}
 .coin i{width:10px;height:10px;border-radius:50%;display:inline-block}
 
 /* tabs with bumper keys */
-.tabs{display:flex;align-items:center;gap:4px;max-width:1500px;margin:10px auto 0}
+.tabs{display:flex;align-items:center;gap:4px;max-width:1500px;margin:10px auto 0;
+  overflow-x:auto;scrollbar-width:none;padding-bottom:6px}
+.tabs::-webkit-scrollbar{display:none}
+.tabs.more{-webkit-mask-image:linear-gradient(90deg,#000 90%,transparent);mask-image:linear-gradient(90deg,#000 90%,transparent)}
+.bump{flex:none}
 .bump{font-family:Teko;font-size:20px;color:var(--muted);padding:2px 10px;border:1px solid rgba(255,255,255,.14);
   border-radius:5px;cursor:pointer;background:transparent}
 .bump:hover{color:#fff;border-color:#fff}
-.tab{cursor:pointer;border:0;background:transparent;font-family:Teko;font-weight:600;font-size:25px;
+.tab{white-space:nowrap;flex:none;cursor:pointer;border:0;background:transparent;font-family:Teko;font-weight:600;font-size:25px;
   letter-spacing:.06em;color:var(--muted);padding:2px 16px 0;position:relative;transition:.15s}
 .tab:hover{color:#fff}
 .tab.on{color:#fff}
@@ -354,6 +358,43 @@ body.inapp .speed{opacity:0}
 .impbar button:hover,.impact button:hover{filter:brightness(1.15)}
 .note2{font-weight:600;font-size:11px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
 
+/* manager cards on the import tab */
+.mcard{margin-top:22px;padding:16px 18px;background:#0A0F17;border:1px solid rgba(255,255,255,.08)}
+.mhd{display:flex;align-items:baseline;gap:12px;margin-bottom:6px}
+.mhd b{font-family:Teko;font-weight:600;font-size:28px;letter-spacing:.04em}
+.mhd span{margin-left:auto;font-weight:700;font-size:11px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+.mcard .note2{display:block;margin:0 0 10px;line-height:1.5}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 6px 0 10px;background:#121A27;border:1px solid rgba(255,255,255,.1);
+  font-family:Teko;font-size:19px;letter-spacing:.04em;text-transform:uppercase}
+.chip.new{border-color:var(--cy)}
+.chip button{cursor:pointer;background:transparent;border:0;color:var(--muted);font-size:14px;padding:0 4px 3px}
+.chip button:hover{color:var(--hot)}
+#rosNew{background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.18);padding:6px 10px;font-family:Teko;font-size:19px;color:#fff;width:200px}
+.impbar button.go4{border:0;color:#0A0207;background:linear-gradient(90deg,var(--hot),var(--hot2))}
+.impbar button.go4.dirty{box-shadow:0 0 0 2px var(--lime),0 0 18px rgba(182,255,59,.4)}
+.mmsg{font-weight:700;font-size:11.5px;letter-spacing:.12em;color:var(--lime);text-transform:uppercase}
+.mmsg.err{color:var(--hot)}
+.entgrid td{font-family:Teko;font-size:20px}
+.entgrid input{background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.18);color:#fff;padding:3px 8px;font-family:Teko;font-size:20px}
+.entgrid input.nm{width:170px;text-transform:uppercase}
+.entgrid input.tb{width:64px;text-align:center}
+.entgrid input.tb.bad{border-color:var(--hot);color:var(--hot)}
+.entgrid tr.changed td{box-shadow:inset 0 0 0 1px var(--cy)}
+.entgrid .tog,.entgrid .del,.ovr button{cursor:pointer;font-family:Teko;font-size:18px;letter-spacing:.06em;padding:2px 12px 0;
+  border:1px solid rgba(255,255,255,.2);background:transparent;color:var(--ink2)}
+.entgrid .tog.on{background:var(--lime);border-color:var(--lime);color:#06120A}
+.entgrid .tog.off{border-color:var(--hot);color:var(--hot)}
+.entgrid .del:hover{background:var(--hot);border-color:var(--hot);color:#fff}
+.lblin{width:100%;background:rgba(0,0,0,.4);border:0;border-top:1px solid rgba(255,255,255,.08);color:#fff;padding:6px 10px;
+  font-family:Teko;font-size:18px;letter-spacing:.04em;text-transform:uppercase}
+.lblin.changed{box-shadow:inset 0 0 0 1px var(--cy)}
+.ovr{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 10px;background:#0C121C;margin-bottom:4px}
+.ovr .og{font-weight:700;font-size:12px;letter-spacing:.1em;min-width:190px;text-transform:uppercase}
+.ovr .og small{display:block;color:var(--muted);font-size:10.5px}
+.ovr button.on{background:var(--cy);border-color:var(--cy);color:#04111A}
+.ovr.set{box-shadow:inset 3px 0 0 var(--cy)}
+
 /* payments */
 .paybar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
 .paybar label{font-weight:700;font-size:12px;letter-spacing:.14em;color:var(--muted);display:flex;align-items:center;gap:6px}
@@ -387,11 +428,11 @@ body.inapp .speed{opacity:0}
 .sheet .pdf{display:grid;place-items:center;font-family:Teko;font-size:34px;letter-spacing:.1em;color:var(--muted)}
 .sheet .cap{padding:7px 10px;font-family:Teko;font-size:19px;letter-spacing:.04em;text-transform:uppercase;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#lb{position:fixed;inset:0;z-index:95;background:rgba(2,3,6,.94);display:flex;align-items:center;justify-content:center;gap:10px;padding:16px}
-#lb[hidden]{display:none}
-#lb figure{margin:0;max-width:min(1100px,calc(100vw - 140px));max-height:calc(100vh - 40px);display:flex;flex-direction:column;align-items:center}
-#lb img{max-width:100%;max-height:calc(100vh - 90px);object-fit:contain;box-shadow:0 20px 60px rgba(0,0,0,.6)}
-#lb figcaption{margin-top:10px;font-family:Teko;font-size:24px;letter-spacing:.05em;text-transform:uppercase}
+#sheetView{position:fixed;inset:0;z-index:95;background:rgba(2,3,6,.94);display:flex;align-items:center;justify-content:center;gap:10px;padding:16px}
+#sheetView[hidden]{display:none}
+#sheetView figure{margin:0;max-width:min(1100px,calc(100vw - 140px));max-height:calc(100vh - 40px);display:flex;flex-direction:column;align-items:center}
+#sheetView img{max-width:100%;max-height:calc(100vh - 90px);object-fit:contain;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+#sheetView figcaption{margin-top:10px;font-family:Teko;font-size:24px;letter-spacing:.05em;text-transform:uppercase}
 .lbx{cursor:pointer;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);color:#fff;font-size:30px;
   width:48px;height:64px;flex:none}
 .lbx:hover{background:var(--hot);border-color:var(--hot)}
@@ -401,7 +442,7 @@ body.inapp .speed{opacity:0}
 .dsheet:hover{border-color:var(--cy);color:var(--cy)}
 @media (max-width:700px){
   .sheets{grid-template-columns:repeat(2,1fr);gap:8px}.sheet img,.sheet .pdf{height:130px}
-  #lb{padding:8px}#lb figure{max-width:calc(100vw - 16px)}
+  #sheetView{padding:8px}#sheetView figure{max-width:calc(100vw - 16px)}
   #lbPrev,#lbNext{position:absolute;bottom:18px;width:56px;height:48px}#lbPrev{left:16px}#lbNext{right:16px}
 }
 
@@ -684,12 +725,32 @@ html,body{max-width:100%;overflow-x:hidden}
         <input type="file" id="impFile" accept="image/*,application/pdf,.pdf" multiple hidden></label>
       <div class="impmsg" id="impMsg"></div>
       <div id="impReview"></div>
-      <div class="impbar">
-        <button id="impUndo">Undo Last Publish</button>
-        <button id="impArch">Add Photos to Archive</button>
-        <input type="file" id="impArchFile" accept="image/*,application/pdf,.pdf" multiple hidden>
-        <span class="note2">adds photos only · doesn't read or change any picks</span>
-      </div>
+      <div class="mcard"><div class="mhd"><b>Roster</b><span id="rosCount"></span></div>
+        <p class="note2">The master list of players. Every sheet gets assigned to one of these names.</p>
+        <div class="chips" id="rosChips"></div>
+        <p class="note2" id="rosNever"></p>
+        <div class="impbar"><input type="text" id="rosNew" placeholder="ADD A PLAYER">
+          <button id="rosAdd">Add</button><button id="rosPull">Pull Names from This Week</button>
+          <button id="rosSave" class="go4">Save Roster</button><span class="mmsg" id="rosMsg"></span></div></div>
+
+      <div class="mcard"><div class="mhd"><b>Entries on File</b><span id="entCount"></span></div>
+        <p class="note2" id="entMissing"></p>
+        <div class="grid entgrid" id="entGrid"></div>
+        <div class="impbar"><button id="entAdd">Add Entry Manually</button><button id="impUndo">Undo Last Publish</button>
+          <button id="fileSave" class="go4">Save Changes</button><span class="mmsg" id="fileMsg"></span></div></div>
+
+      <div class="mcard"><div class="mhd"><b>Sheet Archive</b><span id="archCount2"></span></div>
+        <p class="note2">Photos of this week's sheets, kept as the receipt. Rename a label and save to fix who it belongs to.</p>
+        <div class="sheets" id="archGrid2"></div>
+        <div class="impbar"><button id="impArch">Add Photos to Archive</button>
+          <input type="file" id="impArchFile" accept="image/*,application/pdf,.pdf" multiple hidden>
+          <button id="archLabels" class="go4">Save Labels</button><span class="mmsg" id="archMsg2"></span></div></div>
+
+      <div class="mcard"><div class="mhd"><b>Result Overrides</b><span>RARELY NEEDED</span></div>
+        <p class="note2">Winners come from the live feed. Set an override only when the league scores a game differently —
+          a postponed game, a tie your pool awards to one side, or a feed error. An override replaces the feed result for everyone.
+          Saved with Save Changes above.</p>
+        <div id="ovrList"></div></div>
     </section>
     <section class="pane" id="p-season">
       <div class="banner"><span class="tag">SEASON</span><span class="ttl">Standings</span>
@@ -702,7 +763,7 @@ html,body{max-width:100%;overflow-x:hidden}
   </div>
 </div>
 
-<div id="lb" hidden>
+<div id="sheetView" hidden>
   <button class="lbx" id="lbPrev" title="Previous">‹</button>
   <figure><img id="lbImg" alt=""><figcaption id="lbCap"></figcaption></figure>
   <button class="lbx" id="lbNext" title="Next">›</button>
@@ -750,8 +811,8 @@ $("gpass").onkeydown=e=>{if(e.key==="Enter")$("gbtn").click();};
 (async()=>{if(pass&&await unlock(pass)){$("gate").style.display="none";$("ui").classList.add("on");document.body.classList.add("inapp");boot();}})();
 
 for(let w=1;w<=18;w++){const o=document.createElement("option");o.value=w;o.textContent="WEEK "+w;$("weekSel").appendChild(o);}
-$("weekSel").onchange=e=>{ if((payEdits.size||imp.rows.length)&&!confirm("Unsaved payment changes or an unpublished import will be lost. Switch weeks?")){ e.target.value=week; return; }
-  imp={rows:[],shots:[],week:null,batch:imp.batch};
+$("weekSel").onchange=e=>{ if((payEdits.size||imp.rows.length||fileOps.length||labelEdits.size)&&!confirm("Unsaved payment changes or an unpublished import will be lost. Switch weeks?")){ e.target.value=week; return; }
+  imp={rows:[],shots:[],week:null,batch:imp.batch}; fileOps=[]; labelEdits.clear();
   payEdits.clear(); week=+e.target.value; load(); };
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>go(b.dataset.t));
 $("demo").onclick=()=>{ simLive=!simLive; $("demo").textContent=simLive?"END SIM":"SIM LIVE";
@@ -763,10 +824,17 @@ document.addEventListener("keydown",e=>{
   if(e.key==="q"||e.key==="Q")$("lb").click();
   if(e.key==="e"||e.key==="E")$("rb").click();
 });
+// fade the tab strip's right edge only when it has more than fits
+function tabsFit(){ const t=document.querySelector(".tabs"); if(!t) return;
+  t.classList.toggle("more", t.scrollWidth>t.clientWidth+2 && t.scrollLeft+t.clientWidth<t.scrollWidth-2); }
+window.addEventListener("resize",tabsFit);
+document.querySelector(".tabs")?.addEventListener("scroll",tabsFit,{passive:true});
+setTimeout(tabsFit,300);
 function go(t){
   tab=t;
   document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
   TABS.forEach(k=>$("p-"+k).classList.toggle("on",k===t));
+  document.querySelector(`.tab[data-t="${t}"]`)?.scrollIntoView({block:"nearest",inline:"nearest"}); tabsFit();
   render();
 }
 
@@ -1202,6 +1270,7 @@ dz.addEventListener("dragleave",()=>dz.classList.remove("over"));
 dz.addEventListener("drop",e=>{ e.preventDefault(); dz.classList.remove("over"); impFiles([...e.dataTransfer.files]); });
 const finalName=r=>(r.assigned||r.newName||"").trim();
 function drawImport(){
+  drawManager();
   const gs=games(), rows=imp.rows;
   if(!rows.length){ $("impReview").innerHTML=""; return; }
   const wrongWeek=imp.week&&imp.week!==week;
@@ -1303,9 +1372,155 @@ $("impArchFile").onchange=async e=>{
       kind:c.kind,uploadedAt:new Date().toISOString(),data:c.data}); }
   if(!shots.length){ impSay("Couldn't read those photos",true); return; }
   const saved=await PickImport.saveShots({week,pass,shots,onProgress:impSay});
-  delete sheetCache[week];
+  delete sheetCache[week]; drawArchive2();
   impSay(saved.failed.length?`${shots.length-saved.failed.length} saved · ${saved.failed.length} didn't save`:`${shots.length} photo${shots.length>1?"s":""} added to the week ${week} archive`,saved.failed.length>0);
 };
+
+/* ---------- manager cards: roster, entries on file, sheet archive, result overrides ---------- */
+// Entries and overrides collect as a list of changes. Saving replays them onto a fresh copy
+// of the week from the server, so a save here can't undo one made anywhere else.
+let fileOps=[];
+const clone=o=>JSON.parse(JSON.stringify(o||{}));
+function applyOps(doc,ops){
+  const d=clone(doc); d.entries=d.entries||[]; d.manualResults=d.manualResults||{};
+  const find=n=>d.entries.findIndex(e=>slug(e.name)===slug(n));
+  for(const op of ops){
+    const i=op.name!=null?find(op.name):-1;
+    if(op.t==="rename"&&i>=0) d.entries[i].name=op.to;
+    if(op.t==="tb"&&i>=0) d.entries[i].tiebreaker=op.v;
+    if(op.t==="paid"&&i>=0) d.entries[i].paid=op.v;
+    if(op.t==="remove"&&i>=0) d.entries.splice(i,1);
+    if(op.t==="add"&&find(op.entry.name)<0) d.entries.push(clone(op.entry));
+    if(op.t==="override"){ if(op.v) d.manualResults[op.game]=op.v; else delete d.manualResults[op.game]; }
+  }
+  return d;
+}
+const fileDraft=()=>applyOps(pool,fileOps);
+const changedNames=()=>new Set(fileOps.filter(o=>o.name||o.entry).map(o=>slug(o.t==="rename"?o.to:o.entry?o.entry.name:o.name)));
+
+function drawManager(){
+  if(!pool) return;
+  // the 30-second refresh mustn't wipe a box someone is typing in
+  const a=document.activeElement;
+  if(a&&a.tagName==="INPUT"&&a.closest("#p-import .mcard")) return;
+  drawRoster(); drawEntriesOnFile(); drawArchive2(); drawOverrides();
+  $("fileSave").classList.toggle("dirty",fileOps.length>0);
+  if(fileOps.length) $("fileMsg").textContent=`${fileOps.length} unsaved change${fileOps.length===1?"":"s"}`;
+}
+
+// roster
+let rosDraft=null;
+function drawRoster(){
+  if(!roster){ loadRoster().then(()=>{ rosDraft=[...roster]; drawRoster(); }); return; }
+  if(!rosDraft) rosDraft=[...roster];
+  const isNew=n=>!roster.some(r=>slug(r)===slug(n));
+  $("rosCount").textContent=`${rosDraft.length} player${rosDraft.length===1?"":"s"}`;
+  $("rosChips").innerHTML=rosDraft.length?rosDraft.map((n,i)=>`<span class="chip${isNew(n)?" new":""}">${esc(n)}<button data-rr="${i}" title="Remove">✕</button></span>`).join("")
+    :'<span class="note2">Empty — add names, or pull them from this week.</span>';
+  const played=new Set((season?.players||[]).map(p=>slug(p.name)));
+  const never=rosDraft.filter(n=>!played.has(slug(n)));
+  $("rosNever").textContent=season&&never.length?`${never.length} on the roster with no entries yet: ${never.join(", ")}`:"";
+  $("rosChips").querySelectorAll("[data-rr]").forEach(b=>b.onclick=()=>{ rosDraft.splice(+b.dataset.rr,1); drawRoster(); rosDirty(); });
+  rosDirty();
+}
+const rosDirty=()=>{ const d=JSON.stringify([...rosDraft].sort())!==JSON.stringify([...(roster||[])].sort());
+  $("rosSave").classList.toggle("dirty",d); if(d) $("rosMsg").textContent="unsaved"; };
+$("rosAdd").onclick=()=>{ const v=$("rosNew").value.trim(); if(!v) return;
+  if(!rosDraft.some(r=>slug(r)===slug(v))) rosDraft.push(v);
+  rosDraft.sort((a,b)=>a.localeCompare(b)); $("rosNew").value=""; drawRoster(); };
+$("rosNew").onkeydown=e=>{ if(e.key==="Enter") $("rosAdd").click(); };
+$("rosPull").onclick=()=>{ fileDraft().entries.forEach(e=>{ if(!rosDraft.some(r=>slug(r)===slug(e.name))) rosDraft.push(e.name); });
+  rosDraft.sort((a,b)=>a.localeCompare(b)); drawRoster(); };
+$("rosSave").onclick=async()=>{
+  try{ const r=await fetch("/api/pool?roster=1",{method:"POST",headers:{"content-type":"application/json","x-admin-key":pass},body:JSON.stringify({names:rosDraft})});
+    const out=await r.json(); if(!r.ok) throw new Error(out.error||"save failed");
+    roster=out.names||[...rosDraft]; rosDraft=[...roster]; drawRoster(); $("rosMsg").textContent="roster saved"; }
+  catch(err){ $("rosMsg").textContent=`not saved: ${err.message||err}`; }
+};
+
+// entries on file (the published week, with pending changes shown)
+function drawEntriesOnFile(){
+  const d=fileDraft(), es=d.entries||[], gs=games(), ch=changedNames();
+  $("entCount").textContent=`${es.length} on file for week ${week}`+
+    (pool.updatedAt?` · published ${new Date(pool.updatedAt).toLocaleString([],{weekday:"short",hour:"numeric",minute:"2-digit"})}`:"");
+  const missing=(roster||[]).filter(n=>!es.some(e=>slug(e.name)===slug(n)));
+  $("entMissing").textContent=roster&&roster.length?(missing.length?`No sheet yet this week: ${missing.join(", ")} — sitting out, or still to upload.`
+    :`Every roster player has a sheet in for week ${week}.`):"";
+  $("entGrid").innerHTML=es.length?`<table><thead><tr><th class="who">Player</th><th>Picks read</th><th>Tiebreaker</th><th>Paid</th><th></th></tr></thead><tbody>`+
+    es.map((e,i)=>`<tr class="${ch.has(slug(e.name))?"changed":""}"><td class="who"><input class="nm" data-nm="${esc(e.name)}" value="${esc(e.name)}"></td>
+      <td>${Object.keys(e.picks||{}).length}/${gs.length}</td>
+      <td><input class="tb${PickImport.tbIssue(e.tiebreaker)?" bad":""}" data-tb="${esc(e.name)}" value="${e.tiebreaker??""}" inputmode="numeric"
+        title="${esc(PickImport.tbIssue(e.tiebreaker)||"")}"></td>
+      <td><button class="tog ${e.paid?"on":"off"}" data-pd="${esc(e.name)}">${e.paid?"PAID":"UNPAID"}</button></td>
+      <td><button class="del" data-del="${esc(e.name)}">REMOVE</button></td></tr>`).join("")+`</tbody></table>`
+    :'<div class="empty" style="padding:24px">NO ENTRIES YET — DROP SHEETS IN ABOVE, OR ADD ONE BY HAND</div>';
+  const G=$("entGrid");
+  G.querySelectorAll("input[data-nm]").forEach(inp=>inp.onchange=()=>{ const to=inp.value.trim(), from=inp.dataset.nm;
+    if(!to||to===from) { inp.value=from; return; }
+    if(fileDraft().entries.some(e=>slug(e.name)===slug(to))){ alert(`${to} already has an entry this week.`); inp.value=from; return; }
+    fileOps.push({t:"rename",name:from,to}); drawManager(); });
+  G.querySelectorAll("input[data-tb]").forEach(inp=>inp.onchange=()=>{ const v=inp.value.trim();
+    fileOps.push({t:"tb",name:inp.dataset.tb,v:v===""?null:Number(v)}); drawManager(); });
+  G.querySelectorAll("[data-pd]").forEach(b=>b.onclick=()=>{ const e=fileDraft().entries.find(x=>x.name===b.dataset.pd);
+    fileOps.push({t:"paid",name:b.dataset.pd,v:!e.paid}); drawManager(); });
+  G.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{ if(!confirm(`Remove ${b.dataset.del}'s entry from week ${week}?`)) return;
+    fileOps.push({t:"remove",name:b.dataset.del}); drawManager(); });
+}
+$("entAdd").onclick=()=>{ const n=prompt("Player name for the new entry:"); if(!n||!n.trim()) return;
+  if(fileDraft().entries.some(e=>slug(e.name)===slug(n))){ alert(`${n} already has an entry this week.`); return; }
+  fileOps.push({t:"add",entry:{name:n.trim(),picks:{},tiebreaker:null,paid:false}}); drawManager(); };
+$("fileSave").onclick=async()=>{
+  if(!fileOps.length){ $("fileMsg").textContent="nothing to save"; return; }
+  $("fileMsg").textContent="saving…";
+  try{
+    const fr=await getJSON(`/api/pool?week=${week}`); if(!fr.ok) throw new Error("couldn't load the week");
+    const next=applyOps(fr.body,fileOps);
+    const w=await fetch(`/api/pool?week=${week}`,{method:"POST",headers:{"content-type":"application/json","x-admin-key":pass},body:JSON.stringify(next)});
+    const out=await w.json(); if(!w.ok) throw new Error(out.error||"save failed");
+    pool=out; const n=fileOps.length; fileOps=[]; render(); loadSeason(); drawManager();
+    $("fileMsg").textContent=`saved ${n} change${n===1?"":"s"} to the league`;
+  }catch(err){ $("fileMsg").textContent=`not saved: ${err.message||err}`; }
+};
+
+// sheet archive: labels can be corrected
+const labelEdits=new Map();
+async function drawArchive2(){
+  const list=await loadSheets();
+  $("archCount2").textContent=`${list.length} photo${list.length===1?"":"s"}`;
+  $("archGrid2").innerHTML=list.length?list.map((sh,i)=>`<div class="sheet">${sh.kind==="pdf"
+      ?`<a href="${esc(sheetSrc(sh))}" target="_blank" rel="noopener" class="pdf" style="text-decoration:none">PDF</a>`
+      :`<img src="${esc(sheetSrc(sh))}" alt="" loading="lazy" data-ai="${i}" style="cursor:pointer">`}
+      <input class="lblin${labelEdits.has(sh.id)?" changed":""}" data-lid="${esc(sh.id)}" value="${esc(labelEdits.get(sh.id)??sh.label??"")}"></div>`).join("")
+    :'<div class="empty" style="padding:24px">NO PHOTOS ARCHIVED FOR THIS WEEK</div>';
+  $("archGrid2").querySelectorAll("img[data-ai]").forEach(im=>im.onclick=()=>openSheet(list,+im.dataset.ai));
+  $("archGrid2").querySelectorAll("input[data-lid]").forEach(inp=>inp.oninput=()=>{
+    const sh=list.find(x=>x.id===inp.dataset.lid);
+    if(inp.value===(sh.label||"")) labelEdits.delete(sh.id); else labelEdits.set(sh.id,inp.value);
+    inp.classList.toggle("changed",labelEdits.has(sh.id)); $("archLabels").classList.toggle("dirty",labelEdits.size>0); });
+  $("archLabels").classList.toggle("dirty",labelEdits.size>0);
+}
+$("archLabels").onclick=async()=>{
+  if(!labelEdits.size){ $("archMsg2").textContent="nothing to save"; return; }
+  try{ const r=await fetch(`/api/sheets?week=${week}`,{method:"POST",headers:{"content-type":"application/json","x-admin-key":pass},
+      body:JSON.stringify({labels:Object.fromEntries(labelEdits)})});
+    if(!r.ok) throw new Error("save failed");
+    sheetCache[week]=(await r.json()).sheets; labelEdits.clear(); drawArchive2(); $("archMsg2").textContent="labels saved"; }
+  catch(err){ $("archMsg2").textContent=`not saved: ${err.message||err}`; }
+};
+
+// result overrides
+function drawOverrides(){
+  const d=fileDraft(), mr=d.manualResults||{};
+  $("ovrList").innerHTML=games().map(g=>{ const o=mr[g.id]||"";
+    const b=(v,l)=>`<button class="${o===v?"on":""}" data-og="${esc(g.id)}" data-ov="${esc(v)}">${esc(l)}</button>`;
+    return `<div class="ovr${o?" set":""}"><span class="og">${esc(g.away)} at ${esc(g.home)}<small>${g.final?`feed: ${esc(g.winner||"—")}`:g.state==="in"?"in progress":"not played yet"}</small></span>
+      ${b(g.away,g.away)}${b(g.home,g.home)}${b("TIE","TIE")}${o?`<button data-og="${esc(g.id)}" data-ov="">CLEAR</button>`:""}</div>`; }).join("")
+    ||'<div class="empty" style="padding:18px">NO GAMES LOADED</div>';
+  $("ovrList").querySelectorAll("[data-og]").forEach(b=>b.onclick=()=>{
+    const cur=(fileDraft().manualResults||{})[b.dataset.og]||"";
+    const v=b.dataset.ov===cur?"":b.dataset.ov;      // tapping the set one again clears it
+    fileOps.push({t:"override",game:b.dataset.og,v}); drawManager(); });
+}
 
 /* ---------- payments (same buy-in setting and week document as the main site) ---------- */
 let buyin=Number(localStorage.getItem("pc.buyin")||10);
@@ -1385,7 +1600,7 @@ async function drawSheets(){
 function openSheet(list,i){
   lbList=list.filter(x=>x.kind!=="pdf"); if(!lbList.length) return;
   const target=list[i]; lbAt=Math.max(0,lbList.indexOf(target));
-  showSheet(); $("lb").hidden=false;
+  showSheet(); $("sheetView").hidden=false;
 }
 function showSheet(){
   const sh=lbList[lbAt]; $("lbImg").src=sheetSrc(sh);
@@ -1394,11 +1609,11 @@ function showSheet(){
 }
 $("lbPrev").onclick=e=>{ e.stopPropagation(); lbAt=(lbAt-1+lbList.length)%lbList.length; showSheet(); };
 $("lbNext").onclick=e=>{ e.stopPropagation(); lbAt=(lbAt+1)%lbList.length; showSheet(); };
-$("lbClose").onclick=()=>{ $("lb").hidden=true; };
-$("lb").addEventListener("click",e=>{ if(e.target===$("lb")) $("lb").hidden=true; });
+$("lbClose").onclick=()=>{ $("sheetView").hidden=true; };
+$("sheetView").addEventListener("click",e=>{ if(e.target===$("sheetView")) $("sheetView").hidden=true; });
 document.addEventListener("keydown",e=>{
-  if($("lb").hidden) return;
-  if(e.key==="Escape") $("lb").hidden=true;
+  if($("sheetView").hidden) return;
+  if(e.key==="Escape") $("sheetView").hidden=true;
   if(e.key==="ArrowLeft") $("lbPrev").click();
   if(e.key==="ArrowRight") $("lbNext").click();
 });

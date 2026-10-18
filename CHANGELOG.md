@@ -3,6 +3,28 @@
 Reconstructed from the build history. Newest first.
 Each entry is the build number shown at the bottom of the sidebar.
 
+## build-154 — Can Still Win replaces Top Score
+- Week Results: the Top Score tile is now Can Still Win — how many players still have a
+  mathematical path to winning the week, out of the field ("16/21"). Before kickoff it's
+  everyone; once every game is final it counts the actual winner(s) after the tiebreaker
+- Verified it matches the OUT tags in the standings, before kickoff, mid-week and final
+
+## build-153 — the rest of Import in Pro
+- /pro Import tab now has the four cards from the main site: Roster (add, remove, pull names
+  from the week, save, never-entered note), Entries on File (rename, tiebreaker, paid, remove,
+  add by hand, no-sheet-yet list, undo), Sheet Archive (photos with editable labels, add
+  photos) and Result Overrides (away / home / tie / clear per game)
+- Entry and override edits collect as pending changes; Save Changes replays them onto a fresh
+  copy of the week, so it can't undo someone else's save (tested with a concurrent add)
+- The 30-second refresh doesn't redraw a card while a box in it is being typed in
+
+## build-152 — fix: Pro header
+- Fixed: the sheet viewer (build-149) reused the id "lb", already the LB tab button, so
+  the button took the viewer's full-screen styling and covered the header, and the viewer's
+  controls were wired to the button. The viewer is now #sheetView
+- Tab labels stay on one line; the tab strip scrolls sideways with a fade when it can't fit
+- Test sweep now fails on any duplicate id in the live page
+
 ## build-151 — Import in Pro
 - New importer.js holds photo prep, the sheet reader with retries, roster matching, the
   tiebreaker check, archive saving and entry merging; the main site's import uses it
