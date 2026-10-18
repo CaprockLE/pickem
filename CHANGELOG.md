@@ -3,6 +3,16 @@
 Reconstructed from the build history. Newest first.
 Each entry is the build number shown at the bottom of the sidebar.
 
+## build-155 — fix: three Pro styling collisions
+- Card Collection: Result Overrides rows (build-153) used the class .ovr, already the card's
+  rating, putting a dark block over every card's rating. Override rows are now .ovrow
+- Matchups: Head to Head's container (build-147) used .tug, already the pool-split bar on
+  every matchup card, stacking its two halves. Head to Head's is now .h2tug
+- Ladder status tags shared .st with the matchup clock; tags are now .lst
+- New checks on every build: a scan for classes reused across components, and visual
+  snapshots of all 20 screens on the three sites compared pixel by pixel to references
+  (verified it flags the card bug: 9.64% of the Card Collection changed)
+
 ## build-154 — Can Still Win replaces Top Score
 - Week Results: the Top Score tile is now Can Still Win — how many players still have a
   mathematical path to winning the week, out of the field ("16/21"). Before kickoff it's

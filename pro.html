@@ -306,10 +306,10 @@ body.inapp .speed{opacity:0}
 .lwin b{font-size:36px;color:var(--cy)}.lwin b small{font-size:18px}
 .lpts b{font-size:46px}
 .lwin span,.lpts span{font-weight:700;font-size:9.5px;letter-spacing:.2em;color:var(--muted)}
-.st{font-weight:700;font-size:11px;letter-spacing:.16em;padding:2px 8px;display:inline-block}
-.st.lead{color:#06120A;background:var(--lime)}
-.st.out{color:var(--hot);border:1px solid var(--hot)}
-.st.win{color:#2A1A02;background:linear-gradient(90deg,var(--gold1),var(--gold2))}
+.lst{font-weight:700;font-size:11px;letter-spacing:.16em;padding:2px 8px;display:inline-block}
+.lst.lead{color:#06120A;background:var(--lime)}
+.lst.out{color:var(--hot);border:1px solid var(--hot)}
+.lst.win{color:#2A1A02;background:linear-gradient(90deg,var(--gold1),var(--gold2))}
 .scens{display:flex;flex-direction:column;gap:8px}
 .sc{display:grid;grid-template-columns:1.1fr 1.4fr 64px;gap:14px;align-items:center;padding:11px 16px;
   background:linear-gradient(90deg,rgba(255,255,255,.06),rgba(255,255,255,.015)) #0C121C;
@@ -381,7 +381,7 @@ body.inapp .speed{opacity:0}
 .entgrid input.tb{width:64px;text-align:center}
 .entgrid input.tb.bad{border-color:var(--hot);color:var(--hot)}
 .entgrid tr.changed td{box-shadow:inset 0 0 0 1px var(--cy)}
-.entgrid .tog,.entgrid .del,.ovr button{cursor:pointer;font-family:Teko;font-size:18px;letter-spacing:.06em;padding:2px 12px 0;
+.entgrid .tog,.entgrid .del,.ovrow button{cursor:pointer;font-family:Teko;font-size:18px;letter-spacing:.06em;padding:2px 12px 0;
   border:1px solid rgba(255,255,255,.2);background:transparent;color:var(--ink2)}
 .entgrid .tog.on{background:var(--lime);border-color:var(--lime);color:#06120A}
 .entgrid .tog.off{border-color:var(--hot);color:var(--hot)}
@@ -389,11 +389,11 @@ body.inapp .speed{opacity:0}
 .lblin{width:100%;background:rgba(0,0,0,.4);border:0;border-top:1px solid rgba(255,255,255,.08);color:#fff;padding:6px 10px;
   font-family:Teko;font-size:18px;letter-spacing:.04em;text-transform:uppercase}
 .lblin.changed{box-shadow:inset 0 0 0 1px var(--cy)}
-.ovr{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 10px;background:#0C121C;margin-bottom:4px}
-.ovr .og{font-weight:700;font-size:12px;letter-spacing:.1em;min-width:190px;text-transform:uppercase}
-.ovr .og small{display:block;color:var(--muted);font-size:10.5px}
-.ovr button.on{background:var(--cy);border-color:var(--cy);color:#04111A}
-.ovr.set{box-shadow:inset 3px 0 0 var(--cy)}
+.ovrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 10px;background:#0C121C;margin-bottom:4px}
+.ovrow .og{font-weight:700;font-size:12px;letter-spacing:.1em;min-width:190px;text-transform:uppercase}
+.ovrow .og small{display:block;color:var(--muted);font-size:10.5px}
+.ovrow button.on{background:var(--cy);border-color:var(--cy);color:#04111A}
+.ovrow.set{box-shadow:inset 3px 0 0 var(--cy)}
 
 /* payments */
 .paybar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
@@ -470,17 +470,17 @@ body.inapp .speed{opacity:0}
 .tape .tv.best{color:var(--lime)}
 .tape .tl{display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10.5px;letter-spacing:.18em;
   color:var(--muted);text-transform:uppercase;background:#0A0F17;text-align:center}
-.tug{display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
-.tug .tw{display:grid;grid-template-columns:1fr 64px 1fr;align-items:center;gap:8px}
-.tug .tw .wk{text-align:center;font-family:Teko;font-size:20px;color:var(--muted)}
-.tug .half{height:22px;display:flex;align-items:center}
-.tug .half.a{justify-content:flex-end}
-.tug .half i{display:block;height:100%;background:rgba(255,255,255,.14);position:relative}
-.tug .half.a i{border-radius:4px 0 0 4px}.tug .half.b i{border-radius:0 4px 4px 0}
-.tug .half i.won{background:linear-gradient(90deg,var(--cy),var(--lime))}
-.tug .half b{font-family:Teko;font-size:20px;padding:0 8px}
-.tug .tw.out{opacity:.4}
-.tug .tw .sat{grid-column:1/-1;text-align:center;font-weight:600;font-size:11px;letter-spacing:.14em;color:var(--muted)}
+.h2tug{display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
+.h2tug .tw{display:grid;grid-template-columns:1fr 64px 1fr;align-items:center;gap:8px}
+.h2tug .tw .wk{text-align:center;font-family:Teko;font-size:20px;color:var(--muted)}
+.h2tug .half{height:22px;display:flex;align-items:center}
+.h2tug .half.a{justify-content:flex-end}
+.h2tug .half i{display:block;height:100%;background:rgba(255,255,255,.14);position:relative}
+.h2tug .half.a i{border-radius:4px 0 0 4px}.tug .half.b i{border-radius:0 4px 4px 0}
+.h2tug .half i.won{background:linear-gradient(90deg,var(--cy),var(--lime))}
+.h2tug .half b{font-family:Teko;font-size:20px;padding:0 8px}
+.h2tug .tw.out{opacity:.4}
+.h2tug .tw .sat{grid-column:1/-1;text-align:center;font-weight:600;font-size:11px;letter-spacing:.14em;color:var(--muted)}
 .splits{display:flex;flex-direction:column;gap:6px}
 .splits .sp{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;padding:6px 12px;background:#0C121C}
 .splits .sp .pk{display:flex;align-items:center;gap:8px}
@@ -1065,9 +1065,9 @@ function drawLadder(){
   const gs=games();
   $("ladder").innerHTML=rows.map((r,i)=>{
       const out=!A.alive.has(r.e.name)&&!done, p=ch(r), isChamp=r.e.name===champ;
-      const status = done ? (isChamp?'<span class="st win">WINNER</span>':"")
-        : out ? '<span class="st out">OUT</span>'
-        : (r.s.c===top && gs.some(g=>winnerOf(g))) ? '<span class="st lead">LEAD</span>' : "";
+      const status = done ? (isChamp?'<span class="lst win">WINNER</span>':"")
+        : out ? '<span class="lst out">OUT</span>'
+        : (r.s.c===top && gs.some(g=>winnerOf(g))) ? '<span class="lst lead">LEAD</span>' : "";
       const pips=gs.map(g=>{const pk=r.e.picks?.[g.id], w=winnerOf(g);
         const c=!pk?"none":!w?"open":w==="TIE"?"miss":pk===w?"hit":"miss";
         const lg=!pk?"":pk===g.home?logoFor(g,"home"):logoFor(g,"away");
@@ -1513,7 +1513,7 @@ function drawOverrides(){
   const d=fileDraft(), mr=d.manualResults||{};
   $("ovrList").innerHTML=games().map(g=>{ const o=mr[g.id]||"";
     const b=(v,l)=>`<button class="${o===v?"on":""}" data-og="${esc(g.id)}" data-ov="${esc(v)}">${esc(l)}</button>`;
-    return `<div class="ovr${o?" set":""}"><span class="og">${esc(g.away)} at ${esc(g.home)}<small>${g.final?`feed: ${esc(g.winner||"—")}`:g.state==="in"?"in progress":"not played yet"}</small></span>
+    return `<div class="ovrow${o?" set":""}"><span class="og">${esc(g.away)} at ${esc(g.home)}<small>${g.final?`feed: ${esc(g.winner||"—")}`:g.state==="in"?"in progress":"not played yet"}</small></span>
       ${b(g.away,g.away)}${b(g.home,g.home)}${b("TIE","TIE")}${o?`<button data-og="${esc(g.id)}" data-ov="">CLEAR</button>`:""}</div>`; }).join("")
     ||'<div class="empty" style="padding:18px">NO GAMES LOADED</div>';
   $("ovrList").querySelectorAll("[data-og]").forEach(b=>b.onclick=()=>{
@@ -1680,7 +1680,7 @@ function drawH2H(){
     <div class="banner" style="margin-top:4px"><span class="ttl" style="font-size:26px">Tale of the Tape</span></div>
     <div class="tape">${tape}</div>
     <div class="banner"><span class="ttl" style="font-size:26px">Week by Week</span></div>
-    <div class="tug">${tug}</div>
+    <div class="h2tug">${tug}</div>
     <div class="banner"><span class="ttl" style="font-size:26px">Where They Split · Week ${week}</span></div>
     <div class="splits">${splits}</div>`;
 }
