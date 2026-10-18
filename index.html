@@ -608,8 +608,9 @@ ul.why b{color:var(--ink)}
 
 <script src="/core.js"></script>
 <script src="/share.js"></script>
+<script src="/importer.js"></script>
 <script>
-const BUILD = "build-146 (2026-10-12 02:43 UTC)";
+const BUILD = "build-151 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -755,34 +756,10 @@ function skeleton(rowCount) {
 }
 
 // shrink a photo in the browser so the archive stays small
-function shrinkImage(file, maxEdge = 1100, quality = 0.62) {
-  return new Promise((resolve, reject) => {
-    const img = new Image(), url = URL.createObjectURL(file);
-    img.onload = () => {
-      const scale = Math.min(1, maxEdge / Math.max(img.width, img.height));
-      const c = document.createElement("canvas");
-      c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
-      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-      URL.revokeObjectURL(url);
-      resolve(c.toDataURL("image/jpeg", quality));
-    };
-    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("bad image")); };
-    img.src = url;
-  });
-}
-
-// Tiebreaker sanity. NFL finals land roughly 20-80 combined; outside that is
-// almost always a misread or a typo, and a blank is worse than a bad guess —
-// it silently loses every tie.
-const TB_MIN = 20, TB_MAX = 100;
-function tbIssue(v) {
-  if (v == null || v === "" || Number.isNaN(Number(v))) return "missing";
-  const n = Number(v);
-  if (!Number.isInteger(n)) return "not a whole number";
-  if (n < TB_MIN) return `unusually low (under ${TB_MIN})`;
-  if (n > TB_MAX) return `unusually high (over ${TB_MAX})`;
-  return null;
-}
+// photo shrinking and the tiebreaker check live in importer.js, shared with /pro
+function shrinkImage(file, maxEdge, quality) { return PickImport.shrinkImage(file, maxEdge, quality); }
+const TB_MIN = PickImport.TB_MIN, TB_MAX = PickImport.TB_MAX;
+function tbIssue(v) { return PickImport.tbIssue(v); }
 
 const tc = n => String(n ?? "").toLowerCase().replace(/\b[a-z]/g, m => m.toUpperCase());
 
@@ -1096,20 +1073,8 @@ function renderRoster() {
   });
 }
 
-// match a scribbled name to the roster
-function matchRoster(raw) {
-  const norm = x => String(x).toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
-  const n = norm(raw);
-  if (!n) return null;
-  const exact = roster.find(r => norm(r) === n);
-  if (exact) return exact;
-  const starts = roster.filter(r => norm(r).startsWith(n) || n.startsWith(norm(r)));
-  if (starts.length === 1) return starts[0];
-  const first = n.split(" ")[0];
-  const sameFirst = roster.filter(r => norm(r).split(" ")[0] === first);
-  if (sameFirst.length === 1) return sameFirst[0];
-  return null;                     // ambiguous or unknown — manager chooses
-}
+// match a scribbled name to the roster (importer.js)
+function matchRoster(raw) { return PickImport.matchRoster(raw, roster); }
 
 async function loadSeason() {
   try {
@@ -1204,15 +1169,10 @@ function renderH2H() {
   const B = season.players.find(p => p.name === $("h2hB").value);
   if (!A || !B) return;
   const ws = season.weeks.map(w => w.week);
-  // Only weeks both of them entered can be compared. Season totals across
-  // different numbers of weeks aren't a like-for-like comparison.
-  const shared = ws.filter(w => A.byWeek[w] != null && B.byWeek[w] != null);
-  let aw = 0, bw = 0, tie = 0, aPts = 0, bPts = 0;
-  for (const w of shared) {
-    const a = A.byWeek[w], b = B.byWeek[w];
-    aPts += a; bPts += b;
-    if (a > b) aw++; else if (b > a) bw++; else tie++;
-  }
+  // Only weeks both of them entered are compared (core.js)
+  const H = PickCore.headToHead(A, B, ws);
+  const shared = H.rows.filter(r => r.shared);
+  const aw = H.aWins, bw = H.bWins, tie = H.ties, aPts = H.aPts, bPts = H.bPts;
   const lead = aw > bw ? `${tc(A.name)} leads` : aw < bw ? `${tc(B.name)} leads` : "Level";
   const gapName = aPts === bPts ? "" : tc(aPts > bPts ? A.name : B.name);
   const sharedLabel = `${shared.length} shared week${shared.length === 1 ? "" : "s"}`;
@@ -1849,33 +1809,10 @@ async function readFiles(files) {
   if (!pass) { $("readMsg").innerHTML = '<span class="err">Enter the manager passcode first.</span>'; return; }
   $("readMsg").textContent = `Preparing ${files.length} file${files.length>1?"s":""}…`;
 
-  // Phone photos run 4-8 MB and base64 adds a third on top — past the 4.5 MB
-  // request limit, which is why a straight upload failed. Re-encode first; the
-  // text on a pick sheet stays readable at 1600px.
-  const readRaw = f => new Promise((res, rej) => {
-    const fr = new FileReader();
-    fr.onload = () => res(fr.result.split(",")[1]);
-    fr.onerror = rej; fr.readAsDataURL(f);
-  });
-
-  const images = [];
-  for (const f of files) {
-    const isPdf = f.type === "application/pdf" || /\.pdf$/i.test(f.name || "");
-    if (isPdf) {
-      const data = await readRaw(f);
-      if (data.length > 4000000) { toast(`${f.name} is too large to send`, "bad"); continue; }
-      images.push({ media_type: "application/pdf", data });
-      continue;
-    }
-    try {
-      const shrunk = await shrinkImage(f, 1600, 0.82);
-      images.push({ media_type: "image/jpeg", data: shrunk.split(",")[1] });
-    } catch (e) {
-      const data = await readRaw(f);
-      if (data.length > 4000000) { toast(`Couldn't shrink ${f.name}; too large to send`, "bad"); continue; }
-      images.push({ media_type: f.type || "image/jpeg", data });
-    }
-  }
+  // photos re-encoded to a sendable size (importer.js)
+  const prepared = await PickImport.prepareForReading(files);
+  prepared.skipped.forEach(m => toast(m, "bad"));
+  const images = prepared.images;
   if (!images.length) { $("readMsg").innerHTML = '<span class="err">Nothing could be prepared for reading.</span>'; return; }
   const mb = images.reduce((n, i) => n + i.data.length, 0) / 1048576;
   $("readMsg").textContent = `Reading ${images.length} file${images.length>1?"s":""} (${mb.toFixed(1)} MB)…`;
@@ -1918,41 +1855,10 @@ async function readFiles(files) {
   }
   renderArchive();
 
-  // One photo per request. A batch of six sheets could run past the server's 60-second
-  // limit or Claude's reply length; one sheet never does, and a hiccup only costs that
-  // sheet. Errors that can succeed on a second try are retried automatically.
-  const gameList = games().map(g => ({ id: g.id, away: g.away, home: g.home }));
-  const RETRYABLE = [429, 500, 502, 503, 504, 529];
-  const all = [], failed = [];
-  let detectedWeek = null;
-  for (let i = 0; i < images.length; i++) {
-    const tag = images.length > 1 ? `Sheet ${i + 1} of ${images.length}` : "Sheet";
-    $("readMsg").textContent = `${tag}: reading…`;
-    let out = null, lastErr = "";
-    for (let attempt = 1; attempt <= 3 && !out; attempt++) {
-      try {
-        const r = await fetch("/api/read-sheet", { method: "POST",
-          headers: { "content-type": "application/json", "x-admin-key": pass },
-          body: JSON.stringify({ images: [images[i]], games: gameList }) });
-        const bodyText = await r.text();
-        const parsed = (() => { try { return JSON.parse(bodyText); }
-          catch (e) { return { error: `HTTP ${r.status}: ` +
-            bodyText.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 120) }; } })();
-        if (r.ok) { out = parsed; break; }
-        lastErr = parsed.error || `HTTP ${r.status}`;
-        if (r.status === 504) lastErr = "took too long to read";
-        if (!RETRYABLE.includes(r.status)) break;          // e.g. wrong passcode: retrying won't help
-      } catch (e) { lastErr = "network error"; }
-      if (attempt < 3) {
-        $("readMsg").textContent = `${tag}: ${lastErr}, trying again (${attempt + 1} of 3)…`;
-        await new Promise(res => setTimeout(res, 2500 * attempt));
-      }
-    }
-    if (out) {
-      all.push(...(out.entries || []));
-      if (out.week != null && detectedWeek == null) detectedWeek = out.week;
-    } else failed.push(`${tag.toLowerCase()}: ${lastErr}`);
-  }
+  // one photo per request, with retries (importer.js)
+  const result = await PickImport.readSheets({ images, games: games(), pass,
+    onProgress: m => { $("readMsg").textContent = m; } });
+  const all = result.entries, failed = result.failed, detectedWeek = result.week;
   if (!all.length) {
     const msg = failed.length ? `Couldn't read ${failed.join("; ")}` : "No entries found on the sheet.";
     $("readMsg").innerHTML = `<span class="err">${esc(msg)}</span>`;

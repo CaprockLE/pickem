@@ -322,6 +322,136 @@ body.inapp .speed{opacity:0}
   font-family:Teko;font-size:18px;letter-spacing:.08em;padding:2px 12px 0}
 .modesw button+button{border-left:0}
 .modesw button.on{background:linear-gradient(90deg,var(--hot),var(--hot2));color:#0A0207;border-color:transparent}
+/* import */
+.drop{display:flex;flex-direction:column;align-items:center;gap:4px;padding:28px 16px;cursor:pointer;text-align:center;
+  border:2px dashed rgba(255,255,255,.18);background:rgba(255,255,255,.02);transition:.15s}
+.drop:hover,.drop.over{border-color:var(--cy);background:rgba(0,224,255,.06)}
+.drop b{font-family:Teko;font-size:26px;letter-spacing:.08em}
+.drop span{font-weight:600;font-size:11.5px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+.impmsg{min-height:20px;margin:10px 0;font-weight:700;font-size:12px;letter-spacing:.1em;color:var(--ink2);text-transform:uppercase}
+.impmsg .err{color:var(--hot)}
+.impwarn{padding:9px 14px;margin-bottom:10px;font-weight:700;font-size:12px;letter-spacing:.08em;
+  background:rgba(255,122,26,.12);border-left:3px solid var(--hot2);text-transform:uppercase}
+.impwarn.bad{background:rgba(255,45,85,.12);border-left-color:var(--hot)}
+.rv td.who{min-width:150px}
+.rv select,.rv input[type=text]{width:140px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.18);
+  padding:4px 6px;font-family:Rajdhani;font-weight:700;font-size:13px;color:#fff;clip-path:none}
+.rv input[type=text]{margin-top:4px}
+.rv .readas{font-weight:600;font-size:10px;letter-spacing:.1em;color:var(--muted);margin-top:3px}
+.rv td.pk{cursor:pointer}
+.rv td.pk:hover{outline:1px solid var(--cy)}
+.rv td.pk.blank{background:rgba(255,45,85,.14);color:var(--hot);font-family:Teko;font-size:22px}
+.rv td.pk.edited{box-shadow:inset 0 0 0 2px var(--cy)}
+.rv input.tb{width:58px;text-align:center;font-family:Teko;font-size:20px;background:rgba(0,0,0,.4);
+  border:1px solid rgba(255,255,255,.18);color:#fff;padding:2px 4px}
+.rv input.tb.bad{border-color:var(--hot);color:var(--hot)}
+.rv .rm{cursor:pointer;background:transparent;border:0;color:var(--muted);font-size:16px}
+.rv .rm:hover{color:var(--hot)}
+.impbar,.impact{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}
+.impbar button,.impact button{cursor:pointer;font-family:Teko;font-size:20px;letter-spacing:.08em;padding:4px 16px 0;
+  border:1px solid rgba(255,255,255,.2);background:transparent;color:var(--ink)}
+.impact button.go3{border:0;color:#0A0207;background:linear-gradient(90deg,var(--hot),var(--hot2))}
+.impbar button:hover,.impact button:hover{filter:brightness(1.15)}
+.note2{font-weight:600;font-size:11px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+
+/* payments */
+.paybar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.paybar label{font-weight:700;font-size:12px;letter-spacing:.14em;color:var(--muted);display:flex;align-items:center;gap:6px}
+.paybar input{width:70px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.18);padding:6px 8px;font-family:Teko;font-size:20px;color:#fff}
+.paybar button{cursor:pointer;font-family:Teko;font-size:20px;letter-spacing:.08em;padding:4px 16px 0;border:1px solid rgba(255,255,255,.2);background:transparent;color:var(--ink)}
+.paybar button.paygo{border:0;color:#0A0207;background:linear-gradient(90deg,var(--hot),var(--hot2))}
+.paybar button.paygo.dirty{box-shadow:0 0 0 2px var(--lime),0 0 18px rgba(182,255,59,.4)}
+#payMsg{font-weight:700;font-size:11.5px;letter-spacing:.12em;color:var(--lime)}
+.kpis4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.kpis4 .k4{background:#0C121C;padding:12px 16px;clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)}
+.kpis4 .k4 b{display:block;font-family:Teko;font-weight:700;font-size:40px;line-height:.9}
+.kpis4 .k4 span{font-weight:700;font-size:10.5px;letter-spacing:.18em;color:var(--muted)}
+.kpis4 .k4.hot b{color:var(--hot)}.kpis4 .k4.good b{color:var(--lime)}
+.paygrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
+.ptile{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;background:#0C121C;
+  border:1px solid rgba(255,255,255,.08);transition:.12s;user-select:none}
+.ptile:hover{border-color:rgba(255,255,255,.25)}
+.ptile .pn{font-family:Teko;font-size:22px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ptile .ps{font-weight:700;font-size:10.5px;letter-spacing:.16em;padding:2px 8px;flex:none}
+.ptile.paid .ps{color:#06120A;background:var(--lime)}
+.ptile.unpaid{box-shadow:inset 3px 0 0 var(--hot)}
+.ptile.unpaid .ps{color:var(--hot);border:1px solid var(--hot)}
+.ptile.changed{border-color:var(--cy)}
+@media (max-width:700px){ .kpis4{grid-template-columns:repeat(2,1fr)} .paygrid{grid-template-columns:repeat(2,1fr)} }
+
+/* sheet photos */
+.sheets{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.sheet{cursor:pointer;background:#0C121C;border:1px solid rgba(255,255,255,.08);transition:.15s;text-decoration:none;color:inherit}
+.sheet:hover{border-color:var(--cy);transform:translateY(-2px)}
+.sheet img,.sheet .pdf{display:block;width:100%;height:170px;object-fit:cover;background:#05070B}
+.sheet .pdf{display:grid;place-items:center;font-family:Teko;font-size:34px;letter-spacing:.1em;color:var(--muted)}
+.sheet .cap{padding:7px 10px;font-family:Teko;font-size:19px;letter-spacing:.04em;text-transform:uppercase;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#lb{position:fixed;inset:0;z-index:95;background:rgba(2,3,6,.94);display:flex;align-items:center;justify-content:center;gap:10px;padding:16px}
+#lb[hidden]{display:none}
+#lb figure{margin:0;max-width:min(1100px,calc(100vw - 140px));max-height:calc(100vh - 40px);display:flex;flex-direction:column;align-items:center}
+#lb img{max-width:100%;max-height:calc(100vh - 90px);object-fit:contain;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+#lb figcaption{margin-top:10px;font-family:Teko;font-size:24px;letter-spacing:.05em;text-transform:uppercase}
+.lbx{cursor:pointer;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);color:#fff;font-size:30px;
+  width:48px;height:64px;flex:none}
+.lbx:hover{background:var(--hot);border-color:var(--hot)}
+.lbx.lbclose{position:absolute;top:14px;right:14px;width:44px;height:44px;font-size:18px}
+.dsheet{cursor:pointer;margin-top:14px;font-family:Teko;font-size:19px;letter-spacing:.08em;padding:4px 14px 0;
+  border:1px solid rgba(255,255,255,.2);background:transparent;color:var(--ink)}
+.dsheet:hover{border-color:var(--cy);color:var(--cy)}
+@media (max-width:700px){
+  .sheets{grid-template-columns:repeat(2,1fr);gap:8px}.sheet img,.sheet .pdf{height:130px}
+  #lb{padding:8px}#lb figure{max-width:calc(100vw - 16px)}
+  #lbPrev,#lbNext{position:absolute;bottom:18px;width:56px;height:48px}#lbPrev{left:16px}#lbNext{right:16px}
+}
+
+/* head to head */
+.h2hpick{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+.h2hpick select{min-width:180px;font-size:15px}
+#hSwap{cursor:pointer;background:transparent;border:1px solid rgba(255,255,255,.2);color:var(--ink2);font-size:18px;padding:3px 12px}
+#hSwap:hover{border-color:var(--lime);color:var(--lime)}
+.fight{display:grid;grid-template-columns:1fr auto 1fr;align-items:stretch;gap:0;margin-bottom:16px}
+.fcorner{padding:18px 22px;background:linear-gradient(100deg,rgba(0,224,255,.20),rgba(0,224,255,.03) 70%) #0C121C;
+  clip-path:polygon(0 0,100% 0,92% 100%,0 100%)}
+.fcorner.b{text-align:right;background:linear-gradient(260deg,rgba(255,45,85,.22),rgba(255,45,85,.03) 70%) #0C121C;
+  clip-path:polygon(8% 0,100% 0,100% 100%,0 100%)}
+.fcorner .fovr{font-family:Teko;font-weight:700;font-size:54px;line-height:.85;color:var(--cy)}
+.fcorner.b .fovr{color:var(--hot)}
+.fcorner .fname{font-family:Teko;font-weight:700;font-size:40px;line-height:1;text-transform:uppercase;letter-spacing:.03em}
+.fcorner .fsub{font-weight:600;font-size:11.5px;letter-spacing:.14em;color:var(--muted);margin-top:4px;text-transform:uppercase}
+.fmid{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 22px;min-width:150px}
+.fmid .fvs{font-family:Teko;font-weight:700;font-style:italic;font-size:26px;color:#fff;text-shadow:0 0 14px rgba(255,45,85,.8)}
+.fmid .frec{font-family:Teko;font-weight:700;font-size:58px;line-height:.9;letter-spacing:.02em}
+.fmid .flead{font-weight:700;font-size:11px;letter-spacing:.16em;color:var(--lime);text-transform:uppercase;text-align:center}
+.tape{display:grid;grid-template-columns:1fr 200px 1fr;gap:6px 0;margin-bottom:18px}
+.tape .tv{font-family:Teko;font-weight:600;font-size:26px;padding:4px 16px;background:#0C121C}
+.tape .tv.a{text-align:right}.tape .tv.b{text-align:left}
+.tape .tv.best{color:var(--lime)}
+.tape .tl{display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10.5px;letter-spacing:.18em;
+  color:var(--muted);text-transform:uppercase;background:#0A0F17;text-align:center}
+.tug{display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
+.tug .tw{display:grid;grid-template-columns:1fr 64px 1fr;align-items:center;gap:8px}
+.tug .tw .wk{text-align:center;font-family:Teko;font-size:20px;color:var(--muted)}
+.tug .half{height:22px;display:flex;align-items:center}
+.tug .half.a{justify-content:flex-end}
+.tug .half i{display:block;height:100%;background:rgba(255,255,255,.14);position:relative}
+.tug .half.a i{border-radius:4px 0 0 4px}.tug .half.b i{border-radius:0 4px 4px 0}
+.tug .half i.won{background:linear-gradient(90deg,var(--cy),var(--lime))}
+.tug .half b{font-family:Teko;font-size:20px;padding:0 8px}
+.tug .tw.out{opacity:.4}
+.tug .tw .sat{grid-column:1/-1;text-align:center;font-weight:600;font-size:11px;letter-spacing:.14em;color:var(--muted)}
+.splits{display:flex;flex-direction:column;gap:6px}
+.splits .sp{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;padding:6px 12px;background:#0C121C}
+.splits .sp .pk{display:flex;align-items:center;gap:8px}
+.splits .sp .pk.b{justify-content:flex-end}
+.splits .sp .gm{font-weight:700;font-size:11px;letter-spacing:.14em;color:var(--muted);text-align:center}
+@media (max-width:700px){
+  .fight{grid-template-columns:1fr 1fr}.fmid{grid-column:1/-1;order:-1;padding:6px 0 10px}
+  .fcorner{padding:12px 14px}.fcorner .fname{font-size:28px}.fcorner .fovr{font-size:40px}
+  .tape{grid-template-columns:1fr 110px 1fr}.tape .tv{font-size:22px;padding:4px 10px}
+  .h2hpick select{min-width:0;flex:1}
+}
+
 /* share card panel */
 .tab.sharetab{margin-left:auto;color:var(--ink2)}
 .tab.sharetab:hover{color:var(--lime)}
@@ -343,6 +473,14 @@ body.inapp .speed{opacity:0}
 .shft button.shgo{border:0;color:#0A0207;background:linear-gradient(90deg,var(--hot),var(--hot2))}
 .shft button:hover{filter:brightness(1.15)}
 #shMsg{font-weight:600;font-size:12px;letter-spacing:.1em;color:var(--lime)}
+/* season week-by-week grid */
+.wkgrid td{font-family:Teko;font-weight:600;font-size:21px;min-width:46px;background:rgba(255,255,255,.035)}
+.wkgrid td.won{background:linear-gradient(180deg,rgba(255,211,107,.42),rgba(227,174,58,.2));color:#FFE7A0}
+.wkgrid td.won::after{content:"★";font-size:11px;vertical-align:top;margin-left:2px;color:var(--gold1)}
+.wkgrid td.sat{color:var(--muted);background:transparent;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.wkgrid td.hi{color:var(--lime)}
+.wkgrid th{font-family:Teko;font-size:19px;color:var(--muted)}
+.wkgrid td.sum{font-size:23px}
 .empty{padding:50px 20px;text-align:center;font-family:Teko;font-size:28px;letter-spacing:.1em;color:var(--muted)}
 /* ================= PHONE ================= */
 html,body{max-width:100%;overflow-x:hidden}
@@ -475,8 +613,7 @@ html,body{max-width:100%;overflow-x:hidden}
         <div class="coin"><i style="background:var(--hot)"></i><span id="cLive">0</span> LIVE</div>
         <div class="coin"><i style="background:var(--cy)"></i><span id="cCards">0</span> CARDS</div>
         <select id="weekSel"></select>
-        <a class="coin" href="/?v=import" target="_blank" style="text-decoration:none;color:inherit">IMPORT ↗</a>
-        <a class="coin" href="/?v=money" target="_blank" style="text-decoration:none;color:inherit">PAYMENTS ↗</a>
+
       </div>
     </div>
     <div class="tabs">
@@ -485,10 +622,12 @@ html,body{max-width:100%;overflow-x:hidden}
       <button class="tab" data-t="deck">Card Collection</button>
       <button class="tab" data-t="ladder">Ladder</button>
       <button class="tab" data-t="grid">All Picks</button>
+      <button class="tab" data-t="h2h">Head to Head</button>
       <button class="tab" data-t="season">Season</button>
+      <button class="tab" data-t="money">Payments</button>
+      <button class="tab" data-t="import">Import</button>
       <button class="bump" id="rb">RB</button>
-      <a class="tab mlink" href="/?v=import" target="_blank" style="text-decoration:none">Import ↗</a>
-      <a class="tab mlink" href="/?v=money" target="_blank" style="text-decoration:none">Payments ↗</a>
+
       <button class="tab sharetab" id="shareBtn">Share Card</button>
       <button class="bump" id="demo" style="font-size:15px">SIM LIVE</button>
     </div>
@@ -514,13 +653,60 @@ html,body{max-width:100%;overflow-x:hidden}
     <section class="pane" id="p-grid">
       <div class="banner"><span class="tag">CARDS</span><span class="ttl">Every Pick</span></div>
       <div class="grid" id="grid"></div>
+      <div class="banner" style="margin-top:24px"><span class="ttl" style="font-size:28px">Sheet Photos</span>
+        <span class="sub" id="sheetsSub">the receipts</span></div>
+      <div class="sheets" id="sheets"></div>
+    </section>
+    <section class="pane" id="p-h2h">
+      <div class="banner"><span class="tag">RIVALS</span><span class="ttl">Head to Head</span>
+        <span class="sub">only weeks both of them played count</span></div>
+      <div class="h2hpick"><select id="hA"></select><button id="hSwap" title="Swap">⇄</button><select id="hB"></select></div>
+      <div id="h2h"></div>
+    </section>
+    <section class="pane" id="p-money">
+      <div class="banner"><span class="tag">MANAGER</span><span class="ttl">Payments</span>
+        <span class="sub">tap a player to toggle · saved to the league when you hit save</span></div>
+      <div class="paybar">
+        <label>BUY-IN $<input type="number" id="buyinIn" min="0" step="1"></label>
+        <button id="payAll">Mark All Paid</button>
+        <button id="paySave" class="paygo">Save</button><span id="payMsg"></span>
+      </div>
+      <div class="kpis4" id="payKpis"></div>
+      <div class="paygrid" id="payGrid"></div>
+      <div class="banner" style="margin-top:24px"><span class="ttl" style="font-size:28px">Season Balances</span>
+        <span class="sub">unpaid weeks across the season</span></div>
+      <div class="ladder" id="owe"></div>
+    </section>
+    <section class="pane" id="p-import">
+      <div class="banner"><span class="tag">MANAGER</span><span class="ttl">Import Sheets</span>
+        <span class="sub">nothing goes live until you publish</span></div>
+      <label class="drop" id="impDrop"><b>DROP PICK-SHEET PHOTOS OR PDFS</b><span>or tap to choose · up to 6 at a time</span>
+        <input type="file" id="impFile" accept="image/*,application/pdf,.pdf" multiple hidden></label>
+      <div class="impmsg" id="impMsg"></div>
+      <div id="impReview"></div>
+      <div class="impbar">
+        <button id="impUndo">Undo Last Publish</button>
+        <button id="impArch">Add Photos to Archive</button>
+        <input type="file" id="impArchFile" accept="image/*,application/pdf,.pdf" multiple hidden>
+        <span class="note2">adds photos only · doesn't read or change any picks</span>
+      </div>
     </section>
     <section class="pane" id="p-season">
       <div class="banner"><span class="tag">SEASON</span><span class="ttl">Standings</span>
         <span class="modesw"><button data-m="season">SEASON</button><button data-m="week">PER WEEK</button></span><span class="sub" id="seasonSub"></span></div>
       <div class="ladder" id="season"></div>
+      <div class="banner" style="margin-top:24px"><span class="ttl" style="font-size:28px">Week by Week</span>
+        <span class="sub">gold = won the week · – = sat out</span></div>
+      <div class="grid wkgrid" id="seasonGrid"></div>
     </section>
   </div>
+</div>
+
+<div id="lb" hidden>
+  <button class="lbx" id="lbPrev" title="Previous">‹</button>
+  <figure><img id="lbImg" alt=""><figcaption id="lbCap"></figcaption></figure>
+  <button class="lbx" id="lbNext" title="Next">›</button>
+  <button class="lbx lbclose" id="lbClose" title="Close">✕</button>
 </div>
 
 <div id="shWrap" hidden><div class="shbox">
@@ -538,6 +724,7 @@ html,body{max-width:100%;overflow-x:hidden}
 
 <script src="/core.js"></script>
 <script src="/share.js"></script>
+<script src="/importer.js"></script>
 <script>
 const $=i=>document.getElementById(i);
 const esc=s=>String(s??"").replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -546,7 +733,7 @@ const slug=n=>String(n).toLowerCase().trim().replace(/[^a-z0-9]+/g,"-");
 const initials=n=>String(n).trim().split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase();
 
 let pass=localStorage.getItem("pc.pass")||"",week=0,scores={games:[]},pool=null,season=null,tab="vs";
-const TABS=["vs","deck","ladder","grid","season"];
+const TABS=["vs","deck","ladder","grid","h2h","season","money","import"];
 
 async function getJSON(u,o){const r=await fetch(u,o);const t=await r.text();
   try{return{ok:r.ok,body:JSON.parse(t)};}catch(e){return{ok:false,body:{}};}}
@@ -563,7 +750,9 @@ $("gpass").onkeydown=e=>{if(e.key==="Enter")$("gbtn").click();};
 (async()=>{if(pass&&await unlock(pass)){$("gate").style.display="none";$("ui").classList.add("on");document.body.classList.add("inapp");boot();}})();
 
 for(let w=1;w<=18;w++){const o=document.createElement("option");o.value=w;o.textContent="WEEK "+w;$("weekSel").appendChild(o);}
-$("weekSel").onchange=e=>{week=+e.target.value;load();};
+$("weekSel").onchange=e=>{ if((payEdits.size||imp.rows.length)&&!confirm("Unsaved payment changes or an unpublished import will be lost. Switch weeks?")){ e.target.value=week; return; }
+  imp={rows:[],shots:[],week:null,batch:imp.batch};
+  payEdits.clear(); week=+e.target.value; load(); };
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>go(b.dataset.t));
 $("demo").onclick=()=>{ simLive=!simLive; $("demo").textContent=simLive?"END SIM":"SIM LIVE";
   if(tab!=="vs") go("vs"); else drawVs(); };
@@ -642,8 +831,11 @@ function render(){
   if(tab==="vs")drawVs();
   if(tab==="deck")drawDeck();
   if(tab==="ladder")drawLadder();
-  if(tab==="grid")drawGrid();
+  if(tab==="grid"){ drawGrid(); drawSheets(); }
   if(tab==="season")drawSeason();
+  if(tab==="h2h")drawH2H();
+  if(tab==="money")drawMoney();
+  if(tab==="import")drawImport();
 }
 
 let simLive=false;
@@ -860,6 +1052,27 @@ function drawSeason(){
         <div class="c">${p.weeks}/${nW}</div>
         <div class="c" style="color:${p.wins?"var(--gold2)":"var(--muted)"}">${p.wins||"–"}</div></div>`;}).join("");
   $("season").querySelectorAll("[data-p]").forEach(el=>el.onclick=()=>openPlayer(el.dataset.p));
+  drawSeasonGrid(ps);
+}
+
+// every player's score in every published week, in the same order as the ladder above
+function drawSeasonGrid(ps){
+  const ws=season.weeks.map(w=>w.week);
+  if(!ws.length){ $("seasonGrid").innerHTML=""; return; }
+  const winners=w=>(season.weeks.find(x=>x.week===w)?.winners)||[];
+  const topOf=w=>Math.max(0,...ps.map(p=>p.byWeek[w]??-1));
+  $("seasonGrid").innerHTML=`<table><thead><tr><th class="who">Player</th>`+
+    ws.map(w=>`<th title="${playedIn(w)} games">W${w}</th>`).join("")+
+    `<th class="sum">TOT</th><th class="sum">WON</th></tr></thead><tbody>`+
+    ps.map(p=>`<tr><td class="who" data-p="${esc(p.name)}">${esc(p.name)}</td>`+
+      ws.map(w=>{ const v=p.byWeek[w];
+        if(v==null) return `<td class="sat">–</td>`;
+        const won=winners(w).some(n=>slug(n)===slug(p.name));
+        // top score of the week but lost the tiebreaker: lime, not gold
+        return `<td class="${won?"won":v===topOf(w)?"hi":""}" title="${v} of ${playedIn(w)}">${v}</td>`; }).join("")+
+      `<td class="sum">${p.total}</td><td class="sum" style="color:${p.wins?"var(--gold2)":"var(--muted)"}">${p.wins||"–"}</td></tr>`).join("")+
+    `</tbody></table>`;
+  $("seasonGrid").querySelectorAll("td[data-p]").forEach(el=>el.onclick=()=>openPlayer(el.dataset.p));
 }
 function drawGrid(){
   const gs=games(),rows=ranked();
@@ -950,8 +1163,313 @@ function openPlayer(name){
         <div class="meter"><i style="width:${pct.toFixed(1)}%"></i></div>
         <div class="v" style="font-size:24px">${v==null?"–":`${v}<small style="font-size:15px;color:var(--muted)">/${n||"?"}</small>`}</div></div>`;
     }).join("")}`:""}`;
-  openDock();
+  openDock(); addSheetButton(name);
 }
+/* ---------- import (reading and saving via importer.js; same endpoints as the main site) ---------- */
+let roster=null;                                 // master player list
+let imp={rows:[],shots:[],week:null,batch:0};   // read but not yet published
+async function loadRoster(){ if(roster) return roster;
+  const r=await getJSON("/api/pool?roster=1"); roster=r.ok?(r.body.names||[]):[]; return roster; }
+const impSay=(t,bad)=>{ $("impMsg").innerHTML=bad?`<span class="err">${esc(t)}</span>`:esc(t); };
+async function impFiles(files){
+  files=files.filter(f=>f.type.startsWith("image/")||PickImport.isPdf(f)).slice(0,6);
+  if(!files.length) return;
+  if(!games().length){ impSay(`No games loaded for week ${week}`,true); return; }
+  await loadRoster();
+  impSay(`Preparing ${files.length} file${files.length>1?"s":""}…`);
+  const prep=await PickImport.prepareForReading(files);
+  if(!prep.images.length){ impSay(prep.skipped.join("; ")||"Nothing could be prepared",true); return; }
+  const res=await PickImport.readSheets({images:prep.images,games:games(),pass,onProgress:impSay});
+  const batch=++imp.batch;
+  for(const f of files){ const c=await PickImport.archiveCopy(f).catch(()=>null);
+    if(c) imp.shots.push({id:Date.now()+"-"+Math.random().toString(36).slice(2,8),label:(f.name||"sheet").replace(/\.[^.]+$/,"").slice(0,40),
+      kind:c.kind,uploadedAt:new Date().toISOString(),data:c.data,batch}); }
+  for(const e of res.entries){
+    const guess=PickImport.matchRoster(e.name||"",roster);
+    imp.rows.push({read:e.name||"",assigned:guess,newName:guess?"":(e.name||""),picks:{...(e.picks||{})},orig:{...(e.picks||{})},
+      tiebreaker:e.tiebreaker??null,batch});
+  }
+  if(res.week!=null&&imp.week==null) imp.week=res.week;
+  const notes=[...prep.skipped,...res.failed];
+  if(!res.entries.length) impSay(notes.length?`Couldn't read ${notes.join("; ")}`:"No entries found on the sheet",true);
+  else impSay(`Read ${res.entries.length} entr${res.entries.length===1?"y":"ies"}${notes.length?` · not read: ${notes.join("; ")}`:""} — check below, then publish`);
+  drawImport();
+}
+$("impFile").onchange=e=>{ const f=[...e.target.files]; e.target.value=""; impFiles(f); };
+const dz=$("impDrop");
+dz.addEventListener("dragover",e=>{ e.preventDefault(); dz.classList.add("over"); });
+dz.addEventListener("dragleave",()=>dz.classList.remove("over"));
+dz.addEventListener("drop",e=>{ e.preventDefault(); dz.classList.remove("over"); impFiles([...e.dataTransfer.files]); });
+const finalName=r=>(r.assigned||r.newName||"").trim();
+function drawImport(){
+  const gs=games(), rows=imp.rows;
+  if(!rows.length){ $("impReview").innerHTML=""; return; }
+  const wrongWeek=imp.week&&imp.week!==week;
+  const clash=rows.filter(r=>finalName(r)&&entries().some(e=>slug(e.name)===slug(finalName(r))));
+  const gaps=rows.filter(r=>gs.some(g=>!r.picks[g.id])).length;
+  const tbBad=rows.filter(r=>PickImport.tbIssue(r.tiebreaker)).length;
+  const opts=r=>(roster||[]).map(n=>`<option value="${esc(n)}"${r.assigned===n?" selected":""}>${esc(up(n))}</option>`).join("");
+  const tile=(g,p)=>{ const img=p===g.home?logoFor(g,"home"):p===g.away?logoFor(g,"away"):"";
+    return img?`<img src="${esc(img)}" alt="${esc(p)}">`:esc(p); };
+  $("impReview").innerHTML=
+    (wrongWeek?`<div class="impwarn bad">The sheet says week ${imp.week} — you're importing into week ${week}. Change the week at the top, or publish anyway if it's mislabeled.</div>`:"")+
+    (clash.length?`<div class="impwarn">${clash.length} will replace existing week ${week} entries: ${clash.slice(0,6).map(r=>esc(up(finalName(r)))).join(", ")}${clash.length>6?"…":""}</div>`:"")+
+    `<div class="grid rv"><table><thead><tr><th class="who">Player</th>`+
+    gs.map(g=>`<th>${logoFor(g,"away")?`<img src="${esc(logoFor(g,"away"))}" alt="${esc(g.away)}">`:esc(g.away)}<span class="at">at</span>
+      ${logoFor(g,"home")?`<img src="${esc(logoFor(g,"home"))}" alt="${esc(g.home)}">`:esc(g.home)}</th>`).join("")+
+    `<th class="sum">TB</th><th></th></tr></thead><tbody>`+
+    rows.map((r,i)=>`<tr><td class="who">
+        <select data-pick="${i}"><option value=""${!r.assigned&&!r.newName?" selected":""}>— choose player —</option>${opts(r)}
+          <option value="__new__"${!r.assigned&&r.newName?" selected":""}>+ new player</option></select>
+        <input type="text" data-new="${i}" value="${esc(r.newName)}" placeholder="name" style="${r.assigned?"display:none":""}">
+        <div class="readas">READ: ${r.read?esc(up(r.read)):"<i>NO NAME</i>"}</div></td>`+
+      gs.map(g=>{ const p=r.picks[g.id]; const ed=p!==r.orig[g.id];
+        return `<td class="pk${p?"":" blank"}${ed?" edited":""}" data-r="${i}" data-g="${esc(g.id)}" title="tap to change">${p?tile(g,p):"?"}</td>`; }).join("")+
+      `<td class="sum"><input class="tb${PickImport.tbIssue(r.tiebreaker)?" bad":""}" data-tb="${i}" value="${r.tiebreaker??""}"
+          title="${esc(PickImport.tbIssue(r.tiebreaker)||"")}" inputmode="numeric"></td>
+      <td><button class="rm" data-rm="${i}" title="Remove this row">✕</button></td></tr>`).join("")+
+    `</tbody></table></div>
+    <div class="impact"><button class="go3" id="impPub">Publish ${rows.length} entr${rows.length===1?"y":"ies"} to week ${week}</button>
+      <button id="impToss">Discard</button>
+      <span class="note2">${gaps?`${gaps} with blank picks · `:""}${tbBad?`${tbBad} tiebreaker${tbBad>1?"s":""} to check · `:""}tap a pick to fix a misread</span></div>`;
+  const R=$("impReview");
+  R.querySelectorAll("select[data-pick]").forEach(sel=>sel.onchange=()=>{ const r=imp.rows[+sel.dataset.pick];
+    if(sel.value==="__new__"){ r.assigned=null; } else { r.assigned=sel.value||null; if(sel.value) r.newName=""; }
+    drawImport(); });
+  R.querySelectorAll("input[data-new]").forEach(inp=>inp.oninput=()=>{ imp.rows[+inp.dataset.new].newName=inp.value; });
+  R.querySelectorAll("input[data-tb]").forEach(inp=>inp.onchange=()=>{ const v=inp.value.trim();
+    imp.rows[+inp.dataset.tb].tiebreaker=v===""?null:Number(v); drawImport(); });
+  R.querySelectorAll("td.pk").forEach(td=>td.onclick=()=>{ const r=imp.rows[+td.dataset.r], g=games().find(x=>x.id===td.dataset.g);
+    const p=r.picks[g.id]; if(p===g.away) r.picks[g.id]=g.home; else if(p===g.home) delete r.picks[g.id]; else r.picks[g.id]=g.away;
+    drawImport(); });
+  R.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{ imp.rows.splice(+b.dataset.rm,1); drawImport(); });
+  $("impToss").onclick=()=>{ if(!confirm("Discard everything read but not published?")) return;
+    imp={rows:[],shots:[],week:null,batch:imp.batch}; impSay(""); drawImport(); };
+  $("impPub").onclick=publishImport;
+}
+// Re-read the week from the server and merge into it, so publishing can never undo a save
+// made elsewhere in the meantime; then the roster and the sheet photos.
+async function publishImport(){
+  const rows=imp.rows;
+  const unnamed=rows.filter(r=>!finalName(r));
+  if(unnamed.length){ impSay(`${unnamed.length} row${unnamed.length>1?"s":""} still need a player`,true); return; }
+  const tbBad=rows.filter(r=>PickImport.tbIssue(r.tiebreaker));
+  if(tbBad.length&&!confirm(`${tbBad.length} tiebreaker${tbBad.length>1?"s look":" looks"} wrong:\n\n`+
+      tbBad.slice(0,6).map(r=>`${finalName(r)}: ${r.tiebreaker??"blank"}`).join("\n")+`\n\nA blank tiebreaker loses every tie. Publish anyway?`)) return;
+  if(imp.week&&imp.week!==week&&!confirm(`The sheet says week ${imp.week}, but you're publishing to week ${week}.\n\nPublishing to the wrong week replaces real picks. Continue?`)) return;
+  impSay("Publishing…");
+  try{
+    const fr=await getJSON(`/api/pool?week=${week}`); if(!fr.ok) throw new Error("couldn't load the week");
+    const fresh=fr.body;
+    const incoming=rows.map(r=>({name:finalName(r),picks:r.picks,tiebreaker:r.tiebreaker}));
+    const merged=PickImport.mergeEntries(fresh.entries,incoming);
+    if(merged.replaced.length&&!confirm(`${merged.replaced.length} existing week ${week} entr${merged.replaced.length>1?"ies":"y"} will be replaced:\n\n`+
+        merged.replaced.slice(0,8).join(", ")+`\n\nReplace them?`)){ impSay(""); return; }
+    fresh.entries=merged.entries;
+    const w=await fetch(`/api/pool?week=${week}`,{method:"POST",headers:{"content-type":"application/json","x-admin-key":pass},body:JSON.stringify(fresh)});
+    const out=await w.json(); if(!w.ok) throw new Error(out.error||"publish failed");
+    pool=out;
+    // new names join the roster
+    const newNames=incoming.map(x=>x.name).filter(n=>!(roster||[]).some(r=>slug(r)===slug(n)));
+    if(newNames.length){ roster=[...new Set([...(roster||[]),...newNames])].sort((a,b)=>a.localeCompare(b));
+      await fetch("/api/pool?roster=1",{method:"POST",headers:{"content-type":"application/json","x-admin-key":pass},body:JSON.stringify({names:roster})}); }
+    // name each upload's photos after its players, then archive them
+    const batches=[...new Set(imp.shots.map(s2=>s2.batch))];
+    for(const b of batches){ const shots=imp.shots.filter(s2=>s2.batch===b), names=rows.filter(r=>r.batch===b).map(finalName);
+      if(shots.length===names.length) shots.forEach((s2,i)=>s2.label=names[i]);
+      else if(shots.length===1&&names.length) shots[0].label=names.length<=3?names.join(", "):`${names.length} entries`; }
+    const saved=await PickImport.saveShots({week,pass,shots:imp.shots.map(({batch,...x})=>x),onProgress:impSay});
+    delete sheetCache[week];
+    const n=rows.length;
+    imp={rows:[],shots:[],week:null,batch:imp.batch};
+    render(); loadSeason(); drawImport();
+    impSay(`Published ${n} entr${n===1?"y":"ies"} to week ${week}${saved.failed.length?` · ${saved.failed.length} photo${saved.failed.length>1?"s":""} didn't archive`:""}`,saved.failed.length>0);
+  }catch(err){ impSay(`Not published: ${err.message||err}`,true); }
+}
+$("impUndo").onclick=async()=>{
+  const prev=await getJSON(`/api/pool?week=${week}&prev=1`);
+  if(!prev.ok||!prev.body||!prev.body.entries){ impSay("No earlier version saved for this week",true); return; }
+  const when=prev.body.updatedAt?new Date(prev.body.updatedAt).toLocaleString([],{weekday:"short",hour:"numeric",minute:"2-digit"}):"earlier";
+  if(!confirm(`Restore the version saved ${when}?\n\n${prev.body.entries.length} entries would replace the current ${entries().length}.`)) return;
+  const r=await fetch(`/api/pool?week=${week}&restore=1`,{method:"POST",headers:{"content-type":"application/json","x-admin-key":pass},body:JSON.stringify(prev.body)});
+  if(!r.ok){ impSay("Restore failed",true); return; }
+  pool=await r.json(); render(); loadSeason(); impSay("Previous version restored");
+};
+$("impArch").onclick=()=>$("impArchFile").click();
+$("impArchFile").onchange=async e=>{
+  const files=[...e.target.files]; e.target.value=""; const shots=[];
+  for(const f of files){ const c=await PickImport.archiveCopy(f).catch(()=>null);
+    if(c) shots.push({id:Date.now()+"-"+Math.random().toString(36).slice(2,8),label:(f.name||"sheet").replace(/\.[^.]+$/,"").slice(0,40),
+      kind:c.kind,uploadedAt:new Date().toISOString(),data:c.data}); }
+  if(!shots.length){ impSay("Couldn't read those photos",true); return; }
+  const saved=await PickImport.saveShots({week,pass,shots,onProgress:impSay});
+  delete sheetCache[week];
+  impSay(saved.failed.length?`${shots.length-saved.failed.length} saved · ${saved.failed.length} didn't save`:`${shots.length} photo${shots.length>1?"s":""} added to the week ${week} archive`,saved.failed.length>0);
+};
+
+/* ---------- payments (same buy-in setting and week document as the main site) ---------- */
+let buyin=Number(localStorage.getItem("pc.buyin")||10);
+const payEdits=new Map();      // name → paid, changed here and not saved yet
+let payNote=null;              // { text, until }: the last save's result
+const sayPay=t=>{ payNote={text:t,until:Date.now()+5000}; $("payMsg").textContent=t; };
+const isPaid=e=>payEdits.has(e.name)?payEdits.get(e.name):!!e.paid;
+$("buyinIn").value=buyin;
+$("buyinIn").oninput=e=>{ buyin=Number(e.target.value||0); localStorage.setItem("pc.buyin",buyin); drawMoney(); };
+$("payAll").onclick=()=>{ entries().forEach(e=>{ if(!e.paid) payEdits.set(e.name,true); else payEdits.delete(e.name); }); drawMoney(); };
+function drawMoney(){
+  const es=[...entries()].sort((a,b)=>a.name.localeCompare(b.name,undefined,{sensitivity:"base"}));
+  const n=es.length, paid=es.filter(isPaid).length;
+  $("payKpis").innerHTML=[["COLLECTED",`$${paid*buyin}`,"good"],["OUTSTANDING",`$${(n-paid)*buyin}`,n-paid?"hot":""],
+    ["PAID",`${paid}/${n}`,""],["POT",`$${n*buyin}`,""]]
+    .map(([k,v,c])=>`<div class="k4 ${c}"><b>${v}</b><span>${k}</span></div>`).join("");
+  $("payGrid").innerHTML=n?es.map(e=>{ const p=isPaid(e);
+      return `<div class="ptile ${p?"paid":"unpaid"}${payEdits.has(e.name)?" changed":""}" data-n="${esc(e.name)}">
+        <span class="pn">${esc(e.name)}</span><span class="ps">${p?"PAID":"UNPAID"}</span></div>`; }).join("")
+    :'<div class="empty">NO ENTRIES THIS WEEK</div>';
+  $("payGrid").querySelectorAll("[data-n]").forEach(el=>el.onclick=()=>{
+    const e=entries().find(x=>x.name===el.dataset.n); if(!e) return;
+    const next=!isPaid(e);
+    if(next===!!e.paid) payEdits.delete(e.name); else payEdits.set(e.name,next);
+    drawMoney();
+  });
+  $("paySave").classList.toggle("dirty",payEdits.size>0);
+  // a save's result stays up for a few seconds, even if the page redraws underneath it
+  $("payMsg").textContent=payEdits.size?`${payEdits.size} UNSAVED CHANGE${payEdits.size===1?"":"S"}`
+    :(payNote&&Date.now()<payNote.until?payNote.text:"");
+  // season balances, biggest first
+  const ps=[...(season?.players||[])].filter(p=>p.unpaid).sort((a,b)=>b.unpaid-a.unpaid||a.name.localeCompare(b.name));
+  $("owe").innerHTML=ps.length?ps.map(p=>`<div class="rung" style="grid-template-columns:1fr 120px 90px">
+      <div class="n">${esc(p.name)}</div><div class="c">${p.unpaid} of ${p.weeks} wks unpaid</div>
+      <div class="v" style="color:var(--hot)">$${p.unpaid*buyin}</div></div>`).join("")
+    :'<div class="empty" style="padding:24px">EVERYONE IS PAID UP</div>';
+}
+// Re-read the week from the server and apply only the paid changes, so a save here can
+// never overwrite an import or edit made somewhere else in the meantime.
+$("paySave").onclick=async()=>{
+  if(!payEdits.size){ $("payMsg").textContent="NOTHING TO SAVE"; return; }
+  $("payMsg").textContent="SAVING…";
+  try{
+    const r=await getJSON(`/api/pool?week=${week}`);
+    if(!r.ok) throw new Error("couldn't load the week");
+    const fresh=r.body, missing=[];
+    for(const [name,paid] of payEdits){ const e=(fresh.entries||[]).find(x=>x.name===name); if(e) e.paid=paid; else missing.push(name); }
+    const w=await fetch(`/api/pool?week=${week}`,{method:"POST",headers:{"content-type":"application/json","x-admin-key":pass},body:JSON.stringify(fresh)});
+    const out=await w.json();
+    if(!w.ok) throw new Error(out.error||"save failed");
+    pool=out; payEdits.clear(); render(); loadSeason();
+    sayPay(missing.length?`SAVED · ${missing.length} NO LONGER ON THE WEEK: ${missing.join(", ").toUpperCase()}`:"SAVED TO THE LEAGUE");
+  }catch(err){ sayPay(`NOT SAVED · ${String(err.message||err).toUpperCase()}`); }
+};
+
+/* ---------- sheet photos (the archive the manager fills on import) ---------- */
+const sheetCache={};            // week → [{id,label,kind,uploadedAt}]
+let lbList=[], lbAt=0;
+const sheetSrc=sh=>`/api/sheets?week=${encodeURIComponent(week)}&img=${encodeURIComponent(sh.id)}`;
+async function loadSheets(){
+  const w=week;
+  if(!sheetCache[w]){
+    const r=await getJSON(`/api/sheets?week=${w}`);
+    sheetCache[w]=r.ok?(r.body.sheets||[]):[];
+  }
+  return sheetCache[w];
+}
+async function drawSheets(){
+  const list=await loadSheets();
+  $("sheetsSub").textContent=list.length?`${list.length} photo${list.length===1?"":"s"} · tap to view`:"none archived for this week";
+  $("sheets").innerHTML=list.length?list.map((sh,i)=>sh.kind==="pdf"
+      ? `<a class="sheet" href="${esc(sheetSrc(sh))}" target="_blank" rel="noopener"><div class="pdf">PDF</div><div class="cap">${esc(sh.label||"Sheet")}</div></a>`
+      : `<div class="sheet" data-i="${i}"><img src="${esc(sheetSrc(sh))}" alt="${esc(sh.label||"Sheet")}" loading="lazy"><div class="cap">${esc(sh.label||"Sheet")}</div></div>`).join("")
+    :"";
+  $("sheets").querySelectorAll("[data-i]").forEach(el=>el.onclick=()=>openSheet(list,+el.dataset.i));
+}
+function openSheet(list,i){
+  lbList=list.filter(x=>x.kind!=="pdf"); if(!lbList.length) return;
+  const target=list[i]; lbAt=Math.max(0,lbList.indexOf(target));
+  showSheet(); $("lb").hidden=false;
+}
+function showSheet(){
+  const sh=lbList[lbAt]; $("lbImg").src=sheetSrc(sh);
+  $("lbCap").textContent=`${sh.label||"Sheet"} · ${lbAt+1} of ${lbList.length}`;
+  $("lbPrev").style.visibility=$("lbNext").style.visibility=lbList.length>1?"visible":"hidden";
+}
+$("lbPrev").onclick=e=>{ e.stopPropagation(); lbAt=(lbAt-1+lbList.length)%lbList.length; showSheet(); };
+$("lbNext").onclick=e=>{ e.stopPropagation(); lbAt=(lbAt+1)%lbList.length; showSheet(); };
+$("lbClose").onclick=()=>{ $("lb").hidden=true; };
+$("lb").addEventListener("click",e=>{ if(e.target===$("lb")) $("lb").hidden=true; });
+document.addEventListener("keydown",e=>{
+  if($("lb").hidden) return;
+  if(e.key==="Escape") $("lb").hidden=true;
+  if(e.key==="ArrowLeft") $("lbPrev").click();
+  if(e.key==="ArrowRight") $("lbNext").click();
+});
+// the photo labelled with this player's name, if there is one
+async function sheetFor(name){
+  const list=await loadSheets(), n=String(name).toLowerCase();
+  return list.find(sh=>sh.kind!=="pdf"&&String(sh.label||"").toLowerCase().split(/\s*[,&]\s*|\s+and\s+/).some(part=>part.trim()===n));
+}
+
+/* ---------- head to head (comparison from core.js) ---------- */
+$("hA").onchange=e=>{ localStorage.setItem("pc.h2hA",e.target.value); drawH2H(); };
+$("hB").onchange=e=>{ localStorage.setItem("pc.h2hB",e.target.value); drawH2H(); };
+$("hSwap").onclick=()=>{ const a=$("hA").value; $("hA").value=$("hB").value; $("hB").value=a;
+  localStorage.setItem("pc.h2hA",$("hA").value); localStorage.setItem("pc.h2hB",$("hB").value); drawH2H(); };
+function drawH2H(){
+  if(!season?.players?.length){ $("h2h").innerHTML='<div class="empty">NO SEASON DATA YET</div>'; return; }
+  const names=season.players.map(p=>p.name).sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:"base"}));
+  const opts=names.map(n=>`<option value="${esc(n)}">${esc(up(n))}</option>`).join("");
+  ["hA","hB"].forEach(id=>{ if($(id).options.length!==names.length) $(id).innerHTML=opts; });
+  const pickA=localStorage.getItem("pc.h2hA"), pickB=localStorage.getItem("pc.h2hB");
+  $("hA").value=names.includes(pickA)?pickA:names[0];
+  $("hB").value=names.includes(pickB)&&pickB!==$("hA").value?pickB:(names.find(n=>n!==$("hA").value)||names[0]);
+  const A=season.players.find(p=>p.name===$("hA").value), B=season.players.find(p=>p.name===$("hB").value);
+  if(!A||!B) return;
+  const ws=season.weeks.map(w=>w.week), H=PickCore.headToHead(A,B,ws);
+  const lead=H.aWins>H.bWins?`${up(A.name)} LEADS`:H.bWins>H.aWins?`${up(B.name)} LEADS`:"LEVEL";
+  const rec=`${H.aWins}–${H.bWins}${H.ties?`–${H.ties}`:""}`;
+  const corner=(P,side)=>{ const {ovr}=ratingFor(P.name);
+    return `<div class="fcorner ${side}"><div class="fovr">${ovr}</div><div class="fname">${esc(P.name)}</div>
+      <div class="fsub">${P.total} pts · ${P.weeks} wks · ${P.wins||0} won</div></div>`; };
+  const best=P=>Math.max(0,...ws.map(w=>P.byWeek[w]??0));
+  const tape=[
+    ["Shared-week points",H.aPts,H.bPts],
+    ["Avg per shared week",H.shared?+(H.aPts/H.shared).toFixed(1):0,H.shared?+(H.bPts/H.shared).toFixed(1):0],
+    ["Season points",A.total,B.total],
+    ["Weeks played",A.weeks,B.weeks],
+    ["Weeks won",A.wins||0,B.wins||0],
+    ["Best week",best(A),best(B)],
+  ].map(([l,a,b])=>`<div class="tv a${a>b?" best":""}">${a}</div><div class="tl">${l}</div><div class="tv b${b>a?" best":""}">${b}</div>`).join("");
+  const scale=Math.max(1,...H.rows.map(r=>Math.max(r.a??0,r.b??0)));
+  const tug=H.rows.map(r=>{
+    if(!r.shared) return `<div class="tw out"><div class="sat">WEEK ${r.week} · ${r.satOut==="both"?"NEITHER PLAYED":`${up(r.satOut==="A"?A.name:B.name)} SAT OUT`}</div></div>`;
+    return `<div class="tw"><div class="half a"><b>${r.a}</b><i class="${r.edge==="A"?"won":""}" style="width:${r.a/scale*100}%"></i></div>
+      <div class="wk">W${r.week}</div>
+      <div class="half b"><i class="${r.edge==="B"?"won":""}" style="width:${r.b/scale*100}%"></i><b>${r.b}</b></div></div>`;
+  }).join("");
+  // this week: where their picks differ
+  const eA=entries().find(e=>slug(e.name)===slug(A.name)), eB=entries().find(e=>slug(e.name)===slug(B.name));
+  let splits;
+  if(!eA||!eB) splits=`<div class="empty" style="padding:18px">${!eA&&!eB?"NEITHER":up((!eA?A:B).name)} HAS A CARD IN WEEK ${week}</div>`;
+  else {
+    const diff=games().filter(g=>eA.picks?.[g.id]&&eB.picks?.[g.id]&&eA.picks[g.id]!==eB.picks[g.id]);
+    const tile=(g,p)=>{ const w=winnerOf(g), img=p===g.home?logoFor(g,"home"):logoFor(g,"away");
+      const cls=!w?"open":w==="TIE"?"miss":p===w?"hit":"miss";
+      return `<span class="lp ${cls}">${img?`<img src="${esc(img)}" alt="${esc(p)}">`:esc(p)}</span>`; };
+    splits=diff.length?diff.map(g=>`<div class="sp"><div class="pk a">${tile(g,eA.picks[g.id])}<b>${esc(eA.picks[g.id])}</b></div>
+        <div class="gm">${esc(g.away)} AT ${esc(g.home)}</div>
+        <div class="pk b"><b>${esc(eB.picks[g.id])}</b>${tile(g,eB.picks[g.id])}</div></div>`).join("")
+      :`<div class="empty" style="padding:18px">IDENTICAL PICKS IN WEEK ${week}</div>`;
+  }
+  $("h2h").innerHTML=`<div class="fight">${corner(A,"a")}
+      <div class="fmid"><div class="fvs">VS</div><div class="frec">${rec}</div><div class="flead">${lead} · ${H.shared} SHARED WK${H.shared===1?"":"S"}</div></div>
+      ${corner(B,"b")}</div>
+    <div class="banner" style="margin-top:4px"><span class="ttl" style="font-size:26px">Tale of the Tape</span></div>
+    <div class="tape">${tape}</div>
+    <div class="banner"><span class="ttl" style="font-size:26px">Week by Week</span></div>
+    <div class="tug">${tug}</div>
+    <div class="banner"><span class="ttl" style="font-size:26px">Where They Split · Week ${week}</span></div>
+    <div class="splits">${splits}</div>`;
+}
+
 /* ---------- share card (drawn by share.js, identical to the main site's) ---------- */
 function shareData(){
   const dark=$("shTheme").value!=="light";
@@ -989,6 +1507,15 @@ $("shCopy").onclick=async()=>{
   setTimeout(()=>$("shMsg").textContent="",2600);
 };
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("shWrap").hidden) $("shClose").click(); });
+
+// adds a View Sheet button to an open player drawer when their photo is archived
+async function addSheetButton(name){
+  const sh=await sheetFor(name);
+  if(!sh||!$("dock").classList.contains("on")) return;
+  const b=document.createElement("button"); b.className="dsheet"; b.textContent="VIEW SHEET";
+  b.onclick=()=>openSheet([sh],0);
+  $("dHd").appendChild(b);
+}
 
 function openDock(){ $("dock").classList.add("on"); $("scrim").classList.add("on"); }
 function closeDock(){ $("dock").classList.remove("on"); $("scrim").classList.remove("on"); }

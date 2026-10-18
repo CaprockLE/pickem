@@ -197,6 +197,23 @@
     return { complete, champs, tiedNames: new Set(tied.map(p => p.e.name)), top, actual, tbGame, open };
   }
 
+  /* ── Head to head ──────────────────────────────────────────────────────
+     Only weeks both players entered are compared: season totals across different numbers
+     of weeks aren't like for like. A and B are season players ({ name, byWeek, ... }). */
+  function headToHead(A, B, weekNumbers) {
+    const rows = weekNumbers.map(w => {
+      const a = A.byWeek[w], b = B.byWeek[w];
+      const both = a != null && b != null;
+      return { week: w, a, b, shared: both, edge: !both ? null : a > b ? "A" : b > a ? "B" : "tie",
+               satOut: !both ? (a == null && b == null ? "both" : a == null ? "A" : "B") : null };
+    });
+    const shared = rows.filter(r => r.shared);
+    const sum = k => shared.reduce((n, r) => n + r[k], 0);
+    return { rows, shared: shared.length,
+             aWins: shared.filter(r => r.edge === "A").length, bWins: shared.filter(r => r.edge === "B").length,
+             ties: shared.filter(r => r.edge === "tie").length, aPts: sum("a"), bPts: sum("b") };
+  }
+
   root.PickCore = { normCdf, minutesLeft, homeWinProb, projectedTotal, tiebreakerShares,
-                    bitCount, analyse, weekOutcome, DARK_MARKS, needsLightLogo, logoFor };
+                    bitCount, analyse, weekOutcome, headToHead, DARK_MARKS, needsLightLogo, logoFor };
 })(typeof window !== "undefined" ? window : globalThis);

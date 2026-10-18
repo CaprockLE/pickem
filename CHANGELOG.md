@@ -3,6 +3,45 @@
 Reconstructed from the build history. Newest first.
 Each entry is the build number shown at the bottom of the sidebar.
 
+## build-151 — Import in Pro
+- New importer.js holds photo prep, the sheet reader with retries, roster matching, the
+  tiebreaker check, archive saving and entry merging; the main site's import uses it
+- /pro Import tab: drop or choose photos/PDFs, review with roster matching, tap any pick to
+  fix a misread, editable tiebreakers, wrong-week and replace warnings, remove rows;
+  one-step Publish that re-reads the week first and merges into it; new names join the
+  roster; photos archived and labelled with player names; Undo Last Publish; Add Photos
+- /pro no longer links out to the main site for Import and Payments
+- Verified end to end (read with a retry, fix, replace, publish, roster, archive) and a
+  full desktop and phone sweep of all three sites
+
+## build-150 — Payments in Pro
+- /pro Payments tab: collected / outstanding / paid / pot, a tile per player to toggle
+  paid, Mark All Paid, the same buy-in setting as the main site, and season balances
+- Saving re-reads the week from the server and applies only the paid changes, so it can't
+  overwrite an import or edit made elsewhere in the meantime (tested with a concurrent add)
+- Unsaved changes are highlighted, and switching weeks with unsaved changes asks first
+
+## build-149 — sheet photos in Pro
+- /pro All Picks: the week's archived sheet photos under the grid, opening a full-screen
+  viewer (arrow keys or buttons to step through, Esc or tap outside to close); PDFs open
+  in a new tab
+- Player drawer: View Sheet button when a photo is labelled with that player's name,
+  including photos labelled with several names
+- Verified thumbnails, viewer, keyboard and the button for matched / shared / missing photos
+
+## build-148 — Season grid in Pro
+- /pro Season tab: week-by-week grid under the ladder — every player's score each week,
+  week winners in gold with a star, the top score that lost the tiebreaker in lime,
+  sat-out weeks marked, plus total and weeks won; same order as the ladder
+- Verified all 90 cells against the season data at desktop and phone width
+
+## build-147 — Head to Head in Pro
+- Head-to-head comparison moved into core.js; the main site uses it unchanged
+- /pro: Head to Head tab — fight card with both players' ratings and the head-to-head
+  record, a tale of the tape, a week-by-week tug of war (weeks either sat out shown
+  but not counted), and the games where the two split their picks this week
+- Verified: main site shows the same records as before; /pro matches it for the same pairs
+
 ## build-146 — Share Card in Pro
 - New share.js draws the picks grid and standings cards for every site; the main site and
   /pro both use it. Who-won-the-week logic moved into core.js

@@ -27,7 +27,7 @@ Project -> Settings -> Environment Variables:
 
 ### 3. Ship it
 Drop this folder into a Git repo and import it on Vercel, or run `vercel` from here.
-No build step: static `core.js` (the shared model and logo logic, loaded by every page), `share.js` (the share card, drawn the same on every site), `index.html` plus three functions in `/api`.
+No build step: static `core.js` (the shared model and logo logic, loaded by every page), `share.js` (the share card, drawn the same on every site), `importer.js` (reading and importing pick sheets), `index.html` plus three functions in `/api`.
 
 See `CHANGELOG.md` for what changed in each build.
 
