@@ -3,6 +3,30 @@
 Reconstructed from the build history. Newest first.
 Each entry is the build number shown at the bottom of the sidebar.
 
+## build-158 — faster live scores
+- Scores refresh every 10 seconds while any game is live (45 otherwise), on every site;
+  the week's entries refresh once a minute instead of with every score update; both refresh
+  immediately when the tab comes back into view
+- api/scores.js: ESPN's answer cached 8 seconds during live games (was 20), 30 otherwise.
+  Saved lines are only read when games are still to kick off, and held in memory 2 minutes
+- /pro: the home team's possession ball sits on the inside of its code ("🏈 PHI")
+- Verified: 3 score fetches and no extra entry reads in 35 live seconds, on both sites
+
+## build-157 — win % on games that haven't started
+- /pro Matchups: games that haven't kicked off show each side's win % (from the line, or a
+  small home edge when there's no line), under the same WIN PROB label as live games
+- Visual snapshots now wait for the page's data before capturing (a timing wobble had made
+  the Card Collection snapshot flag differences that weren't real)
+
+## build-156 — steadier pre-game win %
+- Win % moved overnight with no games played and no entries changed. The likely cause: ESPN's
+  feed dropping some games' lines, which the model then treats as near coin flips (dropping
+  lines on the big favourites reproduces Brock 18%→16.5%, Melissa 16%→14.8%)
+- api/scores.js saves every line it sees (Redis, per game) and reuses it when the feed drops one
+- Favourite now read from ESPN's per-team flag, then the moneylines, then the text; if none
+  says who's favoured, no line rather than a possibly backwards one
+- /pro: pre-game matchup cards show the line ("SF −7.5"), or NO LINE in orange
+
 ## build-155 — fix: three Pro styling collisions
 - Card Collection: Result Overrides rows (build-153) used the class .ovr, already the card's
   rating, putting a dark block over every card's rating. Override rows are now .ovrow

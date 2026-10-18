@@ -1,6 +1,50 @@
 // GET /api/scores?week=5&season=2026
 // Normalizes ESPN's public scoreboard into the shape the app uses.
 
+// ── last known betting lines ────────────────────────────────────────────
+// ESPN's feed sometimes drops a game's odds (near kickoff, or when it changes sportsbooks).
+// Without a line the model treats that game as close to a coin flip, which shifts everyone's
+// win %. So every line the feed carries is saved, and a game that loses its line keeps the
+// last one seen. Saved per game id for the season; never allowed to break the scoreboard.
+const R_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+const R_TOK = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+async function rcmd(cmd) {
+  const r = await fetch(R_URL, { method: "POST",
+    headers: { Authorization: `Bearer ${R_TOK}`, "Content-Type": "application/json" }, body: JSON.stringify(cmd) });
+  if (!r.ok) throw new Error(`redis ${r.status}`);
+  return (await r.json()).result;
+}
+// the saved lines, held in memory for two minutes so live-game refreshes don't each read them
+let linesMemo = { at: 0, key: null, saved: null };
+async function keepLines(games, season) {
+  // lines only matter before kickoff, so once every game has started there's nothing to do
+  if (!R_URL || !R_TOK || !games.some(g => g.state === "pre")) return;
+  const key = `pickem:${season}:lines`;
+  try {
+    let saved;
+    if (linesMemo.key === key && Date.now() - linesMemo.at < 120000) saved = linesMemo.saved;
+    else {
+      const flat = (await rcmd(["HGETALL", key])) || [];
+      saved = {};
+      for (let i = 0; i + 1 < flat.length; i += 2) { try { saved[flat[i]] = JSON.parse(flat[i + 1]); } catch (e) {} }
+      linesMemo = { at: Date.now(), key, saved };
+    }
+    const updates = [];
+    for (const g of games) {
+      const prev = saved[g.id] || {};
+      const cur = { spread: g.spread ?? prev.spread ?? null, overUnder: g.overUnder ?? prev.overUnder ?? null };
+      if (g.spread == null && prev.spread != null) { g.spread = prev.spread; g.lineFrom = "saved"; }
+      if (g.overUnder == null && prev.overUnder != null) { g.overUnder = prev.overUnder; g.lineFrom = "saved"; }
+      if ((cur.spread != null || cur.overUnder != null) &&
+          (cur.spread !== prev.spread || cur.overUnder !== prev.overUnder)) updates.push(g.id, JSON.stringify(cur));
+    }
+    if (updates.length) {
+      await rcmd(["HSET", key, ...updates]);
+      for (let i = 0; i < updates.length; i += 2) saved[updates[i]] = JSON.parse(updates[i + 1]);
+    }
+  } catch (e) { /* lines are a nicety; the scoreboard works without them */ }
+}
+
 export default async function handler(req, res) {
   const week = String(req.query.week || "").trim();
   const season = String(req.query.season || process.env.SEASON || new Date().getFullYear()).trim();
@@ -66,16 +110,20 @@ export default async function handler(req, res) {
         // betting line (home-relative) when the feed carries it, for pre-game odds
         spread: (() => {
           const o = (comp.odds || [])[0];
-          if (!o) return null;
-          if (typeof o.spread === "number") {
-            // ESPN reports spread against the favourite; details names them
-            const d = String(o.details || "");
-            const fav = d.split(" ")[0];
-            if (fav && fav === away.team?.abbreviation) return Math.abs(o.spread);
-            if (fav && fav === home.team?.abbreviation) return -Math.abs(o.spread);
-            return o.spread;
-          }
-          return null;
+          if (!o || typeof o.spread !== "number") return null;
+          const size = Math.abs(o.spread);
+          // Who's favoured: ESPN flags it directly on each side; failing that, the
+          // moneylines (the lower one is the favourite); failing that, the team named in
+          // the details text. Home-relative: negative means the home team is favoured.
+          if (o.homeTeamOdds?.favorite === true) return -size;
+          if (o.awayTeamOdds?.favorite === true) return size;
+          const hm = Number(o.homeTeamOdds?.moneyLine), am = Number(o.awayTeamOdds?.moneyLine);
+          if (Number.isFinite(hm) && Number.isFinite(am) && hm !== am) return hm < am ? -size : size;
+          const fav = String(o.details || "").split(" ")[0].toUpperCase();
+          const names = t => [t?.abbreviation, t?.shortDisplayName, t?.name].filter(Boolean).map(x => String(x).toUpperCase());
+          if (fav && names(away.team).includes(fav)) return size;
+          if (fav && names(home.team).includes(fav)) return -size;
+          return null;                      // can't tell who's favoured: better no line than a backwards one
         })(),
         // who has the ball, and where — only present while a game is live
         possession: (() => {
@@ -100,6 +148,7 @@ export default async function handler(req, res) {
     });
 
     games.sort((a, b) => new Date(a.kickoff) - new Date(b.kickoff) || String(a.id).localeCompare(String(b.id)));
+    await keepLines(games, process.env.SEASON || data.season?.year || "2026");
 
     const byes = (data.week?.teamsOnBye || []).map((t) => t.abbreviation);
 
@@ -117,7 +166,9 @@ export default async function handler(req, res) {
       }
     }
 
-    res.setHeader("Cache-Control", "s-maxage=20, stale-while-revalidate=40");
+    // ESPN updates every 10-15 seconds during games; hold its answer 8 seconds then, longer otherwise
+    const anyLive = games.some(g => g.state === "in");
+    res.setHeader("Cache-Control", anyLive ? "s-maxage=8, stale-while-revalidate=8" : "s-maxage=30, stale-while-revalidate=60");
     return res.status(200).json({
       season: data.season?.year ?? Number(season),
       week: reportedWeek,

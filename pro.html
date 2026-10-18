@@ -140,6 +140,9 @@ body.inapp .speed{opacity:0}
 .vs .side.lost{filter:saturate(.35) brightness(.62)}
 .vs .mid{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;text-align:center}
 .vs .clk{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:4;white-space:nowrap}
+.vs .lnline{font-weight:700;font-size:11px;letter-spacing:.12em;color:#fff;opacity:.85;margin-top:2px;white-space:nowrap;
+  text-shadow:0 2px 6px #000,0 0 2px #000}
+.vs .lnline.none{color:var(--hot2);opacity:1}
 .vs .ddrow{position:absolute;left:50%;bottom:36px;transform:translateX(-50%);z-index:4;white-space:nowrap}
 .vs .mid .v{font-family:Teko;font-weight:700;font-size:22px;font-style:italic;color:#fff;
   text-shadow:0 0 14px rgba(255,45,85,.8),0 2px 0 #000}
@@ -148,6 +151,8 @@ body.inapp .speed{opacity:0}
 .vs .tug i{display:block}
 .vs.live{box-shadow:0 0 0 2px var(--hot),0 0 30px rgba(255,45,85,.35)}
 .vs .side .ab{position:relative}
+/* the home team sits on the right, so its ball goes on the inside of its code: CAR 🏈  VS  🏈 PHI */
+.vs .side.h .ball{left:auto;right:100%;margin-left:0;margin-right:4px}
 .vs .ball{position:absolute;left:100%;top:50%;transform:translateY(-55%);margin-left:4px;font-size:12px;
   filter:drop-shadow(0 1px 3px rgba(0,0,0,.8))}
 .vs .dd{display:inline-block;font-weight:700;font-size:13.5px;letter-spacing:.12em;color:#fff;text-shadow:0 2px 6px #000,0 0 2px #000,0 0 1px #000}
@@ -838,7 +843,15 @@ function go(t){
   render();
 }
 
-function boot(){load();loadSeason();setInterval(()=>{if(!document.hidden)load();},30000);}
+// scores every 10 seconds while a game is live (45 otherwise); the week's entries once a minute
+let lastWeekLoad=0;
+async function loadScores(){ const s=await getJSON(week?`/api/scores?week=${week}`:"/api/scores"); if(s.ok){ scores=s.body; render(); } }
+async function tick(){
+  try{ if(!document.hidden){ if(Date.now()-lastWeekLoad>60000){ await load(); lastWeekLoad=Date.now(); } else await loadScores(); } }
+  finally{ setTimeout(tick, games().some(g=>g.state==="in")?10000:45000); }
+}
+function boot(){ load().then(()=>{ lastWeekLoad=Date.now(); }); loadSeason(); setTimeout(tick,10000);
+  document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ load().then(()=>{ lastWeekLoad=Date.now(); }); } }); }
 async function load(){
   const s=await getJSON(week?`/api/scores?week=${week}`:"/api/scores");
   if(s.ok){scores=s.body;if(!week&&s.body.week){week=+s.body.week;$("weekSel").value=week;}}
@@ -907,6 +920,12 @@ function render(){
 }
 
 let simLive=false;
+// the pre-game line, as the books write it: "SF -7.5"
+function lineText(g){
+  if(typeof g.spread!=="number") return "NO LINE";
+  if(g.spread===0) return "PICK'EM";
+  return `${g.spread<0?g.home:g.away} −${Math.abs(g.spread)}`;
+}
 function drawVs(){
   let gs=games();
   if(simLive && gs.length){
@@ -927,17 +946,17 @@ function drawVs(){
           <div class="disc">${logo?`<img src="${esc(logo)}" alt="">`:""}</div>
           <span class="ab">${esc(ab)}${live&&g.possession===ab?'<span class="ball">🏈</span>':""}</span>
         </div>
-        ${live?`<span class="wpv">${pct}%</span>`:""}
+        ${live||g.state==="pre"?`<span class="wpv">${pct}%</span>`:""}
         ${g.state==="pre"?"":`<span class="big">${sc}</span>`}</div>`;};
     const st=live?`<span class="st live">Q${g.period} ${esc(g.clock)}</span>`
       :w?`<span class="st">${w==="TIE"?"TIE":"FINAL"}</span>`
       :`<span class="st">${up(new Date(g.kickoff).toLocaleString([],{weekday:"short",hour:"numeric",minute:"2-digit"}))}</span>`;
     return `<div class="vs${live?" live":""}" data-g="${esc(g.id)}">
       ${side("a",g.away,logoForCard(g,"away"),g.awayScore,ca)}${side("h",g.home,logoForCard(g,"home"),g.homeScore,ch)}
-      <div class="mid"><div class="v">VS</div></div>
+      <div class="mid"><div class="v">VS</div>${g.state==="pre"?`<div class="lnline${g.spread==null?" none":""}">${lineText(g)}</div>`:""}</div>
       <div class="clk">${st}</div>
       ${live&&g.downDistance?`<div class="ddrow"><span class="dd">${esc(g.downDistance)}</span></div>`:""}
-      ${live?'<div class="wplab">WIN PROB</div>':""}
+      ${live||g.state==="pre"?'<div class="wplab">WIN PROB</div>':""}
       <div class="tug"><i style="width:${sp.a/sp.tot*100}%;background:${ca}"></i>
         <i style="width:${sp.h/sp.tot*100}%;background:${ch}"></i></div></div>`;
   }).join("");

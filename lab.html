@@ -754,7 +754,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
 <script src="/share.js"></script>
 <script src="/importer.js"></script>
 <script>
-const BUILD = "lab-155 (2026-10-12 02:43 UTC)";
+const BUILD = "lab-158 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -2289,7 +2289,27 @@ verifyPass(pass).then(ok => {
 $("stTbl").innerHTML = skeleton(6);
 $("seasonTbl").innerHTML = skeleton(6);
 loadWeek(); loadSeason(); loadRoster(); loadArchive(); detectLiveWeek();
-setInterval(() => { if (!document.hidden) loadWeek(); }, 30000);
+// Scores and the week's entries refresh on separate clocks: scores every 10 seconds while a game
+// is live (45 otherwise); entries, which only change on an import or an edit, once a minute.
+// Both refresh straight away when the tab comes back into view.
+let lastWeekLoad = Date.now();                 // the page's first load just read them
+async function refreshScores() {
+  const s = await getJSON(week ? `/api/scores?week=${week}` : `/api/scores`);
+  if (s.error) return;
+  scores = s;
+  $("updTag").textContent = "Updated " + new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit",second:"2-digit"});
+  render();
+}
+async function tick() {
+  try {
+    if (!document.hidden) {
+      if (Date.now() - lastWeekLoad > 60000) { await loadWeek(); lastWeekLoad = Date.now(); }
+      else await refreshScores();
+    }
+  } finally { setTimeout(tick, games().some(g => g.state === "in") ? 10000 : 45000); }
+}
+setTimeout(tick, 10000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) { lastWeekLoad = 0; loadWeek().then(() => { lastWeekLoad = Date.now(); }); } });
 </script>
 </body>
 </html>
