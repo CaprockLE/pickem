@@ -3,6 +3,19 @@
 Reconstructed from the build history. Newest first.
 Each entry is the build number shown at the bottom of the sidebar.
 
+## build-165 — centred VS on Pro matchups
+- The diagonal between the two team colours now runs through the card's exact centre, where
+  the VS sits: V on the away colour, S on the home colour (it was about 3% left of centre)
+- Each team's colour carries all the way to the split, slightly deepened, instead of fading
+  to near-black, so the split reads as a crisp line between the two teams
+
+## build-164 — fix: optimizer used results
+- Build My Sheet on a week already underway treated finished games as decided and "picked" the
+  winners (100% to win). It now always works from the pre-game lines and ignores scores, so it
+  shows the sheet it would have recommended before kickoff
+- For a week that has started: a note saying so, and how many decided games that sheet got
+  right next to the player's actual sheet
+
 ## build-163 — optimizer, step 2: this week's sheet
 - optimizer.js simulates the week 6,000 times: every game rolled from the betting odds, a sheet
   filled in for everyone likely to play (best backtest model, and how often each person enters),

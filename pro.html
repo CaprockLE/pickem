@@ -116,10 +116,12 @@ body.inapp .speed{opacity:0}
   clip-path:polygon(16px 0,100% 0,calc(100% - 16px) 100%,0 100%);transition:transform .15s}
 .vs:hover{transform:translateY(-3px)}
 .vs .side{position:absolute;top:0;bottom:0;width:58%;display:flex;align-items:center}
+/* the two colours meet on a diagonal through the card's exact centre, where the VS sits:
+   V on the away colour, S on the home colour (55.2% of the width at the top, 44.8% at the bottom) */
 .vs .side.a{left:0;justify-content:flex-start;padding-left:18px;
-  clip-path:polygon(0 0,100% 0,82% 100%,0 100%)}
+  clip-path:polygon(0 0,95.17% 0,77.24% 100%,0 100%)}
 .vs .side.h{right:0;justify-content:flex-end;padding-right:18px;
-  clip-path:polygon(18% 0,100% 0,100% 100%,0 100%)}
+  clip-path:polygon(22.76% 0,100% 0,100% 100%,4.83% 100%)}
 /* a white keyline traced around the mark, so it separates from any team colour */
 .vs .disc{display:grid;place-items:center}
 .vs .disc img{width:58px;height:58px;object-fit:contain;
@@ -977,7 +979,7 @@ function drawVs(){
     const side=(cls,ab,logo,sc,col)=>{
       const pct=Math.round((cls==="h"?ph0:1-ph0)*100);
       return `<div class="side ${cls}${w&&w!=="TIE"&&w!==ab?" lost":""}"
-        style="background:linear-gradient(${cls==="a"?"100deg":"260deg"},${col} 0%,${col}CC 46%,#0B111B 100%)">
+        style="background:linear-gradient(${cls==="a"?"100deg":"260deg"},${col} 0%,${col}E0 50%,${col}A8 100%)">
         <div class="stack">
           <div class="disc">${logo?`<img src="${esc(logo)}" alt="">`:""}</div>
           <span class="ab">${esc(ab)}${live&&g.possession===ab?'<span class="ball">🏈</span>':""}</span>
@@ -1673,9 +1675,13 @@ $("optRun").onclick=async()=>{
   $("optMsg").textContent="loading the model…";
   if(!(await ensureModel())){ $("optMsg").textContent="the backtest needs to run first"; return; }
   const lf=await getJSON("/lines-2026.json"); const LINES=lf.ok?lf.body:null;
-  const gs=games().map(g=>({...g, spread:typeof g.spread==="number"?g.spread:PickOpt.lineFor(LINES,week,g.away,g.home)}));
+  // Always from the pre-game lines, never from scores or results: run it Thursday or Monday,
+  // it shows the sheet it would have recommended before kickoff.
+  const real=games();
+  const gs=real.map(g=>({...g, spread:typeof g.spread==="number"?g.spread:PickOpt.lineFor(LINES,week,g.away,g.home),
+    state:"pre", final:false, winner:null, homeScore:0, awayScore:0, possession:null, redZone:false}));
   if(!gs.length){ $("optMsg").textContent=`no games loaded for week ${week}`; return; }
-  const pHome=gs.map(g=>homeWinProb(g));
+  const pHome=gs.map(g=>PickCore.homeWinProb(g,null));
   // who's likely to play: half how often they've entered overall, half the last three weeks
   const ws=btData.map(d=>d.week).sort((a,b)=>a-b), recent=ws.slice(-3);
   const names=new Map(); btData.forEach(d=>d.entries.forEach(e=>names.set(slug(e.name),e.name)));
@@ -1684,7 +1690,8 @@ $("optRun").onclick=async()=>{
     const all=ws.reduce((s,w)=>s+inW(w),0)/ws.length, rec=recent.reduce((s,w)=>s+inW(w),0)/recent.length;
     return {name, chance:Math.min(0.98,0.5*all+0.5*rec)}; }).filter(e=>e.chance>0.05);
   const formOf=PickOpt.formTable([...btData,{week,games:[]}])[week]||{};
-  const proj=projectedTotal(tbGame())||{mean:45,sd:13};
+  const tbReal=tbGame(), tbPre=tbReal?gs.find(g=>g.id===tbReal.id):null;
+  const proj=PickCore.projectedTotal(tbPre)||{mean:45,sd:13};
   $("optMsg").textContent="simulating the week…"; await new Promise(r=>setTimeout(r,30));
   const W=PickOpt.simulate({games:gs,pHome,entrants,predict:btResult.predict,formOf,tb:{mean:proj.mean,sd:Math.max(proj.sd,6)},sims:6000,seed:week*101});
   const R=PickOpt.optimizeSheet({games:gs,pHome,W,tbMean:proj.mean});
@@ -1692,7 +1699,12 @@ $("optRun").onclick=async()=>{
   const poolFav=gs.map(g=>{ if(!PickOpt.usable(g)) return null; const fav=g.spread<0?g.home:g.away, dog=fav===g.home?g.away:g.home;
     const d=(formOf[fav]||0)-(formOf[dog]||0); const tot=entrants.reduce((s,e)=>s+e.chance,0);
     return entrants.reduce((s,e)=>s+e.chance*btResult.predict(e.name,g,d),0)/Math.max(tot,1e-9); });
-  optResult={me,gs,pHome,R,poolFav,proj,entrants};
+  // for a week that's already played: how this sheet did, next to the sheet actually handed in
+  const decided=real.filter(g=>winnerOf(g)), mine=entries().find(e=>slug(e.name)===slug(me));
+  const retro=decided.length?{ games:decided.length,
+    sheet:decided.filter(g=>{ const i=real.indexOf(g), team=((R.pick>>i)&1)?g.home:g.away; return winnerOf(g)===team; }).length,
+    actual:mine?decided.filter(g=>mine.picks?.[g.id]===winnerOf(g)).length:null }:null;
+  optResult={me,gs,pHome,R,poolFav,proj,entrants,retro};
   $("optMsg").textContent=`${W.sims.toLocaleString()} simulated weeks · model: ${btResult.best.label.replace(/^\+ /,"with ")}`;
   drawOpt();
 };
@@ -1701,7 +1713,10 @@ function drawOpt(){
   const pct=x=>`${(x*100).toFixed(x<0.1?1:0)}%`, tbg=tbGame();
   const flipOf=i=>R.flips.find(f=>f.i===i);
   const mult=R.chalkWin>0?R.finalWin/R.chalkWin:null;
-  $("optOut").innerHTML=`<div class="kpis4">
+  const rt=O.retro;
+  $("optOut").innerHTML=(rt?`<div class="btverdict" style="border-left-color:var(--cy)">Week ${week} has started — this is the sheet it would have recommended before kickoff.
+      <small>Of the ${rt.games} game${rt.games>1?"s":""} decided so far, this sheet got <b>${rt.sheet}</b> right${rt.actual!=null?`; ${esc(me)}'s actual sheet got <b>${rt.actual}</b>`:""}.
+      Its percentages below are from before kickoff, not live.</small></div>`:"")+`<div class="kpis4">
       <div class="k4 good"><b>${pct(R.finalWin)}</b><span>YOUR CHANCE TO WIN</span></div>
       <div class="k4"><b>${pct(R.chalkWin)}</b><span>ALL FAVOURITES INSTEAD${mult&&mult>1.05?` · ${mult.toFixed(1)}× BETTER`:""}</span></div>
       <div class="k4"><b>${R.expected.toFixed(1)}</b><span>EXPECTED CORRECT (FAVS ${R.chalkExpected.toFixed(1)})</span></div>
@@ -1710,7 +1725,7 @@ function drawOpt(){
       <th>Favourite wins</th><th>Pool on favourite</th><th>Your pick</th><th style="min-width:220px">Why</th></tr></thead><tbody>
       ${gs.map((g,i)=>{ const home=(R.pick>>i)&1, team=home?g.home:g.away, img=logoFor(g,home?"home":"away");
         const fav=PickOpt.usable(g)?(g.spread<0?g.home:g.away):null, fp=fav?(fav===g.home?pHome[i]:1-pHome[i]):null, f=flipOf(i);
-        const why=f?`<b style="color:var(--lime)">AGAINST THE CROWD</b> · +${(f.gain*100).toFixed(1)}% to win, costs ${f.cost.toFixed(2)} expected correct`
+        const why=f?`<b style="color:var(--lime)">AGAINST THE CROWD</b> · +${(f.gain*100).toFixed(1)}% to win, costs ${Math.abs(f.cost).toFixed(2)} expected correct`
           :fav&&team!==fav?"underdog":fav?"favourite":"no line";
         return `<tr${f?' style="outline:1px solid var(--lime)"':""}><td class="gm2">${esc(g.away)} at ${esc(g.home)}</td>
           <td>${fav?`${esc(fav)} −${Math.abs(g.spread)}`:"–"}</td><td>${fp==null?"–":pct(fp)}</td>
