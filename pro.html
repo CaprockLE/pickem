@@ -734,6 +734,14 @@ html,body{max-width:100%;overflow-x:hidden}
         then compared with what the pool actually picked.</p>
       <div class="impbar" style="margin:0 0 14px"><button id="btRun" class="go4">Run Backtest</button><span class="mmsg" id="btMsg"></span></div>
       <div id="btOut"></div>
+      <div class="banner" style="margin-top:30px"><span class="tag">STEP 2</span><span class="ttl">This Week's Sheet</span>
+        <span class="sub">the picks with your best chance to finish first</span></div>
+      <p class="note2" style="display:block;line-height:1.6;margin:0 0 12px">Simulates the week thousands of times — every game rolled from the betting odds,
+        everyone likely to play filling in a sheet from their habits — then starts from all favourites and flips a game only when it
+        raises your chance to win. Uses the backtest's best model (run automatically if needed).</p>
+      <div class="impbar" style="margin:0 0 14px"><label class="note2" style="display:flex;gap:8px;align-items:center">OPTIMIZING FOR
+        <select id="optMe"></select></label><button id="optRun" class="go4">Build My Sheet</button><span class="mmsg" id="optMsg"></span></div>
+      <div id="optOut"></div>
     </section>
     <section class="pane" id="p-money">
       <div class="banner"><span class="tag">MANAGER</span><span class="ttl">Payments</span>
@@ -943,7 +951,7 @@ function render(){
   if(tab==="season")drawSeason();
   if(tab==="h2h")drawH2H();
   if(tab==="money")drawMoney();
-  if(tab==="opt"&&btResult) drawBacktest();
+  if(tab==="opt"){ fillOptMe(); if(btResult) drawBacktest(); if(optResult) drawOpt(); }
   if(tab==="import")drawImport();
 }
 
@@ -1579,7 +1587,12 @@ function drawOverrides(){
 }
 
 /* ---------- optimizer, step 1: the backtest (model in optimizer.js) ---------- */
-let btResult=null, btModel=null;
+let btResult=null, btModel=null, btData=null;
+async function ensureModel(){
+  if(btResult) return true;
+  await $("btRun").onclick();
+  return !!btResult;
+}
 $("btRun").onclick=async()=>{
   const ws=(season?.weeks||[]).map(w=>w.week).filter(w=>w<week||(season.weeks.find(x=>x.week===w)?.complete));
   if(ws.length<2){ $("btMsg").textContent="needs at least two finished weeks"; return; }
@@ -1597,7 +1610,7 @@ $("btRun").onclick=async()=>{
   }
   if(data.length<2){ $("btMsg").textContent="couldn't load enough finished weeks"; return; }
   $("btMsg").textContent="comparing models…"; await new Promise(r=>setTimeout(r,30));
-  btResult=PickOpt.compare(data); btModel=btResult.final;
+  btResult=PickOpt.compare(data); btModel=btResult.final; btData=data;
   $("btMsg").textContent=`tested ${data.length} weeks${fromFile?` · ${fromFile} lines from the season file`:""}`;
   drawBacktest();
 };
@@ -1644,6 +1657,70 @@ function drawBacktest(){
         <th>Predicted on dog</th><th>Actually on dog</th><th>Off by</th></tr></thead><tbody>${w.rows.map(r=>
         `<tr><td class="gm2">${esc(r.g.away)} at ${esc(r.g.home)}</td><td>${esc(r.favTeam)} −${Math.abs(r.spread)}</td><td>${esc(r.dogTeam)}</td>
           <td>${f1(r.predDog)}</td><td>${r.actDog} of ${r.of}</td><td class="${r.miss<=2?"ok":"off"}">${f1(r.miss)}</td></tr>`).join("")}</tbody></table></div></div>`).join("")}`;
+}
+
+/* ---------- optimizer, step 2: this week's sheet ---------- */
+function fillOptMe(){
+  const names=(season?.players||[]).map(x=>x.name).sort((a,b)=>a.localeCompare(b));
+  if($("optMe").options.length!==names.length) $("optMe").innerHTML=names.map(n=>`<option value="${esc(n)}">${esc(up(n))}</option>`).join("");
+  const saved=localStorage.getItem("pc.optMe"); if(saved&&names.includes(saved)) $("optMe").value=saved;
+}
+$("optMe").onchange=e=>localStorage.setItem("pc.optMe",e.target.value);
+let optResult=null;
+$("optRun").onclick=async()=>{
+  const me=$("optMe").value; if(!me){ $("optMsg").textContent="choose who it's for"; return; }
+  localStorage.setItem("pc.optMe",me);
+  $("optMsg").textContent="loading the model…";
+  if(!(await ensureModel())){ $("optMsg").textContent="the backtest needs to run first"; return; }
+  const lf=await getJSON("/lines-2026.json"); const LINES=lf.ok?lf.body:null;
+  const gs=games().map(g=>({...g, spread:typeof g.spread==="number"?g.spread:PickOpt.lineFor(LINES,week,g.away,g.home)}));
+  if(!gs.length){ $("optMsg").textContent=`no games loaded for week ${week}`; return; }
+  const pHome=gs.map(g=>homeWinProb(g));
+  // who's likely to play: half how often they've entered overall, half the last three weeks
+  const ws=btData.map(d=>d.week).sort((a,b)=>a-b), recent=ws.slice(-3);
+  const names=new Map(); btData.forEach(d=>d.entries.forEach(e=>names.set(slug(e.name),e.name)));
+  const entrants=[...names].filter(([k])=>k!==slug(me)).map(([k,name])=>{
+    const inW=w=>btData.find(d=>d.week===w)?.entries.some(e=>slug(e.name)===k)?1:0;
+    const all=ws.reduce((s,w)=>s+inW(w),0)/ws.length, rec=recent.reduce((s,w)=>s+inW(w),0)/recent.length;
+    return {name, chance:Math.min(0.98,0.5*all+0.5*rec)}; }).filter(e=>e.chance>0.05);
+  const formOf=PickOpt.formTable([...btData,{week,games:[]}])[week]||{};
+  const proj=projectedTotal(tbGame())||{mean:45,sd:13};
+  $("optMsg").textContent="simulating the week…"; await new Promise(r=>setTimeout(r,30));
+  const W=PickOpt.simulate({games:gs,pHome,entrants,predict:btResult.predict,formOf,tb:{mean:proj.mean,sd:Math.max(proj.sd,6)},sims:6000,seed:week*101});
+  const R=PickOpt.optimizeSheet({games:gs,pHome,W,tbMean:proj.mean});
+  // how the pool is expected to split each game
+  const poolFav=gs.map(g=>{ if(!PickOpt.usable(g)) return null; const fav=g.spread<0?g.home:g.away, dog=fav===g.home?g.away:g.home;
+    const d=(formOf[fav]||0)-(formOf[dog]||0); const tot=entrants.reduce((s,e)=>s+e.chance,0);
+    return entrants.reduce((s,e)=>s+e.chance*btResult.predict(e.name,g,d),0)/Math.max(tot,1e-9); });
+  optResult={me,gs,pHome,R,poolFav,proj,entrants};
+  $("optMsg").textContent=`${W.sims.toLocaleString()} simulated weeks · model: ${btResult.best.label.replace(/^\+ /,"with ")}`;
+  drawOpt();
+};
+function drawOpt(){
+  const O=optResult; if(!O) return; const {gs,pHome,R,poolFav,me}=O;
+  const pct=x=>`${(x*100).toFixed(x<0.1?1:0)}%`, tbg=tbGame();
+  const flipOf=i=>R.flips.find(f=>f.i===i);
+  const mult=R.chalkWin>0?R.finalWin/R.chalkWin:null;
+  $("optOut").innerHTML=`<div class="kpis4">
+      <div class="k4 good"><b>${pct(R.finalWin)}</b><span>YOUR CHANCE TO WIN</span></div>
+      <div class="k4"><b>${pct(R.chalkWin)}</b><span>ALL FAVOURITES INSTEAD${mult&&mult>1.05?` · ${mult.toFixed(1)}× BETTER`:""}</span></div>
+      <div class="k4"><b>${R.expected.toFixed(1)}</b><span>EXPECTED CORRECT (FAVS ${R.chalkExpected.toFixed(1)})</span></div>
+      <div class="k4"><b>${R.tb}</b><span>TIEBREAKER · ${tbg?esc(tbg.away+" AT "+tbg.home):""}</span></div></div>
+    <div class="grid bttab" style="margin-top:12px"><table><thead><tr><th class="who" style="min-width:150px">Game</th><th>Line</th>
+      <th>Favourite wins</th><th>Pool on favourite</th><th>Your pick</th><th style="min-width:220px">Why</th></tr></thead><tbody>
+      ${gs.map((g,i)=>{ const home=(R.pick>>i)&1, team=home?g.home:g.away, img=logoFor(g,home?"home":"away");
+        const fav=PickOpt.usable(g)?(g.spread<0?g.home:g.away):null, fp=fav?(fav===g.home?pHome[i]:1-pHome[i]):null, f=flipOf(i);
+        const why=f?`<b style="color:var(--lime)">AGAINST THE CROWD</b> · +${(f.gain*100).toFixed(1)}% to win, costs ${f.cost.toFixed(2)} expected correct`
+          :fav&&team!==fav?"underdog":fav?"favourite":"no line";
+        return `<tr${f?' style="outline:1px solid var(--lime)"':""}><td class="gm2">${esc(g.away)} at ${esc(g.home)}</td>
+          <td>${fav?`${esc(fav)} −${Math.abs(g.spread)}`:"–"}</td><td>${fp==null?"–":pct(fp)}</td>
+          <td>${poolFav[i]==null?"–":pct(poolFav[i])}</td>
+          <td><span class="lp ${f?"hit":"open"}" style="display:inline-grid;vertical-align:middle">${img?`<img src="${esc(img)}" alt="${esc(team)}">`:esc(team)}</span> ${esc(team)}</td>
+          <td class="gm2" style="font-size:16px">${why}</td></tr>`; }).join("")}</tbody></table></div>
+    <p class="note2" style="display:block;line-height:1.6;margin-top:10px">For ${esc(me)} · about ${R.avgPlayers.toFixed(0)} opponents per simulated week, from how often each person enters.
+      ${R.flips.length?`${R.flips.length} pick${R.flips.length>1?"s go":" goes"} against the crowd: each one gives up a little expected accuracy for a bigger chance of finishing alone on top.`
+        :"No flip helped this week — the favourites are your best sheet."}
+      Lines move during the week, so build it again Thursday morning before you hand in your sheet.</p>`;
 }
 
 /* ---------- payments (same buy-in setting and week document as the main site) ---------- */

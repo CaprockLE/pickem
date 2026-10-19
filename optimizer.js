@@ -8,6 +8,8 @@
   const slug = n => String(n || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-");
   const logit = p => Math.log(p / (1 - p));
   const unlogit = x => 1 / (1 + Math.exp(-x));
+  function bitCount(v) { v = v - ((v >>> 1) & 0x55555555); v = (v & 0x33333333) + ((v >>> 2) & 0x33333333);
+    return (((v + (v >>> 4)) & 0x0F0F0F0F) * 0x01010101) >>> 24; }
   const clamp = p => Math.min(0.985, Math.max(0.015, p));
 
   // close games (3 or less), medium (3.5 to 7), big favourites (over 7)
@@ -230,6 +232,93 @@
     return { models: all, best, final, predict, form };
   }
 
+
+  /* ── Step 2: the sheet with the best chance to finish first ───────────────
+     Each simulated week rolls every game from the betting odds and fills in a sheet for
+     everyone likely to play (from the backtest's best model and how often each person
+     enters). Your sheet is scored against the same simulated weeks for every candidate, so
+     comparisons between candidates aren't blurred by luck. */
+  function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  const normal = r => Math.sqrt(-2 * Math.log(r() + 1e-12)) * Math.cos(2 * Math.PI * r());
+
+  /* games: this week's games (with spread); pHome: chance each home team wins;
+     entrants: [{ name, chance }] who might play (not you); predict(name, g, formDiff) → P(favourite);
+     formOf: team → +1/-1/0; tb: { mean, sd } of the tiebreaker game's total */
+  function simulate({ games, pHome, entrants, predict, formOf = {}, tb, sims = 5000, seed = 7 }) {
+    const r = rng(seed), n = games.length, ALL = n >= 32 ? 0xffffffff : (1 << n) - 1;
+    const favP = games.map(g => entrants.map(e => {
+      if (!usable(g)) return 0.5;
+      const fav = favOf(g), dog = fav === g.home ? g.away : g.home;
+      return predict(e.name, g, (formOf[fav] || 0) - (formOf[dog] || 0));
+    }));
+    const favIsHome = games.map(g => usable(g) ? g.spread < 0 : true);
+    const W = { n, ALL, sims, outcome: new Uint32Array(sims), total: new Int16Array(sims),
+                fieldMax: new Int8Array(sims), tied: [], players: new Uint8Array(sims) };
+    for (let s = 0; s < sims; s++) {
+      let mask = 0;
+      for (let i = 0; i < n; i++) if (r() < pHome[i]) mask |= 1 << i;
+      W.outcome[s] = mask >>> 0;
+      W.total[s] = Math.max(0, Math.round(tb.mean + tb.sd * normal(r)));
+      let best = -1, tied = [], count = 0;
+      for (let k = 0; k < entrants.length; k++) {
+        if (r() >= entrants[k].chance) continue;
+        count++;
+        let pick = 0;
+        for (let i = 0; i < n; i++) {
+          const takesFav = r() < favP[i][k];
+          if (takesFav === favIsHome[i]) pick |= 1 << i;          // bit set = took the home team
+        }
+        const sc = bitCount((~(mask ^ pick)) & ALL);
+        const guess = Math.max(0, Math.round(tb.mean + 7 * normal(r)));
+        if (sc > best) { best = sc; tied = [guess]; } else if (sc === best) tied.push(guess);
+      }
+      W.fieldMax[s] = best; W.tied.push(tied); W.players[s] = count;
+    }
+    return W;
+  }
+  // chance a sheet (bit set = home team) with this tiebreaker finishes first, ties shared
+  function winChance(W, pick, tbGuess) {
+    let won = 0;
+    for (let s = 0; s < W.sims; s++) {
+      const sc = bitCount((~(W.outcome[s] ^ pick)) & W.ALL), top = W.fieldMax[s];
+      if (sc > top) { won++; continue; }
+      if (sc < top) continue;
+      const mine = Math.abs(tbGuess - W.total[s]); let closer = false, same = 0;
+      for (const t of W.tied[s]) { const d = Math.abs(t - W.total[s]); if (d < mine) { closer = true; break; } if (d === mine) same++; }
+      if (!closer) won += 1 / (1 + same);
+    }
+    return won / W.sims;
+  }
+  function optimizeSheet({ games, pHome, W, tbMean }) {
+    const n = games.length;
+    const chalk = games.reduce((m, g, i) => (usable(g) ? g.spread < 0 : pHome[i] >= 0.5) ? m | (1 << i) : m, 0) >>> 0;
+    const pPick = (mask, i) => ((mask >> i) & 1) ? pHome[i] : 1 - pHome[i];
+    const expected = mask => games.reduce((s, g, i) => s + pPick(mask, i), 0);
+    let tbBest = Math.round(tbMean), pick = chalk;
+    const chalkWin = winChance(W, chalk, tbBest);
+    let cur = chalkWin; const flips = [];
+    for (let round = 0; round < 5; round++) {
+      let bestI = -1, bestP = cur;
+      for (let i = 0; i < n; i++) {
+        if (flips.some(f => f.i === i)) continue;
+        const p = winChance(W, (pick ^ (1 << i)) >>> 0, tbBest);
+        if (p > bestP + 0.0015) { bestP = p; bestI = i; }
+      }
+      if (bestI < 0) break;
+      flips.push({ i: bestI, gain: bestP - cur, cost: pPick(pick, bestI) - pPick((pick ^ (1 << bestI)) >>> 0, bestI) });
+      pick = (pick ^ (1 << bestI)) >>> 0; cur = bestP;
+    }
+    // tiebreaker: every whole number near the projected total
+    let tbWin = cur;
+    for (let t = Math.round(tbMean) - 12; t <= Math.round(tbMean) + 12; t++) {
+      const p = winChance(W, pick, t); if (p > tbWin + 0.0005) { tbWin = p; tbBest = t; }
+    }
+    return { chalk, pick, chalkWin, finalWin: tbWin, tb: tbBest, flips,
+             chalkExpected: expected(chalk), expected: expected(pick),
+             avgPlayers: W.players.reduce((a, b) => a + b, 0) / W.sims };
+  }
+
   // lines from the season file (lines-2026.json), for games the feed carried no line for
   const ALIAS = { WAS: "WSH", LA: "LAR", JAC: "JAX" };
   const norm = t => ALIAS[String(t || "").toUpperCase()] || String(t || "").toUpperCase();
@@ -240,5 +329,6 @@
   }
 
   root.PickOpt = { BUCKETS, bucket, usable, learn, favChance, predictSplit, backtest, lineFor,
-                   FEATURES, formTable, rowsOf, fitLogit, score, compare, slug, unlogit };
+                   FEATURES, formTable, rowsOf, fitLogit, score, compare, slug, unlogit,
+                   simulate, winChance, optimizeSheet };
 })(typeof window !== "undefined" ? window : globalThis);

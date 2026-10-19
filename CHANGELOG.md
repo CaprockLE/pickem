@@ -3,6 +3,18 @@
 Reconstructed from the build history. Newest first.
 Each entry is the build number shown at the bottom of the sidebar.
 
+## build-163 — optimizer, step 2: this week's sheet
+- optimizer.js simulates the week 6,000 times: every game rolled from the betting odds, a sheet
+  filled in for everyone likely to play (best backtest model, and how often each person enters),
+  a tiebreaker guess for each. Starts from all favourites, flips one game at a time only while
+  it raises your chance to finish first, then picks the tiebreaker the same way
+- /pro Optimizer → Step 2: choose who it's for (remembered), Build My Sheet. Shows your chance
+  to win against the all-favourites sheet, expected correct, the tiebreaker, and every game
+  with the market's chance, the pool's predicted lean, your pick, and for each pick against the
+  crowd what it gains and costs
+- Tested: on a planted coin-flip the pool piles onto, it finds it alone (2.2% → 12% to win at a
+  cost of 0.07 expected correct); never worse than all favourites
+
 ## build-162 — a better pool model, chosen by the backtest
 - optimizer.js: one logistic model over every pick — a smooth line curve, home favourite,
   each player's lean, team popularity and recent form (did each team win its last game)
