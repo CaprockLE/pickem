@@ -290,24 +290,47 @@
     }
     return won / W.sims;
   }
+  function winVector(W, pick, tbGuess) {
+    const v = new Float32Array(W.sims);
+    for (let s = 0; s < W.sims; s++) {
+      const sc = bitCount((~(W.outcome[s] ^ pick)) & W.ALL), top = W.fieldMax[s];
+      if (sc > top) { v[s] = 1; continue; }
+      if (sc < top) continue;
+      const mine = Math.abs(tbGuess - W.total[s]); let closer = false, same = 0;
+      for (const t of W.tied[s]) { const d = Math.abs(t - W.total[s]); if (d < mine) { closer = true; break; } if (d === mine) same++; }
+      if (!closer) v[s] = 1 / (1 + same);
+    }
+    return v;
+  }
+  // A flip is kept only if it beats the current sheet clearly: at least half a point of win
+  // chance, and more than twice the paired standard error across the same simulated weeks.
+  // Smaller "gains" are mostly simulation noise, and every flip costs accuracy.
+  const MIN_GAIN = 0.005, MAX_FLIPS = 3;
+  function pairedGain(a, b) {
+    const n = a.length; let sum = 0, sq = 0;
+    for (let s = 0; s < n; s++) { const d = b[s] - a[s]; sum += d; sq += d * d; }
+    const mean = sum / n, se = Math.sqrt(Math.max(sq / n - mean * mean, 0) / n);
+    return { mean, se };
+  }
   function optimizeSheet({ games, pHome, W, tbMean }) {
     const n = games.length;
     const chalk = games.reduce((m, g, i) => (usable(g) ? g.spread < 0 : pHome[i] >= 0.5) ? m | (1 << i) : m, 0) >>> 0;
     const pPick = (mask, i) => ((mask >> i) & 1) ? pHome[i] : 1 - pHome[i];
     const expected = mask => games.reduce((s, g, i) => s + pPick(mask, i), 0);
     let tbBest = Math.round(tbMean), pick = chalk;
-    const chalkWin = winChance(W, chalk, tbBest);
+    let curV = winVector(W, chalk, tbBest);
+    const chalkWin = curV.reduce((a, b) => a + b, 0) / W.sims;
     let cur = chalkWin; const flips = [];
-    for (let round = 0; round < 5; round++) {
-      let bestI = -1, bestP = cur;
+    for (let round = 0; round < MAX_FLIPS; round++) {
+      let bestI = -1, bestG = null, bestV = null;
       for (let i = 0; i < n; i++) {
         if (flips.some(f => f.i === i)) continue;
-        const p = winChance(W, (pick ^ (1 << i)) >>> 0, tbBest);
-        if (p > bestP + 0.0015) { bestP = p; bestI = i; }
+        const v = winVector(W, (pick ^ (1 << i)) >>> 0, tbBest), g = pairedGain(curV, v);
+        if (g.mean >= MIN_GAIN && g.mean > 2 * g.se && (!bestG || g.mean > bestG.mean)) { bestI = i; bestG = g; bestV = v; }
       }
       if (bestI < 0) break;
-      flips.push({ i: bestI, gain: bestP - cur, cost: pPick(pick, bestI) - pPick((pick ^ (1 << bestI)) >>> 0, bestI) });
-      pick = (pick ^ (1 << bestI)) >>> 0; cur = bestP;
+      flips.push({ i: bestI, gain: bestG.mean, cost: pPick(pick, bestI) - pPick((pick ^ (1 << bestI)) >>> 0, bestI) });
+      pick = (pick ^ (1 << bestI)) >>> 0; cur += bestG.mean; curV = bestV;
     }
     // tiebreaker: every whole number near the projected total
     let tbWin = cur;
@@ -317,6 +340,176 @@
     return { chalk, pick, chalkWin, finalWin: tbWin, tb: tbBest, flips,
              chalkExpected: expected(chalk), expected: expected(pick),
              avgPlayers: W.players.reduce((a, b) => a + b, 0) / W.sims };
+  }
+
+
+  /* Walk-forward test: for each past week, build the sheet using only the weeks before it,
+     then score it against what actually happened, next to all favourites and the player's
+     real sheet. h = { homeWinProb(g), projected(g) → {mean, sd} } from the page. */
+  function walkForward({ weeks, me, h, sims = 4000 }) {
+    const sorted = [...weeks].sort((a, b) => a.week - b.week), out = [];
+    for (const w of sorted) {
+      const prior = sorted.filter(x => x.week < w.week);
+      if (!prior.length) continue;
+      const form = formTable([...prior, { week: w.week, games: [] }]);
+      const predict = prior.length >= 2 ? compare(prior).predict
+        : ((m => (name, g, d = 0) => usable(g) ? unlogit(score(m, { line: Math.min(Math.abs(g.spread), 14), home: g.spread < 0 ? 1 : 0,
+            fav: favOf(g), dog: favOf(g) === g.home ? g.away : g.home, form: d, player: slug(name) })) : null)
+          (fitLogit(rowsOf(prior, formTable(prior)), {})));
+      // who plays: from the weeks before
+      const seen = new Map(); prior.forEach(p => p.entries.forEach(e => seen.set(slug(e.name), e.name)));
+      const entrants = [...seen].filter(([k]) => k !== slug(me)).map(([k, name]) => ({ name,
+        chance: Math.min(0.98, prior.filter(p => p.entries.some(e => slug(e.name) === k)).length / prior.length) }));
+      const pre = w.games.map(g => ({ ...g, state: "pre", final: false, winner: null, homeScore: 0, awayScore: 0 }));
+      const pHome = pre.map(g => h.homeWinProb(g));
+      const tbg = w.games.find(g => g.id === w.tbId) || w.games[w.games.length - 1];
+      const proj = h.projected(pre.find(g => g.id === tbg?.id)) || { mean: 45, sd: 13 };
+      const W = simulate({ games: pre, pHome, entrants, predict, formOf: form[w.week] || {}, tb: { mean: proj.mean, sd: Math.max(proj.sd, 6) }, sims, seed: w.week * 101 });
+      const R = optimizeSheet({ games: pre, pHome, W, tbMean: proj.mean });
+      // what actually happened
+      const decided = w.games.filter(g => g.winner);
+      const total = tbg && tbg.winner ? (tbg.homeScore || 0) + (tbg.awayScore || 0) : null;
+      const scoreMask = mask => decided.reduce((s, g) => { const i = w.games.indexOf(g); return s + (g.winner === (((mask >> i) & 1) ? g.home : g.away) ? 1 : 0); }, 0);
+      const others = w.entries.filter(e => slug(e.name) !== slug(me));
+      const otherScores = others.map(e => ({ s: decided.filter(g => e.picks?.[g.id] === g.winner).length, tb: e.tiebreaker }));
+      const top = Math.max(-1, ...otherScores.map(x => x.s));
+      const result = (s, tb) => {
+        if (s > top) return 1; if (s < top) return 0;
+        if (total == null || tb == null) return 0.5;
+        const mine = Math.abs(tb - total), tied = otherScores.filter(x => x.s === top).map(x => Math.abs((x.tb ?? 999) - total));
+        const best = Math.min(...tied); return mine < best ? 1 : mine > best ? 0 : 1 / (1 + tied.filter(d => d === best).length);
+      };
+      const mine = w.entries.find(e => slug(e.name) === slug(me));
+      const mineScore = mine ? decided.filter(g => mine.picks?.[g.id] === g.winner).length : null;
+      out.push({ week: w.week, games: decided.length, flips: R.flips.length,
+        opt: { s: scoreMask(R.pick), won: result(scoreMask(R.pick), R.tb), chance: R.finalWin },
+        favs: { s: scoreMask(R.chalk), won: result(scoreMask(R.chalk), Math.round(proj.mean)), chance: R.chalkWin },
+        actual: mine ? { s: mineScore, won: result(mineScore, mine.tiebreaker) } : null, top });
+    }
+    return out;
+  }
+
+
+  /* ── This week's news: injuries and weather ──────────────────────────────
+     The line is the best single forecast, and it already reacts to news. These adjustments
+     only cover the gap between what the line assumes and what we know on Thursday. */
+
+  // chance a player suits up, by what's known Thursday (historical rates where they exist:
+  // ~71% of questionable players play, ~5% of doubtful; practice-only statuses are estimates)
+  const STATUS_CHANCE = { "full": 0.97, "limited": 0.85, "dnp": 0.55, "questionable": 0.71,
+    "doubtful": 0.06, "out": 0, "expected-to-play": 0.88, "expected-to-sit": 0.15 };
+  const STATUS_LABEL = { "full": "Full practice", "limited": "Limited practice", "dnp": "Did not practice",
+    "questionable": "Questionable", "doubtful": "Doubtful", "out": "Out",
+    "expected-to-play": "Expected to play (reports)", "expected-to-sit": "Expected to sit (reports)" };
+  // points to the spread when he sits (betting-market rules of thumb)
+  const VALUE_TIERS = [ { label: "Elite QB", value: 6 }, { label: "Starting QB", value: 4 },
+    { label: "Weak starting QB", value: 2 }, { label: "Star non-QB", value: 1.5 }, { label: "Other starter", value: 0.75 } ];
+  const ASSUMES = [ { label: "Line assumes he plays", value: 1 }, { label: "Mostly plays", value: 0.75 },
+    { label: "Unsure", value: 0.5 }, { label: "Mostly sits", value: 0.25 }, { label: "Line assumes he sits", value: 0 } ];
+
+  // inverse of the normal curve (Acklam's approximation), to turn a win chance back into points
+  function normInv(p) {
+    p = Math.min(1 - 1e-9, Math.max(1e-9, p));
+    const a = [-39.6968302866538, 220.946098424521, -275.928510446969, 138.357751867269, -30.6647980661472, 2.50662827745924],
+          b = [-54.4760987982241, 161.585836858041, -155.698979859887, 66.8013118877197, -13.2806815528857],
+          c = [-0.00778489400243029, -0.322396458041136, -2.40075827716184, -2.54973253934373, 4.37466414146497, 2.93816398269878],
+          d = [0.00778469570904146, 0.32246712907004, 2.445134137143, 3.75440866190742], pl = 0.02425;
+    if (p < pl) { const q = Math.sqrt(-2 * Math.log(p)); return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1); }
+    if (p > 1 - pl) { const q = Math.sqrt(-2 * Math.log(1 - p)); return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1); }
+    const q = p - 0.5, r = q * q;
+    return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q / (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+  }
+  const phi = z => 0.5 * (1 + erf(z / Math.SQRT2));
+  function erf(x) { const t = 1 / (1 + 0.3275911 * Math.abs(x)), y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x); return x >= 0 ? y : -y; }
+  const SD = 13.5;
+
+  /* Adjust one game's chance that the home team wins.
+     pHome: the market's chance. injuries: this game's entries, each { team, value, chance,
+     marketAssumes }. The line already prices each player as playing with probability
+     marketAssumes; the home team's margin in a world where he plays is (plays − assumed) × value
+     away from the line. Every combination of who plays is weighed by its chance.
+     Extreme weather (20+ mph wind or heavy snow) narrows the gap between the teams by 15%. */
+  function adjustGame(g, pHome, injuries = [], weather = null) {
+    let margin = SD * normInv(pHome);
+    const notes = [];
+    if (weather && weather.extreme) { margin *= 0.85; notes.push("extreme weather narrows the gap"); }
+    const list = injuries.filter(x => x.team === g.home || x.team === g.away).slice(0, 6);
+    let p = 0;
+    const n = list.length;
+    for (let mask = 0; mask < (1 << n); mask++) {
+      let w = 1, m = margin;
+      for (let i = 0; i < n; i++) {
+        const x = list[i], plays = (mask >> i) & 1, sign = x.team === g.home ? 1 : -1;
+        w *= plays ? x.chance : 1 - x.chance;
+        m += sign * (plays - x.marketAssumes) * x.value;
+      }
+      if (w > 0) p += w * phi(m / SD);
+    }
+    for (const x of list) {
+      const shift = (x.chance - x.marketAssumes) * x.value;
+      if (Math.abs(shift) >= 0.05) notes.push(`${x.player} ${Math.round(x.chance * 100)}% to play (line assumes ${Math.round(x.marketAssumes * 100)}%)`);
+    }
+    return { pHome: n ? p : phi(margin / SD), notes };
+  }
+
+  /* ── Weather ────────────────────────────────────────────────────────────
+     Outdoor stadiums only (roof: open; retractable roofs are treated as closed in bad weather).
+     Forecasts come from Open-Meteo (free, no key) for the kickoff hour. */
+  const STADIUMS = {
+    ARI:[33.5276,-112.2626,"dome"], ATL:[33.7554,-84.4008,"dome"], BAL:[39.2780,-76.6227,"open"], BUF:[42.7738,-78.7870,"open"],
+    CAR:[35.2258,-80.8528,"open"], CHI:[41.8623,-87.6167,"open"], CIN:[39.0955,-84.5161,"open"], CLE:[41.5061,-81.6995,"open"],
+    DAL:[32.7473,-97.0945,"dome"], DEN:[39.7439,-105.0201,"open"], DET:[42.3400,-83.0456,"dome"], GB:[44.5013,-88.0622,"open"],
+    HOU:[29.6847,-95.4107,"dome"], IND:[39.7601,-86.1639,"dome"], JAX:[30.3239,-81.6373,"open"], KC:[39.0489,-94.4839,"open"],
+    LV:[36.0909,-115.1833,"dome"], LAC:[33.9535,-118.3392,"dome"], LAR:[33.9535,-118.3392,"dome"], MIA:[25.9580,-80.2389,"open"],
+    MIN:[44.9737,-93.2577,"dome"], NE:[42.0909,-71.2643,"open"], NO:[29.9511,-90.0812,"dome"], NYG:[40.8135,-74.0745,"open"],
+    NYJ:[40.8135,-74.0745,"open"], PHI:[39.9008,-75.1675,"open"], PIT:[40.4468,-80.0158,"open"], SF:[37.4030,-121.9700,"open"],
+    SEA:[47.5952,-122.3316,"open"], TB:[27.9759,-82.5033,"open"], TEN:[36.1665,-86.7713,"open"], WSH:[38.9077,-76.8645,"open"],
+  };
+  // games played away from the home team's stadium (international and neutral sites)
+  const VENUES = [
+    [/wembley/i, [51.5560,-0.2795,"open"]], [/tottenham/i, [51.6043,-0.0664,"open"]], [/croke|dublin/i, [53.3607,-6.2512,"open"]],
+    [/allianz|munich/i, [48.2188,11.6247,"open"]], [/frankfurt|deutsche bank/i, [50.0686,8.6455,"open"]],
+    [/bernab[eé]u|madrid/i, [40.4531,-3.6883,"retractable"]], [/maracan|rio/i, [-22.9122,-43.2302,"open"]],
+    [/s[aã]o paulo|corinthians|arena/i, [-23.5453,-46.4742,"open"]], [/melbourne|mcg/i, [-37.8200,144.9834,"open"]],
+    [/mexico|azteca|banorte/i, [19.3029,-99.1505,"open"]],
+  ];
+  function stadiumFor(g) {
+    const v = g.venue || {};
+    const hit = VENUES.find(([re]) => re.test(`${v.name || ""} ${v.city || ""}`));
+    if (hit) return { lat: hit[1][0], lon: hit[1][1], roof: hit[1][2], where: v.name || v.city };
+    const s = STADIUMS[String(g.home || "").toUpperCase()] || STADIUMS[{ WAS: "WSH", LA: "LAR", JAC: "JAX" }[g.home]];
+    if (!s) return null;
+    return { lat: s[0], lon: s[1], roof: v.indoor ? "dome" : s[2], where: v.name || g.home };
+  }
+  // forecast at kickoff; returns null for indoor games or when there's no forecast yet
+  async function fetchWeather(g) {
+    const st = stadiumFor(g);
+    if (!st || st.roof !== "open" || !g.kickoff) return st ? { indoor: true } : null;
+    const k = new Date(g.kickoff), day = k.toISOString().slice(0, 10);
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${st.lat}&longitude=${st.lon}` +
+      `&hourly=temperature_2m,wind_speed_10m,wind_gusts_10m,precipitation,snowfall&wind_speed_unit=mph` +
+      `&temperature_unit=fahrenheit&precipitation_unit=inch&timezone=UTC&start_date=${day}&end_date=${day}`;
+    try {
+      const r = await fetch(url); if (!r.ok) return null;
+      const d = await r.json(), t = d.hourly?.time || [];
+      const i = t.indexOf(k.toISOString().slice(0, 13) + ":00"); if (i < 0) return null;
+      const at = key => d.hourly[key]?.[i];
+      // the whole game, not just the first hour: the worst of the next three hours
+      const win = key => Math.max(...[i, i + 1, i + 2].map(j => d.hourly[key]?.[j] ?? 0));
+      const w = { indoor: false, temp: at("temperature_2m"), wind: win("wind_speed_10m"), gust: win("wind_gusts_10m"),
+                  rain: win("precipitation"), snow: win("snowfall") };
+      w.windy = w.wind >= 15; w.extreme = w.wind >= 20 || w.snow >= 0.1;
+      // tiebreaker total: wind and snow cut scoring (rough market rules of thumb)
+      w.totalShift = -(w.wind >= 20 ? 3 : w.wind >= 15 ? 1.5 : 0) - (w.snow >= 0.1 ? 2 : 0) - (w.rain >= 0.1 ? 1 : 0);
+      return w;
+    } catch (e) { return null; }
+  }
+  function weatherLabel(w) {
+    if (!w) return "";
+    if (w.indoor) return "indoors";
+    const bits = [`${Math.round(w.temp)}°`, `wind ${Math.round(w.wind)} mph`];
+    if (w.snow >= 0.05) bits.push("snow"); else if (w.rain >= 0.05) bits.push("rain");
+    return bits.join(" · ");
   }
 
   // lines from the season file (lines-2026.json), for games the feed carried no line for
@@ -330,5 +523,6 @@
 
   root.PickOpt = { BUCKETS, bucket, usable, learn, favChance, predictSplit, backtest, lineFor,
                    FEATURES, formTable, rowsOf, fitLogit, score, compare, slug, unlogit,
-                   simulate, winChance, optimizeSheet };
+                   simulate, winChance, optimizeSheet, walkForward,
+                   STATUS_CHANCE, STATUS_LABEL, VALUE_TIERS, ASSUMES, adjustGame, normInv, stadiumFor, fetchWeather, weatherLabel };
 })(typeof window !== "undefined" ? window : globalThis);

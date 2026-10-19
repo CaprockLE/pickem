@@ -3,6 +3,32 @@
 Reconstructed from the build history. Newest first.
 Each entry is the build number shown at the bottom of the sidebar.
 
+## build-167 — news, weather and moneylines in the optimizer
+- api/scores.js: each game's moneylines and venue (name, city, indoors); moneylines remembered
+  with the spread and total
+- core.js: pre-game win chances from the moneylines with the bookmaker's margin removed; the
+  spread conversion is the fallback (affects pre-game win % on every site)
+- New api/news.js: per-week injuries (team, player, worth in points, Thursday status, chance he
+  suits up, what the line already assumes, notes/source) and public pick percentages
+- optimizer.js: each game blends every combination of who plays, measured from what the line
+  assumes, so news already in the line isn't counted twice; QB value tiers; status starting
+  chances (questionable 71%, doubtful 6%, from historical play rates); weather from Open-Meteo
+  for outdoor stadiums and international venues — wind and snow lower the tiebreaker total,
+  extreme conditions (20+ mph, heavy snow) narrow the gap between teams by 15%
+- /pro Optimizer: This Week's News panel (edit, paste Claude's notes, save), and the sheet
+  shows market vs with-news chances, predicted pool lean vs public, and the news per game
+
+## build-166 — stricter optimizer, walk-forward test, phone cards
+- Optimizer: a flip is kept only if it beats the current sheet by at least half a point of win
+  chance AND by more than twice its paired standard error across the same simulated weeks;
+  at most three flips. Smaller "gains" were mostly simulation noise, and each flip costs accuracy
+- Optimizer Step 3: How It Would Have Done — every past week rebuilt from only the weeks
+  before it, scored against what happened, next to all favourites and the player's real sheet
+- /pro Card Collection on phones: a compact horizontal tile per player (rating, rank and tier
+  on the left; name and six stats on the right), five per screen; the flipped back lays the
+  weeks across the tile
+- /pro All Picks: Pool Split label padded away from the edge; no empty cells under TB and PTS
+
 ## build-165 — centred VS on Pro matchups
 - The diagonal between the two team colours now runs through the card's exact centre, where
   the VS sits: V on the away colour, S on the home colour (it was about 3% left of centre)

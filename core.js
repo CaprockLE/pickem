@@ -26,6 +26,17 @@
     return Math.max(0, 4 - per) * 15 + secs / 60;
   }
 
+  // The moneylines are the market's win probabilities directly. Each side's price includes the
+  // bookmaker's margin, so the two implied chances add to a little over 100%; dividing by their
+  // sum removes it. Null unless both sides are priced and the result looks sane.
+  function moneylineProb(g) {
+    const imp = ml => (ml < 0 ? -ml / (-ml + 100) : 100 / (ml + 100));
+    if (typeof g.mlHome !== "number" || typeof g.mlAway !== "number") return null;
+    const h = imp(g.mlHome), a = imp(g.mlAway), sum = h + a;
+    if (!(sum > 0.98 && sum < 1.15)) return null;          // not a matched pair of prices
+    return h / sum;
+  }
+
   // probability the HOME team wins, 0..1. `winner` is the game's result if it's decided
   // (a team, "TIE", or nothing), which each page works out its own way.
   function homeWinProb(g, winner) {
@@ -33,6 +44,8 @@
     const mins = minutesLeft(g);
     const margin = (g.homeScore || 0) - (g.awayScore || 0);
     if (g.state === "pre") {
+      const ml = moneylineProb(g);
+      if (ml != null) return ml;
       const line = typeof g.spread === "number" ? -g.spread : 1.6;   // home spread -3 → +3 edge
       return normCdf(line / 13.5);
     }
@@ -214,6 +227,6 @@
              ties: shared.filter(r => r.edge === "tie").length, aPts: sum("a"), bPts: sum("b") };
   }
 
-  root.PickCore = { normCdf, minutesLeft, homeWinProb, projectedTotal, tiebreakerShares,
+  root.PickCore = { normCdf, minutesLeft, homeWinProb, moneylineProb, projectedTotal, tiebreakerShares,
                     bitCount, analyse, weekOutcome, headToHead, DARK_MARKS, needsLightLogo, logoFor };
 })(typeof window !== "undefined" ? window : globalThis);

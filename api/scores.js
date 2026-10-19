@@ -32,11 +32,10 @@ async function keepLines(games, season) {
     const updates = [];
     for (const g of games) {
       const prev = saved[g.id] || {};
-      const cur = { spread: g.spread ?? prev.spread ?? null, overUnder: g.overUnder ?? prev.overUnder ?? null };
-      if (g.spread == null && prev.spread != null) { g.spread = prev.spread; g.lineFrom = "saved"; }
-      if (g.overUnder == null && prev.overUnder != null) { g.overUnder = prev.overUnder; g.lineFrom = "saved"; }
-      if ((cur.spread != null || cur.overUnder != null) &&
-          (cur.spread !== prev.spread || cur.overUnder !== prev.overUnder)) updates.push(g.id, JSON.stringify(cur));
+      const KEYS = ["spread", "overUnder", "mlHome", "mlAway"];
+      const cur = Object.fromEntries(KEYS.map(k => [k, g[k] ?? prev[k] ?? null]));
+      for (const k of KEYS) if (g[k] == null && prev[k] != null) { g[k] = prev[k]; g.lineFrom = "saved"; }
+      if (KEYS.some(k => cur[k] != null) && KEYS.some(k => cur[k] !== (prev[k] ?? null))) updates.push(g.id, JSON.stringify(cur));
     }
     if (updates.length) {
       await rcmd(["HSET", key, ...updates]);
@@ -136,6 +135,12 @@ export default async function handler(req, res) {
         redZone: comp.situation?.isRedZone === true,
         downDistance: comp.situation?.shortDownDistanceText || comp.situation?.downDistanceText || null,
         overUnder: (() => { const o = (comp.odds || [])[0]; return typeof o?.overUnder === "number" ? o.overUnder : null; })(),
+        // moneylines: the market's win probability directly (American odds, e.g. -180 / +150)
+        mlHome: (() => { const v = Number((comp.odds || [])[0]?.homeTeamOdds?.moneyLine); return Number.isFinite(v) && v !== 0 ? v : null; })(),
+        mlAway: (() => { const v = Number((comp.odds || [])[0]?.awayTeamOdds?.moneyLine); return Number.isFinite(v) && v !== 0 ? v : null; })(),
+        // where it's played, for the weather: indoors needs no forecast
+        venue: comp.venue ? { name: comp.venue.fullName || null, city: comp.venue.address?.city || null,
+                              indoor: comp.venue.indoor === true } : null,
         clockSeconds: (() => {
           const c = comp.status?.displayClock || "";
           const m = /^(\d+):(\d+)$/.exec(c.trim());
