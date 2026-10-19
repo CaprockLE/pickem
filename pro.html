@@ -1583,16 +1583,21 @@ let btResult=null, btModel=null;
 $("btRun").onclick=async()=>{
   const ws=(season?.weeks||[]).map(w=>w.week).filter(w=>w<week||(season.weeks.find(x=>x.week===w)?.complete));
   if(ws.length<2){ $("btMsg").textContent="needs at least two finished weeks"; return; }
-  const data=[];
+  // lines the feed no longer carries come from the season file
+  const lf=await getJSON("/lines-2026.json"); const LINES=lf.ok?lf.body:null;
+  const data=[]; let fromFile=0;
   for(const w of ws){
     $("btMsg").textContent=`loading week ${w}…`;
     const [sc,pl]=await Promise.all([getJSON(`/api/scores?week=${w}`),getJSON(`/api/pool?week=${w}`)]);
     if(!sc.ok||!pl.ok||!(pl.body.entries||[]).length) continue;
-    data.push({ week:w, games:(sc.body.games||[]).map(g=>({id:g.id,home:g.home,away:g.away,spread:g.spread})), entries:pl.body.entries });
+    data.push({ week:w, entries:pl.body.entries, games:(sc.body.games||[]).map(g=>{
+      let spread=typeof g.spread==="number"?g.spread:null;
+      if(spread==null){ spread=PickOpt.lineFor(LINES,w,g.away,g.home); if(spread!=null) fromFile++; }
+      return {id:g.id,home:g.home,away:g.away,spread}; }) });
   }
   if(data.length<2){ $("btMsg").textContent="couldn't load enough finished weeks"; return; }
   btResult=PickOpt.backtest(data); btModel=PickOpt.learn(data);
-  $("btMsg").textContent=`tested ${data.length} weeks`;
+  $("btMsg").textContent=`tested ${data.length} weeks${fromFile?` · ${fromFile} lines from the season file`:""}`;
   drawBacktest();
 };
 function drawBacktest(){

@@ -102,5 +102,14 @@
     return out;
   }
 
-  root.PickOpt = { BUCKETS, bucket, usable, learn, favChance, predictSplit, backtest };
+  // lines from the season file (lines-2026.json), for games the feed carried no line for
+  const ALIAS = { WAS: "WSH", LA: "LAR", JAC: "JAX" };
+  const norm = t => ALIAS[String(t || "").toUpperCase()] || String(t || "").toUpperCase();
+  function lineFor(file, week, away, home) {
+    const wk = file?.weeks?.[String(week)]; if (!wk) return null;
+    const v = wk[`${norm(away)}@${norm(home)}`];
+    return typeof v === "number" ? v : null;
+  }
+
+  root.PickOpt = { BUCKETS, bucket, usable, learn, favChance, predictSplit, backtest, lineFor };
 })(typeof window !== "undefined" ? window : globalThis);

@@ -3,6 +3,13 @@
 Reconstructed from the build history. Newest first.
 Each entry is the build number shown at the bottom of the sidebar.
 
+## build-161 — lines for Weeks 1–6
+- New lines-2026.json: closing (or latest pre-game) lines for every game in Weeks 1–6, from
+  FOX Sports' weekly results pages, with VegasInsider, SportsbookReview, CBS and Yahoo where
+  FOX didn't list a game. Home-relative, keyed AWAY@HOME
+- The backtest uses them for any game the feed has no line for; ESPN's alternative team codes
+  (WAS, LA, JAC) are matched too
+
 ## build-160 — optimizer, step 1: the pool backtest
 - New optimizer.js learns each player's habits from past sheets (how often they take the
   favourite in close / medium / big games, shrunk toward the league, plus a league-wide home
