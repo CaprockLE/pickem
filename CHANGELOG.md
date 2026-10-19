@@ -3,6 +3,13 @@
 Reconstructed from the build history. Newest first.
 Each entry is the build number shown at the bottom of the sidebar.
 
+## build-159 — clinched weeks
+- When one player tops every remaining outcome, the week is clinched. Instead of a scenario
+  table repeating their name, What's Still in Play says so in one line; the Week Winner card
+  names them as soon as it's clinched; the standings show Clinched instead of Lead
+- Same in /pro: a CLINCHED banner instead of scenarios, a CLINCHED tag on the ladder, and the
+  ladder header names who clinched it
+
 ## build-158 — faster live scores
 - Scores refresh every 10 seconds while any game is live (45 otherwise), on every site;
   the week's entries refresh once a minute instead of with every score update; both refresh

@@ -754,7 +754,7 @@ button.primary:hover{box-shadow:0 12px 28px rgba(26,120,194,.32)}
 <script src="/share.js"></script>
 <script src="/importer.js"></script>
 <script>
-const BUILD = "lab-158 (2026-10-12 02:43 UTC)";
+const BUILD = "lab-159 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -1499,6 +1499,13 @@ function weekAnalysis(rows) {
 }
 // Names that can still finish top in at least one combination of the open games.
 function stillAlive(rows) { return weekAnalysis(rows).alive; }
+// The player who has the week won with games still to play: the only one who can finish
+// top, and alone on top in every way the rest can go. Null when it isn't settled yet.
+function clinchedBy(rows) {
+  if (!games().some(g => !winnerOf(g))) return null;
+  const alive = stillAlive(rows);
+  return alive.size === 1 ? [...alive][0] : null;
+}
 // chance each player tops the week, weighting every outcome by live game odds
 function winChances(rows) { return weekAnalysis(rows).chance; }
 
@@ -1552,6 +1559,7 @@ function renderStandings(rows) {
         ? (isChamp ? '<span class="pill gold">&#127942; Winner</span>'
           : wasTied ? '<span class="pill">Lost Tiebreaker</span>' : "")
         : (!alive.has(r.e.name) ? '<span class="pill no">Out</span>'
+          : alive.size === 1 ? '<span class="pill gold">&#127942; Clinched</span>'
           : r.s.correct === top ? '<span class="pill ok">Lead</span>' : "");
       return `<tr class="${isChamp?"winrow":""}"><td class="pos">${i+1}</td><td>${esc(tc(r.e.name))}</td>
       <td class="n num" style="font-size:17px">${r.s.correct}</td><td class="n mono c-open">${r.s.remaining}</td>
@@ -1573,6 +1581,12 @@ function renderWinner(rows) {
   if (!field.length) { $("winCard").hidden = true; return; }
   $("winCard").hidden = false;
   const top = o0.top, tied = o0.tied;
+  const locked = open.length ? clinchedBy(rows) : null;
+  if (locked) {
+    $("winner").innerHTML = `<div class="champ"><span class="cup">&#127942;</span><div><div class="nm">${esc(tc(locked))}</div>
+      <div class="note">Clinched · ${open.length} Game${open.length>1?"s":""} Still to Play</div></div></div>`;
+    return;
+  }
   if (open.length) {
     $("winner").innerHTML = `<div class="champ"><span class="cup">&#9203;</span><div>
       <div class="nm" style="font-size:22px">To Be Decided</div>
@@ -1601,6 +1615,14 @@ function renderWinner(rows) {
 function renderScenarios(rows) {
   const open = games().filter(g => !winnerOf(g))
     .sort((a,b) => new Date(a.kickoff) - new Date(b.kickoff));
+  const locked = rows.length ? clinchedBy(rows) : null;
+  if (locked) {
+    $("scenarioCard").hidden = false;
+    $("scenarioSub").textContent = `Clinched · ${open.length} game${open.length > 1 ? "s" : ""} left`;
+    $("scenarioTbl").innerHTML = `<tbody><tr><td style="padding:16px"><b>${esc(tc(locked))}</b> has clinched week ${week}.
+      No result of the ${open.length > 1 ? `remaining ${open.length} games` : "last game"} can change it.</td></tr></tbody>`;
+    return;
+  }
   if (!rows.length || !open.length || open.length > 3) { $("scenarioCard").hidden = true; return; }
   $("scenarioCard").hidden = false;
 

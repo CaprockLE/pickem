@@ -1080,12 +1080,14 @@ function drawLadder(){
   const proj=projectedTotal(tb);
   $("ladderSub").textContent = done
     ? (actual!=null?`FINAL · TIEBREAKER ${actual}`:"FINAL")
+    : A.alive.size===1 ? `CLINCHED BY ${up([...A.alive][0])} · ${openN} OPEN`
     : `${A.alive.size} ALIVE · ${openN} OPEN${proj&&proj.sd>.5?` · TB PROJ ${Math.round(proj.mean)} ±${Math.round(proj.sd)}`:""}`;
   const gs=games();
   $("ladder").innerHTML=rows.map((r,i)=>{
       const out=!A.alive.has(r.e.name)&&!done, p=ch(r), isChamp=r.e.name===champ;
       const status = done ? (isChamp?'<span class="lst win">WINNER</span>':"")
         : out ? '<span class="lst out">OUT</span>'
+        : A.alive.size===1 ? '<span class="lst win">CLINCHED</span>'
         : (r.s.c===top && gs.some(g=>winnerOf(g))) ? '<span class="lst lead">LEAD</span>' : "";
       const pips=gs.map(g=>{const pk=r.e.picks?.[g.id], w=winnerOf(g);
         const c=!pk?"none":!w?"open":w==="TIE"?"miss":pk===w?"hit":"miss";
@@ -1112,6 +1114,13 @@ function drawLadder(){
 /* ---------- if / then ---------- */
 function drawScenarios(A){
   const box=$("scen");
+  if(A.open.length&&A.alive.size===1){
+    const who=[...A.alive][0];
+    box.innerHTML=`<div class="banner" style="margin-top:22px"><span class="tag">CLINCHED</span>
+        <span class="ttl">${esc(who)} has won week ${week}</span></div>
+      <div class="sc" style="grid-template-columns:1fr"><div class="then">No result of the ${A.open.length>1?`remaining ${A.open.length} games`:"last game"} can change it.</div></div>`;
+    return;
+  }
   if(!A.open.length||A.open.length>3||!A.combos.length){ box.innerHTML=""; return; }
   const name=(g,ab)=>(ab===g.away?g.awayName:g.homeName)||ab;
   box.innerHTML=`<div class="banner" style="margin-top:22px"><span class="tag">STILL IN PLAY</span>
