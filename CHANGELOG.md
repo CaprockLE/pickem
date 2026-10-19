@@ -3,6 +3,16 @@
 Reconstructed from the build history. Newest first.
 Each entry is the build number shown at the bottom of the sidebar.
 
+## build-160 — optimizer, step 1: the pool backtest
+- New optimizer.js learns each player's habits from past sheets (how often they take the
+  favourite in close / medium / big games, shrunk toward the league, plus a league-wide home
+  lean) and backtests it: every finished week predicted from only the other weeks
+- /pro Optimizer tab: verdict, games tested, average miss in players per game against the
+  miss chance alone would cause, how often it called the pool's lean, the league's habits,
+  who takes underdogs most, and week-by-week predicted vs actual
+- Tested on a made-up league with known habits: misses 1.05 players per game against 1.16
+  from chance alone. Finding: per-game splits are predicted as well by league-wide habits
+
 ## build-159 — clinched weeks
 - When one player tops every remaining outcome, the week is clinched. Instead of a scenario
   table repeating their name, What's Still in Play says so in one line; the Week Winner card

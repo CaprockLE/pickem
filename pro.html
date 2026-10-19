@@ -363,6 +363,22 @@ body.inapp .speed{opacity:0}
 .impbar button:hover,.impact button:hover{filter:brightness(1.15)}
 .note2{font-weight:600;font-size:11px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
 
+/* optimizer backtest */
+.btverdict{padding:14px 18px;margin-bottom:14px;font-family:Teko;font-size:26px;letter-spacing:.03em;line-height:1.1;
+  background:#0C121C;border-left:4px solid var(--lime)}
+.btverdict.no{border-left-color:var(--hot)}
+.btverdict small{display:block;font-family:Rajdhani;font-weight:600;font-size:13px;letter-spacing:.04em;color:var(--ink2);margin-top:6px;line-height:1.5}
+.btweek{margin-top:16px}
+.btweek h4{margin:0 0 6px;font-family:Teko;font-size:24px;letter-spacing:.04em}
+.bttab td,.bttab th{font-family:Teko;font-size:19px}
+.bttab td.gm2{text-align:left;padding-left:12px;font-size:18px;white-space:nowrap}
+.bttab td.ok{color:var(--lime)}.bttab td.off{color:var(--hot2)}
+.habits{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:6px 0 10px}
+.habits .k4{background:#0C121C;padding:12px 16px;clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)}
+.habits .k4 b{display:block;font-family:Teko;font-weight:700;font-size:40px;line-height:.9;color:var(--cy)}
+.habits .k4 span{font-weight:700;font-size:10.5px;letter-spacing:.18em;color:var(--muted)}
+@media (max-width:700px){ .habits{grid-template-columns:1fr} }
+
 /* manager cards on the import tab */
 .mcard{margin-top:22px;padding:16px 18px;background:#0A0F17;border:1px solid rgba(255,255,255,.08)}
 .mhd{display:flex;align-items:baseline;gap:12px;margin-bottom:6px}
@@ -670,6 +686,7 @@ html,body{max-width:100%;overflow-x:hidden}
       <button class="tab" data-t="grid">All Picks</button>
       <button class="tab" data-t="h2h">Head to Head</button>
       <button class="tab" data-t="season">Season</button>
+      <button class="tab" data-t="opt">Optimizer</button>
       <button class="tab" data-t="money">Payments</button>
       <button class="tab" data-t="import">Import</button>
       <button class="bump" id="rb">RB</button>
@@ -708,6 +725,15 @@ html,body{max-width:100%;overflow-x:hidden}
         <span class="sub">only weeks both of them played count</span></div>
       <div class="h2hpick"><select id="hA"></select><button id="hSwap" title="Swap">⇄</button><select id="hB"></select></div>
       <div id="h2h"></div>
+    </section>
+    <section class="pane" id="p-opt">
+      <div class="banner"><span class="tag">STEP 1</span><span class="ttl">Pool Backtest</span>
+        <span class="sub">can the pool's picks be predicted from past weeks?</span></div>
+      <p class="note2" style="display:block;line-height:1.6;margin:0 0 12px">Nobody sees anyone's sheet before the deadline, so the optimizer predicts the pool from
+        each player's past habits. This tests that: every finished week is predicted using only the <i>other</i> weeks,
+        then compared with what the pool actually picked.</p>
+      <div class="impbar" style="margin:0 0 14px"><button id="btRun" class="go4">Run Backtest</button><span class="mmsg" id="btMsg"></span></div>
+      <div id="btOut"></div>
     </section>
     <section class="pane" id="p-money">
       <div class="banner"><span class="tag">MANAGER</span><span class="ttl">Payments</span>
@@ -791,6 +817,7 @@ html,body{max-width:100%;overflow-x:hidden}
 <script src="/core.js"></script>
 <script src="/share.js"></script>
 <script src="/importer.js"></script>
+<script src="/optimizer.js"></script>
 <script>
 const $=i=>document.getElementById(i);
 const esc=s=>String(s??"").replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -799,7 +826,7 @@ const slug=n=>String(n).toLowerCase().trim().replace(/[^a-z0-9]+/g,"-");
 const initials=n=>String(n).trim().split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase();
 
 let pass=localStorage.getItem("pc.pass")||"",week=0,scores={games:[]},pool=null,season=null,tab="vs";
-const TABS=["vs","deck","ladder","grid","h2h","season","money","import"];
+const TABS=["vs","deck","ladder","grid","h2h","season","opt","money","import"];
 
 async function getJSON(u,o){const r=await fetch(u,o);const t=await r.text();
   try{return{ok:r.ok,body:JSON.parse(t)};}catch(e){return{ok:false,body:{}};}}
@@ -916,6 +943,7 @@ function render(){
   if(tab==="season")drawSeason();
   if(tab==="h2h")drawH2H();
   if(tab==="money")drawMoney();
+  if(tab==="opt"&&btResult) drawBacktest();
   if(tab==="import")drawImport();
 }
 
@@ -1548,6 +1576,54 @@ function drawOverrides(){
     const cur=(fileDraft().manualResults||{})[b.dataset.og]||"";
     const v=b.dataset.ov===cur?"":b.dataset.ov;      // tapping the set one again clears it
     fileOps.push({t:"override",game:b.dataset.og,v}); drawManager(); });
+}
+
+/* ---------- optimizer, step 1: the backtest (model in optimizer.js) ---------- */
+let btResult=null, btModel=null;
+$("btRun").onclick=async()=>{
+  const ws=(season?.weeks||[]).map(w=>w.week).filter(w=>w<week||(season.weeks.find(x=>x.week===w)?.complete));
+  if(ws.length<2){ $("btMsg").textContent="needs at least two finished weeks"; return; }
+  const data=[];
+  for(const w of ws){
+    $("btMsg").textContent=`loading week ${w}…`;
+    const [sc,pl]=await Promise.all([getJSON(`/api/scores?week=${w}`),getJSON(`/api/pool?week=${w}`)]);
+    if(!sc.ok||!pl.ok||!(pl.body.entries||[]).length) continue;
+    data.push({ week:w, games:(sc.body.games||[]).map(g=>({id:g.id,home:g.home,away:g.away,spread:g.spread})), entries:pl.body.entries });
+  }
+  if(data.length<2){ $("btMsg").textContent="couldn't load enough finished weeks"; return; }
+  btResult=PickOpt.backtest(data); btModel=PickOpt.learn(data);
+  $("btMsg").textContent=`tested ${data.length} weeks`;
+  drawBacktest();
+};
+function drawBacktest(){
+  const R=btResult, M=btModel; if(!R) return;
+  const f1=x=>x==null?"–":x.toFixed(1);
+  // close to what chance alone would cause = as good as it can get
+  const good=R.games>=10 && R.avgMiss<=R.avgFloor*1.25 && R.sideRate>=0.8;
+  const verdict=R.games<10?`Not enough games with a betting line to judge yet (${R.games}).`
+    :good?`Predictable — the optimizer has something to work with.`:`Not predictable enough yet — the optimizer wouldn't be trustworthy.`;
+  const why=R.games<10?`Games need a pre-game line to be modelled; ${R.skipped} had none in the feed. Lines are now saved as they come in, so this improves week by week.`
+    :`On average the prediction was off by ${f1(R.avgMiss)} player${R.avgMiss>=1.05?"s":""} per game. Chance alone would cause about ${f1(R.avgFloor)} — `+
+     `people's picks aren't fully predictable even in principle. It called which way the pool would lean in ${Math.round(R.sideRate*100)}% of games. `+
+     `Using each player's own habits vs. the league average: ${f1(R.avgMiss)} vs ${f1(R.avgMissBase)}.`;
+  const pct=x=>`${Math.round(x*100)}%`;
+  const contr=Object.values(M.players).filter(p=>p.n[0]>=4).map(p=>({name:p.name,close:p.rate[0]})).sort((a,b)=>a.close-b.close);
+  $("btOut").innerHTML=`<div class="btverdict${good?"":" no"}">${verdict}<small>${why}</small></div>
+    <div class="kpis4"><div class="k4"><b>${R.games}</b><span>GAMES TESTED</span></div>
+      <div class="k4"><b>${f1(R.avgMiss)}</b><span>AVG MISS (PLAYERS)</span></div>
+      <div class="k4"><b>${f1(R.avgFloor)}</b><span>CHANCE ALONE</span></div>
+      <div class="k4 ${R.sideRate>=.8?"good":""}"><b>${R.sideRate==null?"–":pct(R.sideRate)}</b><span>LEAN CALLED RIGHT</span></div></div>
+    <div class="banner" style="margin-top:18px"><span class="ttl" style="font-size:26px">How the pool picks</span>
+      <span class="sub">share taking the favourite</span></div>
+    <div class="habits">${PickOpt.BUCKETS.map((b,i)=>`<div class="k4"><b>${pct(M.league[i])}</b><span>${["CLOSE GAMES · 3 OR LESS","MEDIUM · 3.5 TO 7","BIG FAVOURITES · OVER 7"][i]}</span></div>`).join("")}</div>
+    ${contr.length?`<p class="note2" style="display:block;line-height:1.6">Most willing to take the underdog in close games: ${contr.slice(0,4).map(c=>`${esc(c.name)} (favourite ${pct(c.close)})`).join(", ")}.
+      Least: ${contr.slice(-3).reverse().map(c=>`${esc(c.name)} (${pct(c.close)})`).join(", ")}.</p>`:""}
+    ${R.weeks.map(w=>`<div class="btweek"><h4>Week ${w.week} · ${w.players} players</h4>
+      <div class="grid bttab"><table><thead><tr><th class="who" style="min-width:150px">Game</th><th>Line</th><th>Underdog</th>
+        <th>Predicted on dog</th><th>Actually on dog</th><th>Off by</th></tr></thead><tbody>${w.rows.map(r=>r.skipped
+        ?`<tr><td class="gm2">${esc(r.g.away)} at ${esc(r.g.home)}</td><td colspan="5" style="color:var(--muted)">no line in the feed — skipped</td></tr>`
+        :`<tr><td class="gm2">${esc(r.g.away)} at ${esc(r.g.home)}</td><td>${esc(r.favTeam)} −${Math.abs(r.spread)}</td><td>${esc(r.dogTeam)}</td>
+          <td>${f1(r.predDog)}</td><td>${r.actDog} of ${r.of}</td><td class="${r.miss<=r.floor*1.5?"ok":"off"}">${f1(r.miss)}</td></tr>`).join("")}</tbody></table></div></div>`).join("")}`;
 }
 
 /* ---------- payments (same buy-in setting and week document as the main site) ---------- */
