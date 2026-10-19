@@ -1593,42 +1593,57 @@ $("btRun").onclick=async()=>{
     data.push({ week:w, entries:pl.body.entries, games:(sc.body.games||[]).map(g=>{
       let spread=typeof g.spread==="number"?g.spread:null;
       if(spread==null){ spread=PickOpt.lineFor(LINES,w,g.away,g.home); if(spread!=null) fromFile++; }
-      return {id:g.id,home:g.home,away:g.away,spread}; }) });
+      return {id:g.id,home:g.home,away:g.away,spread,winner:g.winner||(g.final?(g.homeScore>g.awayScore?g.home:g.awayScore>g.homeScore?g.away:"TIE"):null)}; }) });
   }
   if(data.length<2){ $("btMsg").textContent="couldn't load enough finished weeks"; return; }
-  btResult=PickOpt.backtest(data); btModel=PickOpt.learn(data);
+  $("btMsg").textContent="comparing models…"; await new Promise(r=>setTimeout(r,30));
+  btResult=PickOpt.compare(data); btModel=btResult.final;
   $("btMsg").textContent=`tested ${data.length} weeks${fromFile?` · ${fromFile} lines from the season file`:""}`;
   drawBacktest();
 };
 function drawBacktest(){
-  const R=btResult, M=btModel; if(!R) return;
-  const f1=x=>x==null?"–":x.toFixed(1);
-  // close to what chance alone would cause = as good as it can get
-  const good=R.games>=10 && R.avgMiss<=R.avgFloor*1.25 && R.sideRate>=0.8;
-  const verdict=R.games<10?`Not enough games with a betting line to judge yet (${R.games}).`
-    :good?`Predictable — the optimizer has something to work with.`:`Not predictable enough yet — the optimizer wouldn't be trustworthy.`;
-  const why=R.games<10?`Games need a pre-game line to be modelled; ${R.skipped} had none in the feed. Lines are now saved as they come in, so this improves week by week.`
-    :`On average the prediction was off by ${f1(R.avgMiss)} player${R.avgMiss>=1.05?"s":""} per game. Chance alone would cause about ${f1(R.avgFloor)} — `+
-     `people's picks aren't fully predictable even in principle. It called which way the pool would lean in ${Math.round(R.sideRate*100)}% of games. `+
-     `Using each player's own habits vs. the league average: ${f1(R.avgMiss)} vs ${f1(R.avgMissBase)}.`;
-  const pct=x=>`${Math.round(x*100)}%`;
-  const contr=Object.values(M.players).filter(p=>p.n[0]>=4).map(p=>({name:p.name,close:p.rate[0]})).sort((a,b)=>a.close-b.close);
-  $("btOut").innerHTML=`<div class="btverdict${good?"":" no"}">${verdict}<small>${why}</small></div>
-    <div class="kpis4"><div class="k4"><b>${R.games}</b><span>GAMES TESTED</span></div>
-      <div class="k4"><b>${f1(R.avgMiss)}</b><span>AVG MISS (PLAYERS)</span></div>
-      <div class="k4"><b>${f1(R.avgFloor)}</b><span>CHANCE ALONE</span></div>
-      <div class="k4 ${R.sideRate>=.8?"good":""}"><b>${R.sideRate==null?"–":pct(R.sideRate)}</b><span>LEAN CALLED RIGHT</span></div></div>
-    <div class="banner" style="margin-top:18px"><span class="ttl" style="font-size:26px">How the pool picks</span>
-      <span class="sub">share taking the favourite</span></div>
-    <div class="habits">${PickOpt.BUCKETS.map((b,i)=>`<div class="k4"><b>${pct(M.league[i])}</b><span>${["CLOSE GAMES · 3 OR LESS","MEDIUM · 3.5 TO 7","BIG FAVOURITES · OVER 7"][i]}</span></div>`).join("")}</div>
-    ${contr.length?`<p class="note2" style="display:block;line-height:1.6">Most willing to take the underdog in close games: ${contr.slice(0,4).map(c=>`${esc(c.name)} (favourite ${pct(c.close)})`).join(", ")}.
-      Least: ${contr.slice(-3).reverse().map(c=>`${esc(c.name)} (${pct(c.close)})`).join(", ")}.</p>`:""}
-    ${R.weeks.map(w=>`<div class="btweek"><h4>Week ${w.week} · ${w.players} players</h4>
+  const R=btResult, M=btModel; if(!R||!R.best) return;
+  const B=R.best, simple=R.models[0], f1=x=>x==null?"–":x.toFixed(1), pct=x=>`${Math.round(x*100)}%`;
+  const level=B.games<10?"few":B.avgMiss<=1.8&&B.sideRate>=.88?"good":B.avgMiss<=2.3&&B.sideRate>=.85?"ok":"no";
+  const verdict={few:`Not enough games with a betting line to judge yet (${B.games}).`,
+    good:"Predictable — the optimizer has something solid to work with.",
+    ok:"Usable — it reliably knows which way the pool leans; treat how lopsided it says a game will be as a rough guide.",
+    no:"Not predictable enough yet — the optimizer wouldn't be trustworthy."}[level];
+  const why=`Best model: <b>${esc(B.label.replace(/^\+ /,"with "))}</b>. Off by ${f1(B.avgMiss)} players per game on average, `+
+    `and it called which way the pool would lean in ${pct(B.sideRate)} of ${B.games} games. `+
+    `Players in a pool react to the same news together, so no model gets close to zero.`;
+  // what the winning model learned
+  const avgP=(line,home)=>PickOpt.unlogit(M.b[0]+M.b[1]*line+M.b[2]*home);
+  const teams=Object.entries(M.t||{}).filter(([,v])=>Math.abs(v)>0.05).sort((a,b)=>b[1]-a[1]);
+  const learned=[
+    `In a pick'em-ish game (a 2-point line) the pool takes the favourite about ${pct((avgP(2,1)+avgP(2,0))/2)} of the time; `+
+      `at 5 points ${pct((avgP(5,1)+avgP(5,0))/2)}; at 9 points ${pct((avgP(9,1)+avgP(9,0))/2)}.`,
+    (()=>{ const up2=teams.filter(([,v])=>v>0).slice(0,4).map(([k])=>k), dn=teams.filter(([,v])=>v<0).slice(-4).reverse().map(([k])=>k);
+      return up2.length||dn.length?`${up2.length?`Over-picked beyond what the line says: ${up2.join(", ")}.`:""} ${dn.length?`Under-picked: ${dn.join(", ")}.`:""}`.trim():""; })(),
+    M.use.form?`Teams coming off a win get picked ${M.b[3]>0.05?"more":M.b[3]<-0.05?"less":"about the same"} (weight ${M.b[3].toFixed(2)}).`:""
+  ].filter(Boolean).map(t=>`<li>${t}</li>`).join("");
+  const leaners=Object.entries(M.u||{}).filter(([,v])=>Math.abs(v)>0.05).sort((a,b)=>a[1]-b[1]);
+  const nameOf=k=>{ const r=(season?.players||[]).find(p=>slug(p.name)===k); return r?r.name:k; };
+  $("btOut").innerHTML=`<div class="btverdict${level==="good"||level==="ok"?"":" no"}">${verdict}<small>${why}</small></div>
+    <div class="kpis4"><div class="k4"><b>${B.games}</b><span>GAMES TESTED</span></div>
+      <div class="k4"><b>${f1(B.avgMiss)}</b><span>BEST MODEL MISS (PLAYERS)</span></div>
+      <div class="k4 ${B.avgMiss<simple.avgMiss?"good":""}"><b>${B.avgMiss<simple.avgMiss?"−":"+"}${f1(Math.abs(simple.avgMiss-B.avgMiss))}</b><span>VS SIMPLE HABITS</span></div>
+      <div class="k4 ${B.sideRate>=.88?"good":""}"><b>${pct(B.sideRate)}</b><span>LEAN CALLED RIGHT</span></div></div>
+    <div class="banner" style="margin-top:18px"><span class="ttl" style="font-size:26px">Models compared</span>
+      <span class="sub">each week predicted from the others · lowest miss wins</span></div>
+    <div class="grid bttab"><table><thead><tr><th class="who" style="min-width:260px">Model</th><th>Avg miss</th><th>Lean right</th></tr></thead><tbody>
+      ${R.models.map(m=>`<tr${m===B?' style="outline:1px solid var(--lime)"':""}><td class="gm2">${esc(m.label)}${m===B?" ✓":""}</td>
+        <td class="${m===B?"ok":""}">${f1(m.avgMiss)}</td><td>${m.sideRate==null?"–":pct(m.sideRate)}</td></tr>`).join("")}</tbody></table></div>
+    <div class="banner" style="margin-top:18px"><span class="ttl" style="font-size:26px">What it learned about your pool</span>
+      <span class="sub">from the fullest model, fitted on every week</span></div>
+    <ul class="note2" style="display:block;line-height:1.7;margin:0 0 6px;padding-left:18px">${learned}</ul>
+    ${(()=>{ const dogs=leaners.filter(([,v])=>v<0).slice(0,4), chalk=leaners.filter(([,v])=>v>0).slice(-3).reverse();
+      return dogs.length||chalk.length?`<p class="note2" style="display:block;line-height:1.6">${dogs.length?`Most willing to take underdogs: ${dogs.map(([k])=>esc(nameOf(k))).join(", ")}. `:""}${chalk.length?`Chalkiest: ${chalk.map(([k])=>esc(nameOf(k))).join(", ")}.`:""}</p>`:""; })()}
+    ${(B.weeks||[]).map(w=>`<div class="btweek"><h4>Week ${w.week} · ${w.players} players</h4>
       <div class="grid bttab"><table><thead><tr><th class="who" style="min-width:150px">Game</th><th>Line</th><th>Underdog</th>
-        <th>Predicted on dog</th><th>Actually on dog</th><th>Off by</th></tr></thead><tbody>${w.rows.map(r=>r.skipped
-        ?`<tr><td class="gm2">${esc(r.g.away)} at ${esc(r.g.home)}</td><td colspan="5" style="color:var(--muted)">no line in the feed — skipped</td></tr>`
-        :`<tr><td class="gm2">${esc(r.g.away)} at ${esc(r.g.home)}</td><td>${esc(r.favTeam)} −${Math.abs(r.spread)}</td><td>${esc(r.dogTeam)}</td>
-          <td>${f1(r.predDog)}</td><td>${r.actDog} of ${r.of}</td><td class="${r.miss<=r.floor*1.5?"ok":"off"}">${f1(r.miss)}</td></tr>`).join("")}</tbody></table></div></div>`).join("")}`;
+        <th>Predicted on dog</th><th>Actually on dog</th><th>Off by</th></tr></thead><tbody>${w.rows.map(r=>
+        `<tr><td class="gm2">${esc(r.g.away)} at ${esc(r.g.home)}</td><td>${esc(r.favTeam)} −${Math.abs(r.spread)}</td><td>${esc(r.dogTeam)}</td>
+          <td>${f1(r.predDog)}</td><td>${r.actDog} of ${r.of}</td><td class="${r.miss<=2?"ok":"off"}">${f1(r.miss)}</td></tr>`).join("")}</tbody></table></div></div>`).join("")}`;
 }
 
 /* ---------- payments (same buy-in setting and week document as the main site) ---------- */

@@ -3,6 +3,16 @@
 Reconstructed from the build history. Newest first.
 Each entry is the build number shown at the bottom of the sidebar.
 
+## build-162 — a better pool model, chosen by the backtest
+- optimizer.js: one logistic model over every pick — a smooth line curve, home favourite,
+  each player's lean, team popularity and recent form (did each team win its last game)
+- Leans and popularity are held back hard (tuned on a made-up league with planted effects,
+  where it recovered the planted team preferences and form weight: 0.36 vs a true 0.35)
+- The backtest compares five models side by side on the pool's own weeks; the optimizer
+  predicts with whichever has the lowest miss
+- /pro Optimizer: models compared, what the pool's habits look like (favourite share by
+  line size, over- and under-picked teams, form effect, underdog-lovers and chalkiest)
+
 ## build-161 — lines for Weeks 1–6
 - New lines-2026.json: closing (or latest pre-game) lines for every game in Weeks 1–6, from
   FOX Sports' weekly results pages, with VegasInsider, SportsbookReview, CBS and Yahoo where
