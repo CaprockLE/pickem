@@ -610,7 +610,7 @@ ul.why b{color:var(--ink)}
 <script src="/share.js"></script>
 <script src="/importer.js"></script>
 <script>
-const BUILD = "build-167 (2026-10-12 02:43 UTC)";
+const BUILD = "build-168 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -907,8 +907,8 @@ function scoreOf(e) {
   }
   return { correct: c, remaining: rem, max: c + rem };
 }
-const ranked = () => entries().map(e => ({ e, s: scoreOf(e) }))
-  .sort((a, b) => b.s.correct - a.s.correct || a.e.name.localeCompare(b.e.name));
+// most correct, then closest tiebreaker, then A to Z (core.js — the same order on every screen)
+const ranked = () => PickCore.standingsSort(entries().map(e => ({ e, s: scoreOf(e) })), tbGame(), r => r.s.correct);
 
 async function loadWeek() {
   try {
@@ -1375,19 +1375,7 @@ function renderStandings(rows) {
   const alive = stillAlive(rows);
   const chance = winChances(rows);
   const o = weekOutcome(rows);
-  let list = rows;
-  if (o.complete && o.actual != null) {
-    const dist = r => Math.abs((r.e.tiebreaker ?? 9999) - o.actual);
-    list = [...rows].sort((a,b) => b.s.correct - a.s.correct || dist(a) - dist(b) || a.e.name.localeCompare(b.e.name));
-  } else if (!o.complete && chance.size) {
-    const ch = r => chance.get(r.e.name) || 0;
-    const openCount = games().filter(g => !winnerOf(g)).length;
-    list = openCount <= 1
-      // last game: likelihood is what matters
-      ? [...rows].sort((a,b) => ch(b) - ch(a) || b.s.correct - a.s.correct || a.e.name.localeCompare(b.e.name))
-      // earlier in the week: the board is still the board
-      : [...rows].sort((a,b) => b.s.correct - a.s.correct || ch(b) - ch(a) || a.e.name.localeCompare(b.e.name));
-  }
+  const list = rows;                                // already in standings order (ranked())
   const aliveCount = alive.size;
   const liveOrder = !o.complete && chance.size > 0;
   $("stSub").innerHTML = o.complete
@@ -1606,16 +1594,8 @@ function renderPicks(rows) {
   if (picksOrder === "az") {
     shown.sort((a, b) => a.e.name.localeCompare(b.e.name, undefined, { sensitivity: "base" }));
   } else {
-    // By rank: correct picks, then tiebreaker distance once the week is settled
-    const o = weekOutcome(rows);
-    if (o.complete && o.actual != null) {
-      const dist = r => Math.abs((r.e.tiebreaker ?? 9999) - o.actual);
-      shown.sort((a, b) => b.s.correct - a.s.correct || dist(a) - dist(b) ||
-                           a.e.name.localeCompare(b.e.name, undefined, { sensitivity: "base" }));
-    } else {
-      shown.sort((a, b) => b.s.correct - a.s.correct ||
-                           a.e.name.localeCompare(b.e.name, undefined, { sensitivity: "base" }));
-    }
+    // By rank: the standings order used on every screen (core.js)
+    shown = PickCore.standingsSort(shown, tbGame(), r => r.s.correct);
   }
   $("picksOrder").value = picksOrder;
   $("picksSub").textContent = `${shown.length} of ${rows.length} Entries · Week ${week}`;

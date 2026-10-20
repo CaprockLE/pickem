@@ -189,6 +189,24 @@
     return std || light || "";
   }
 
+  /* ── Standings order, everywhere ──────────────────────────────────────
+     Most correct picks first; then the tiebreaker guess closest to the tiebreaker game's total
+     (the final total once it's over, otherwise its projected total: the over/under before
+     kickoff, the live projection during it); then A to Z. correctOf(row) and entryOf(row) let
+     each page pass its own row shape. */
+  function tbTarget(tbGame) {
+    if (!tbGame) return null;
+    if (tbGame.final) return (tbGame.homeScore || 0) + (tbGame.awayScore || 0);
+    const p = projectedTotal(tbGame);
+    return p ? p.mean : null;
+  }
+  function standingsSort(rows, tbGame, correctOf, entryOf = r => r.e) {
+    const target = tbTarget(tbGame);
+    const dist = r => { const t = entryOf(r)?.tiebreaker; return target == null || t == null || t === "" ? Infinity : Math.abs(Number(t) - target); };
+    return [...rows].sort((a, b) => (correctOf(b) - correctOf(a)) || (dist(a) - dist(b)) ||
+      String(entryOf(a)?.name || "").localeCompare(String(entryOf(b)?.name || ""), undefined, { sensitivity: "base" }));
+  }
+
   /* ── Who won the week ─────────────────────────────────────────────────
      players: [{ e: entry, base: correct picks }]. Once every game is final, the top score
      wins; a tie goes to the tiebreaker guess closest to the tiebreaker game's real total. */
@@ -228,5 +246,5 @@
   }
 
   root.PickCore = { normCdf, minutesLeft, homeWinProb, moneylineProb, projectedTotal, tiebreakerShares,
-                    bitCount, analyse, weekOutcome, headToHead, DARK_MARKS, needsLightLogo, logoFor };
+                    bitCount, analyse, weekOutcome, headToHead, standingsSort, tbTarget, DARK_MARKS, needsLightLogo, logoFor };
 })(typeof window !== "undefined" ? window : globalThis);

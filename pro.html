@@ -941,7 +941,8 @@ function scoreOf(e){let c=0,rem=0;
   for(const g of games()){const w=winnerOf(g),p=e.picks?.[g.id];
     if(!w){if(p)rem++;}else if(w!=="TIE"&&p===w)c++;}
   return{c,rem,max:c+rem};}
-const ranked=()=>entries().map(e=>({e,s:scoreOf(e)})).sort((a,b)=>b.s.c-a.s.c||a.e.name.localeCompare(b.e.name));
+// most correct, then closest tiebreaker, then A to Z (core.js — the same order on every screen)
+const ranked=()=>PickCore.standingsSort(entries().map(e=>({e,s:scoreOf(e)})),tbGame(),r=>r.s.c);
 const splitOf=g=>{const r=entries();
   const a=r.filter(e=>e.picks?.[g.id]===g.away).length,h=r.filter(e=>e.picks?.[g.id]===g.home).length;
   return{a,h,tot:Math.max(a+h,1)};};
@@ -1147,11 +1148,7 @@ function drawLadder(){
   const A=analyseWeek(), top=rows[0].s.c, openN=A.open.length;
   const tb=tbGame(), done=!openN, actual=done&&tb?.final?tb.homeScore+tb.awayScore:null;
   const ch=r=>A.chance.get(r.e.name)||0;
-  // same ordering rules as the main site
-  if(done&&actual!=null){ const d=r=>Math.abs((r.e.tiebreaker??9999)-actual);
-    rows=[...rows].sort((a,b)=>b.s.c-a.s.c||d(a)-d(b)||a.e.name.localeCompare(b.e.name)); }
-  else if(openN<=1) rows=[...rows].sort((a,b)=>ch(b)-ch(a)||b.s.c-a.s.c||a.e.name.localeCompare(b.e.name));
-  else rows=[...rows].sort((a,b)=>b.s.c-a.s.c||ch(b)-ch(a)||a.e.name.localeCompare(b.e.name));
+  // rows come from ranked(): most correct, then closest tiebreaker, then A to Z, as on every screen
   const champ=done?rows[0]?.e.name:null;
   const proj=projectedTotal(tb);
   $("ladderSub").textContent = done

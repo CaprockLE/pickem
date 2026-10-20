@@ -3,6 +3,14 @@
 Reconstructed from the build history. Newest first.
 Each entry is the build number shown at the bottom of the sidebar.
 
+## build-168 — one standings order everywhere
+- core.js standingsSort: most correct picks, then the tiebreaker closest to the tiebreaker game's
+  total (final total once it's over, otherwise its projected total), then A to Z
+- Used by Week Results, All Picks (By Rank), the share card (As Standings and By Correct) on the
+  main site and Lab, and by All Picks and the Ladder in /pro. Previously Week Results and the
+  Ladder broke ties by win chance, while the share card and /pro All Picks went straight to A–Z
+- Verified all six list players in the identical order, and the rule holds within every tie
+
 ## build-167 — news, weather and moneylines in the optimizer
 - api/scores.js: each game's moneylines and venue (name, city, indoors); moneylines remembered
   with the spread and total
