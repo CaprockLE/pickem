@@ -190,20 +190,27 @@
   }
 
   /* ── Standings order, everywhere ──────────────────────────────────────
-     Most correct picks first; then the tiebreaker guess closest to the tiebreaker game's total
-     (the final total once it's over, otherwise its projected total: the over/under before
-     kickoff, the live projection during it); then A to Z. correctOf(row) and entryOf(row) let
-     each page pass its own row shape. */
+     1. most correct picks;
+     2. while the tiebreaker game isn't final: the better chance to win the week (chance: name →
+        0..1, which already weighs everyone's remaining picks and tiebreakers); once it's final:
+        the tiebreaker guess closest to its actual total;
+     3. A to Z.
+     correctOf(row) and entryOf(row) let each page pass its own row shape. Without a chance map
+     (nothing to compare yet) step 2 falls back to closeness to the projected total. */
   function tbTarget(tbGame) {
     if (!tbGame) return null;
     if (tbGame.final) return (tbGame.homeScore || 0) + (tbGame.awayScore || 0);
     const p = projectedTotal(tbGame);
     return p ? p.mean : null;
   }
-  function standingsSort(rows, tbGame, correctOf, entryOf = r => r.e) {
+  function standingsSort(rows, tbGame, correctOf, entryOf = r => r.e, chance = null) {
+    const settled = !!(tbGame && tbGame.final);
     const target = tbTarget(tbGame);
     const dist = r => { const t = entryOf(r)?.tiebreaker; return target == null || t == null || t === "" ? Infinity : Math.abs(Number(t) - target); };
-    return [...rows].sort((a, b) => (correctOf(b) - correctOf(a)) || (dist(a) - dist(b)) ||
+    const byChance = !settled && chance && chance.size > 0;
+    const ch = r => chance.get(entryOf(r)?.name) || 0;
+    return [...rows].sort((a, b) => (correctOf(b) - correctOf(a)) ||
+      (byChance ? (ch(b) - ch(a)) : (dist(a) - dist(b))) ||
       String(entryOf(a)?.name || "").localeCompare(String(entryOf(b)?.name || ""), undefined, { sensitivity: "base" }));
   }
 

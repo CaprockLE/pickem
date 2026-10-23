@@ -610,7 +610,7 @@ ul.why b{color:var(--ink)}
 <script src="/share.js"></script>
 <script src="/importer.js"></script>
 <script>
-const BUILD = "build-168 (2026-10-12 02:43 UTC)";
+const BUILD = "build-169 (2026-10-12 02:43 UTC)";
 console.log("[pickem] " + BUILD);
 const $ = i => document.getElementById(i);
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -907,8 +907,11 @@ function scoreOf(e) {
   }
   return { correct: c, remaining: rem, max: c + rem };
 }
-// most correct, then closest tiebreaker, then A to Z (core.js — the same order on every screen)
-const ranked = () => PickCore.standingsSort(entries().map(e => ({ e, s: scoreOf(e) })), tbGame(), r => r.s.correct);
+// Standings order (core.js — the same on every screen): most correct; then, until the tiebreaker
+// game is final, the better chance to win the week, and after it the closest tiebreaker; then A to Z.
+const rowsNow = () => entries().map(e => ({ e, s: scoreOf(e) }));
+const ranked = () => { const rows = rowsNow(), tb = tbGame();
+  return PickCore.standingsSort(rows, tb, r => r.s.correct, r => r.e, tb && tb.final ? null : winChances(rows)); };
 
 async function loadWeek() {
   try {
@@ -1339,7 +1342,7 @@ function weekKey(rows) {
   const open = games().filter(g => !winnerOf(g));
   const p = projectedTotal(tbGame());
   return [week, open.map(g => g.id + ":" + homeWinProb(g).toFixed(4)).join(","),
-          rows.map(r => r.e.name + ":" + r.s.correct + ":" + (r.e.paid ? 1 : 0) + ":" + (r.e.tiebreaker ?? "")).join(","),
+          rows.map(r => r.e.name + ":" + r.s.correct + ":" + (r.e.paid ? 1 : 0) + ":" + (r.e.tiebreaker ?? "")).sort().join(","),
           pool.requirePaid ? 1 : 0, p ? p.mean.toFixed(1) + "/" + p.sd.toFixed(1) : ""].join("|");
 }
 const weekCache = { key: null, val: null };
@@ -1595,7 +1598,7 @@ function renderPicks(rows) {
     shown.sort((a, b) => a.e.name.localeCompare(b.e.name, undefined, { sensitivity: "base" }));
   } else {
     // By rank: the standings order used on every screen (core.js)
-    shown = PickCore.standingsSort(shown, tbGame(), r => r.s.correct);
+    { const tb = tbGame(); shown = PickCore.standingsSort(shown, tb, r => r.s.correct, r => r.e, tb && tb.final ? null : winChances(rowsNow())); }
   }
   $("picksOrder").value = picksOrder;
   $("picksSub").textContent = `${shown.length} of ${rows.length} Entries · Week ${week}`;
@@ -1725,7 +1728,7 @@ function renderMoney(rows) {
 // drawn by share.js, shared with /pro, from this page's data
 function shareData() {
   const rows = ranked();
-  return { week, games: games(), winnerOf, rows, outcome: weekOutcome(rows), tbGame: tbGame(),
+  return { week, games: games(), winnerOf, rows, outcome: weekOutcome(rows), tbGame: tbGame(), chance: winChances(rows),
            dark: darkMode(), logoFor, order: ($("shareOrder") && $("shareOrder").value) || "az" };
 }
 function drawShare(mode) {

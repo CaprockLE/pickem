@@ -3,6 +3,17 @@
 Reconstructed from the build history. Newest first.
 Each entry is the build number shown at the bottom of the sidebar.
 
+## build-169 — win chance breaks ties until Monday night is final
+- Standings rule (core.js), everywhere: most correct picks; then, while the tiebreaker game isn't
+  final, the better chance to win the week (which already weighs everyone's remaining picks and
+  tiebreakers); once it's final, the guess closest to the actual total; then A to Z
+- Mid-week, ranking ties by closeness to a projected Monday total said little about who was
+  winning (Week 7: Ryan 4th at 22% to win). He now ranks 1st among the ten on 1 correct
+- /pro: win chances now come from unsorted rows (the order no longer depends on itself) and are
+  cached until a result, the odds or an entry changes
+- Verified on the real Week 7 sheets: nine views across Console, Lab and Pro list the same order;
+  the switch to the real tiebreaker checked at four final totals, including an exact tie
+
 ## build-168 — one standings order everywhere
 - core.js standingsSort: most correct picks, then the tiebreaker closest to the tiebreaker game's
   total (final total once it's over, otherwise its projected total), then A to Z

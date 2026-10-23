@@ -48,7 +48,8 @@
   const order = d.order || "az";
   let rows = d.rows;
   if (order === "az") rows = [...rows].sort((a, b) => a.e.name.localeCompare(b.e.name, undefined, { sensitivity: "base" }));
-  else if (order === "correct") rows = PickCore.standingsSort(rows, d.tbGame, r => r.s.correct);
+  else if (order === "correct") rows = PickCore.standingsSort(rows, d.tbGame, r => r.s.correct, r => r.e,
+                                                               d.tbGame && d.tbGame.final ? null : d.chance);
   const paidW = 68;
   const nameW = 190, colW = 58, tbW = 86, corW = showCorrect ? 72 : 0, rowH = 38, headH = 148, colHead = 80;
   const W = nameW + gs.length * colW + tbW + corW + paidW + 56;

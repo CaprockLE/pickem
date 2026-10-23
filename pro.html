@@ -941,8 +941,11 @@ function scoreOf(e){let c=0,rem=0;
   for(const g of games()){const w=winnerOf(g),p=e.picks?.[g.id];
     if(!w){if(p)rem++;}else if(w!=="TIE"&&p===w)c++;}
   return{c,rem,max:c+rem};}
-// most correct, then closest tiebreaker, then A to Z (core.js — the same order on every screen)
-const ranked=()=>PickCore.standingsSort(entries().map(e=>({e,s:scoreOf(e)})),tbGame(),r=>r.s.c);
+// Standings order (core.js — the same on every screen): most correct; then, until the tiebreaker
+// game is final, the better chance to win the week, and after it the closest tiebreaker; then A to Z.
+const rowsNow=()=>entries().map(e=>({e,s:scoreOf(e)}));
+const ranked=()=>{ const rows=rowsNow(), tb=tbGame();
+  return PickCore.standingsSort(rows,tb,r=>r.s.c,r=>r.e,tb&&tb.final?null:analyseWeek().chance); };
 const splitOf=g=>{const r=entries();
   const a=r.filter(e=>e.picks?.[g.id]===g.away).length,h=r.filter(e=>e.picks?.[g.id]===g.home).length;
   return{a,h,tot:Math.max(a+h,1)};};
@@ -956,11 +959,19 @@ function tiebreakerShares(tied,g){ return PickCore.tiebreakerShares(tied,g); }
 const tbGame=()=>{const gs=games(); if(!gs.length) return null;
   return gs.find(g=>g.id===pool?.tiebreakerGameId)||gs[gs.length-1];};
 // who can still win, each player's chance, and (3 or fewer games left) every combination
+// worked out once per change in results, odds or entries, not on every call; it reads the
+// unsorted rows so the standings order (which uses its win chances) never waits on itself
+let weekMemo={key:null,val:null};
 function analyseWeek(){
-  const field=ranked().filter(r=>!pool?.requirePaid||r.e.paid);
+  const rows=rowsNow(), field=rows.filter(r=>!pool?.requirePaid||r.e.paid);
   const open=games().filter(g=>!winnerOf(g)).sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff));
+  const proj=projectedTotal(tbGame());
+  const key=[week,open.map(g=>g.id+":"+homeWinProb(g).toFixed(4)).join(","),
+    field.map(r=>r.e.name+":"+r.s.c+":"+(r.e.tiebreaker??"")).sort().join(","),proj?proj.mean.toFixed(1)+"/"+proj.sd.toFixed(1):""].join("|");
+  if(weekMemo.key===key) return weekMemo.val;
   const res=PickCore.analyse({ open, players: field.map(r=>({e:r.e, base:r.s.c})), tbGame: tbGame(), scenarios: true });
-  return { chance: res.chance, alive: res.alive, open, combos: res.combos };
+  weekMemo={key,val:{ chance: res.chance, alive: res.alive, open, combos: res.combos }};
+  return weekMemo.val;
 }
 // games that counted in a given week: everything once it's complete, the finished ones while it runs
 function playedIn(w){
@@ -2049,7 +2060,7 @@ function shareData(){
   const field=rows.filter(r=>!pool?.requirePaid||r.e.paid);
   const outcome=PickCore.weekOutcome({games:games(),winnerOf,tbGame:tbGame(),
     players:field.map(r=>({e:r.e,base:r.s.correct}))});
-  return {week,games:games(),winnerOf,rows,outcome,tbGame:tbGame(),dark,
+  return {week,games:games(),winnerOf,rows,outcome,tbGame:tbGame(),chance:analyseWeek().chance,dark,
     logoFor:(g,side)=>PickCore.logoFor(g,side,dark),order:$("shOrder").value};
 }
 function drawShare(){
