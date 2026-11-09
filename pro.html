@@ -1646,11 +1646,12 @@ $("btRun").onclick=async()=>{
   if(ws.length<2){ $("btMsg").textContent="needs at least two finished weeks"; return; }
   // lines the feed no longer carries come from the season file
   const lf=await getJSON("/lines-2026.json"); const LINES=lf.ok?lf.body:null;
-  const data=[]; let fromFile=0;
+  const data=[]; let fromFile=0; const publicByWeek={};
   for(const w of ws){
     $("btMsg").textContent=`loading week ${w}…`;
-    const [sc,pl]=await Promise.all([getJSON(`/api/scores?week=${w}`),getJSON(`/api/pool?week=${w}`)]);
+    const [sc,pl,nw]=await Promise.all([getJSON(`/api/scores?week=${w}`),getJSON(`/api/pool?week=${w}`),getJSON(`/api/news?week=${w}`)]);
     if(!sc.ok||!pl.ok||!(pl.body.entries||[]).length) continue;
+    if(nw.ok&&nw.body&&Object.keys(nw.body.publicPct||{}).length) publicByWeek[w]=nw.body.publicPct;
     data.push({ week:w, entries:pl.body.entries, games:(sc.body.games||[]).map(g=>{
       let spread=typeof g.spread==="number"?g.spread:null;
       if(spread==null){ spread=PickOpt.lineFor(LINES,w,g.away,g.home); if(spread!=null) fromFile++; }
@@ -1660,7 +1661,7 @@ $("btRun").onclick=async()=>{
   }
   if(data.length<2){ $("btMsg").textContent="couldn't load enough finished weeks"; return; }
   $("btMsg").textContent="comparing models…"; await new Promise(r=>setTimeout(r,30));
-  btResult=PickOpt.compare(data); btModel=btResult.final; btData=data;
+  btResult=PickOpt.compare(data,publicByWeek); btModel=btResult.final; btData=data;
   $("btMsg").textContent=`tested ${data.length} weeks${fromFile?` · ${fromFile} lines from the season file`:""}`;
   drawBacktest();
 };
@@ -1697,6 +1698,12 @@ function drawBacktest(){
     <div class="grid bttab"><table><thead><tr><th class="who" style="min-width:260px">Model</th><th>Avg miss</th><th>Lean right</th></tr></thead><tbody>
       ${R.models.map(m=>`<tr${m===B?' style="outline:1px solid var(--lime)"':""}><td class="gm2">${esc(m.label)}${m===B?" ✓":""}</td>
         <td class="${m===B?"ok":""}">${f1(m.avgMiss)}</td><td>${m.sideRate==null?"–":pct(m.sideRate)}</td></tr>`).join("")}</tbody></table></div>
+    <p class="note2" style="display:block;line-height:1.6;margin-top:10px">${(()=>{ const T=R.pubTested||[];
+      if(!T.length||T[0].games<10) return `Public pick percentages: not enough weeks with public numbers saved yet to test (${T.length?T[0].games:0} games) — the sheet blends them in halfway until there are.`;
+      const by=l=>T.find(a=>a.lambda===l), none=by(0), chosen=by(R.lambda);
+      return `Public pick percentages, tested on ${none.games} games: ${R.lambda===0?"they didn't help predict your pool, so they're not used":
+        `blending them in ${R.lambda===1?"fully":`${Math.round(R.lambda*100)}%`} predicts your pool best — off by ${f1(chosen.miss/chosen.games)} players per game, against ${f1(none.miss/none.games)} without them`}.`; })()}
+      Recent weeks count more: a week's picks carry half the weight after ${PickOpt.HALF_LIFE} weeks.</p>
     <div class="banner" style="margin-top:18px"><span class="ttl" style="font-size:26px">What it learned about your pool</span>
       <span class="sub">from the fullest model, fitted on every week</span></div>
     <ul class="note2" style="display:block;line-height:1.7;margin:0 0 6px;padding-left:18px">${learned}</ul>
@@ -1805,17 +1812,29 @@ $("optRun").onclick=async()=>{
     const all=ws.reduce((s,w)=>s+inW(w),0)/ws.length, rec=recent.reduce((s,w)=>s+inW(w),0)/recent.length;
     return {name, chance:Math.min(0.98,0.5*all+0.5*rec)}; }).filter(e=>e.chance>0.05);
   const formOf=PickOpt.formTable([...btData,{week,games:[]}])[week]||{};
+  // a team whose starting QB is more likely out than in: its popularity is halved
+  const reset=new Set(inj.filter(x=>x.pos==="QB"&&x.chance<0.5).map(x=>x.team));
+  // the public blend, per game: move the pool's average lean part of the way to the public's
+  const baseCtx={reset};
+  const pubShift={};
+  for(const g of gs){ const pf=PickOpt.publicFav(news.publicPct,g); if(pf==null) continue;
+    const fav=g.spread<0?g.home:g.away, dog=fav===g.home?g.away:g.home, d=(formOf[fav]||0)-(formOf[dog]||0);
+    const tot=entrants.reduce((s,e)=>s+e.chance,0)||1;
+    const avg=entrants.reduce((s,e)=>s+e.chance*btResult.predict(e.name,g,d,baseCtx),0)/tot;
+    pubShift[g.id]=PickOpt.publicShift(avg,pf,btResult.lambda); }
+  const ctxFor=g=>({reset,pubShift:pubShift[g.id]||0});
+  const habits=PickOpt.tiebreakerHabits(btData);
   const tbReal=tbGame(), tbPre=tbReal?gs.find(g=>g.id===tbReal.id):null;
   const proj0=PickCore.projectedTotal(tbPre)||{mean:45,sd:13};
   const tbWx=tbPre?wx[gs.indexOf(tbPre)]:null;
   const proj={...proj0, mean:proj0.mean+((tbWx&&tbWx.totalShift)||0)};
   $("optMsg").textContent="simulating the week…"; await new Promise(r=>setTimeout(r,30));
-  const W=PickOpt.simulate({games:gs,pHome,entrants,predict:btResult.predict,formOf,tb:{mean:proj.mean,sd:Math.max(proj.sd,6)},sims:6000,seed:week*101});
+  const W=PickOpt.simulate({games:gs,pHome,entrants,predict:btResult.predict,formOf,tb:{mean:proj.mean,sd:Math.max(proj.sd,6)},sims:6000,seed:week*101,habits,ctxFor});
   const R=PickOpt.optimizeSheet({games:gs,pHome,W,tbMean:proj.mean});
   // how the pool is expected to split each game
   const poolFav=gs.map(g=>{ if(!PickOpt.usable(g)) return null; const fav=g.spread<0?g.home:g.away, dog=fav===g.home?g.away:g.home;
     const d=(formOf[fav]||0)-(formOf[dog]||0); const tot=entrants.reduce((s,e)=>s+e.chance,0);
-    return entrants.reduce((s,e)=>s+e.chance*btResult.predict(e.name,g,d),0)/Math.max(tot,1e-9); });
+    return entrants.reduce((s,e)=>s+e.chance*btResult.predict(e.name,g,d,ctxFor(g)),0)/Math.max(tot,1e-9); });
   // for a week that's already played: how this sheet did, next to the sheet actually handed in
   const decided=real.filter(g=>winnerOf(g)), mine=entries().find(e=>slug(e.name)===slug(me));
   const retro=decided.length?{ games:decided.length,
@@ -1858,6 +1877,8 @@ function drawOpt(){
     <p class="note2" style="display:block;line-height:1.6;margin-top:10px">For ${esc(me)} · about ${R.avgPlayers.toFixed(0)} opponents per simulated week, from how often each person enters.
       ${R.flips.length?`${R.flips.length} pick${R.flips.length>1?"s go":" goes"} against the crowd: each one gives up a little expected accuracy for a bigger chance of finishing alone on top.`
         :"No flip helped this week — the favourites are your best sheet."}
+      Each extra flip has to clear a higher bar: the first must add at least ${PickOpt.MIN_GAINS[0]*100} point of win chance, the second ${PickOpt.MIN_GAINS[1]*100}, the third ${PickOpt.MIN_GAINS[2]*100}.
+      The tiebreaker is chosen against how your pool actually guesses, steering clear of crowded numbers.
       Lines move during the week, so build it again Thursday morning before you hand in your sheet.</p>`;
 }
 

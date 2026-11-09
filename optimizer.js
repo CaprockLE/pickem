@@ -131,8 +131,11 @@
     }
     return out;
   }
-  function rowsOf(weeks, form) {
-    const rows = [];
+  // Recent weeks count more: a pick's weight halves every HALF_LIFE weeks, so a team's
+  // September popularity has mostly faded by November.
+  const HALF_LIFE = 3;
+  function rowsOf(weeks, form, refWeek = null) {
+    const rows = [], latest = refWeek ?? Math.max(0, ...weeks.map(w => w.week));
     for (const w of weeks) for (const g of w.games) {
       if (!usable(g)) continue;
       const fav = favOf(g), dog = fav === g.home ? g.away : g.home, f = form?.[w.week] || {};
@@ -141,7 +144,7 @@
       for (const e of w.entries) {
         const pk = e.picks?.[g.id];
         if (pk !== g.home && pk !== g.away) continue;
-        rows.push({ ...base, player: slug(e.name), y: pk === fav ? 1 : 0 });
+        rows.push({ ...base, player: slug(e.name), y: pk === fav ? 1 : 0, w: Math.pow(0.5, Math.max(0, latest - w.week) / HALF_LIFE) });
       }
     }
     return rows;
@@ -156,15 +159,16 @@
       const a = (mom.get(key) || 0) * 0.9 + 0.1 * g, v = (vel.get(key) || 0) * 0.999 + 0.001 * g * g;
       mom.set(key, a); vel.set(key, v); set(get() - lr * a / (Math.sqrt(v) + 1e-8));
     };
+    const wsum = rows.reduce((s, r) => s + (r.w ?? 1), 0) || 1;
     for (let it = 0; it < 350; it++) {
       const gb = [0, 0, 0, 0], gu = {}, gt = {};
       for (const r of rows) {
-        const p = unlogit(score(m, r)), d = (p - r.y) / rows.length;
+        const p = unlogit(score(m, r)), d = (p - r.y) * (r.w ?? 1) / wsum;
         gb[0] += d; gb[1] += d * r.line; gb[2] += d * r.home; if (use.form) gb[3] += d * r.form;
         if (use.players) gu[r.player] = (gu[r.player] || 0) + d;
         if (use.teams) { gt[r.fav] = (gt[r.fav] || 0) + d; gt[r.dog] = (gt[r.dog] || 0) - d; }
       }
-      const n = rows.length;
+      const n = wsum;
       for (let i = 0; i < 4; i++) step("b" + i, gb[i] + LB * m.b[i], () => m.b[i], v => m.b[i] = v);
       for (const k in gu) step("u" + k, gu[k] + LP * (m.u[k] || 0) / n, () => m.u[k] || 0, v => m.u[k] = v);
       for (const k in gt) step("t" + k, gt[k] + LT * (m.t[k] || 0) / n, () => m.t[k] || 0, v => m.t[k] = v);
@@ -179,15 +183,38 @@
     return s;
   }
 
+  /* Public pick percentages (the big free pick'em games) nudge the pool prediction for a game
+     by LAMBDA × (how far the public's lean is from the model's average lean). LAMBDA is chosen
+     by the backtest on weeks that have public numbers: 0 ignores the public, 1 moves the
+     average all the way to it. */
+  const LAMBDAS = [0, 0.25, 0.5, 0.75, 1];
+  const ALIAS2 = { WAS: "WSH", LA: "LAR", JAC: "JAX" };
+  const nk = t => ALIAS2[String(t || "").toUpperCase()] || String(t || "").toUpperCase();
+  function publicFav(pub, g) {             // public share on the favourite, or null
+    if (!pub || !usable(g)) return null;
+    const v = pub[`${nk(g.away)}@${nk(g.home)}`];
+    if (typeof v !== "number") return null;
+    const homeShare = Math.min(0.99, Math.max(0.01, v / 100));
+    return favOf(g) === g.home ? homeShare : 1 - homeShare;
+  }
+  // shift every player's chance on this game so the average moves LAMBDA of the way to the public
+  function publicShift(avgPred, pubFav, lambda) {
+    if (pubFav == null || !lambda) return 0;
+    const c = p => Math.min(0.99, Math.max(0.01, p));
+    return lambda * (Math.log(c(pubFav) / (1 - c(pubFav))) - Math.log(c(avgPred) / (1 - c(avgPred))));
+  }
+
   // every model, each week predicted from the others; lower miss is better
-  function compare(weeks) {
+  // publicByWeek: { week: { "AWAY@HOME": % on home } } where known
+  function compare(weeks, publicByWeek = {}) {
     const form = formTable(weeks);
     const results = FEATURES.map(f => ({ ...f, games: 0, miss: 0, side: 0, weeks: [] }));
     const buckets = { key: "buckets", label: "Simple habits (three line sizes)", games: 0, miss: 0, side: 0 };
+    const pubAcc = LAMBDAS.map(l => ({ lambda: l, games: 0, miss: 0 }));
     for (const w of weeks) {
       const others = weeks.filter(x => x !== w);
       if (!others.length) continue;
-      const trainRows = rowsOf(others, form);
+      const trainRows = rowsOf(others, form, w.week);
       const models = FEATURES.map(f => fitLogit(trainRows, f.use));
       const bm = learn(others);
       const names = w.entries.map(e => e.name);
@@ -206,6 +233,16 @@
         judge(buckets, picked.reduce((s, e) => s + (1 - favChance(bm, e.name, g)), 0));
         const base = { line: Math.min(Math.abs(g.spread), 14), home: g.spread < 0 ? 1 : 0, fav, dog,
                        form: (fw[fav] || 0) - (fw[dog] || 0) };
+        const pub = publicFav(publicByWeek[w.week], g);
+        if (pub != null) {
+          const m = models[3], ps = picked.map(e => unlogit(score(m, { ...base, player: slug(e.name) })));
+          const avg = ps.reduce((a, b) => a + b, 0) / ps.length;
+          LAMBDAS.forEach((lam, li) => {
+            const sh = publicShift(avg, pub, lam);
+            const predDog = ps.reduce((s, p) => s + (1 - unlogit(Math.log(p / (1 - p)) + sh)), 0);
+            const acc = pubAcc[li]; acc.games++; acc.miss += Math.abs(predDog - actDog);
+          });
+        }
         models.forEach((m, fi) => {
           const predDog = picked.reduce((s, e) => s + (1 - unlogit(score(m, { ...base, player: slug(e.name) }))), 0);
           judge(results[fi], predDog);
@@ -222,14 +259,23 @@
     const final = fitLogit(rowsOf(weeks, form), FEATURES[3].use);
     const bestUse = FEATURES.find(f => f.key === best?.key)?.use;
     const bestFit = bestUse ? fitLogit(rowsOf(weeks, form), bestUse) : learn(weeks);
-    const predict = (name, g, formDiff = 0) => {
+    // the public weight: the one with the lowest miss, once at least 10 games had public numbers
+    const pubTested = pubAcc.filter(a => a.games).map(a => ({ ...a, avgMiss: a.miss / a.games }));
+    const lambda = pubTested.length && pubTested[0].games >= 10
+      ? pubTested.slice().sort((a, b) => a.avgMiss - b.avgMiss)[0].lambda : 0.5;
+    /* predict(name, g, formDiff, ctx): chance this player takes the favourite.
+       ctx = { reset: Set of teams whose popularity is halved (starting QB out),
+               pubShift: extra log-odds for this game from the public blend } */
+    const predict = (name, g, formDiff = 0, ctx = {}) => {
       if (!usable(g)) return null;
       if (!bestUse) return favChance(bestFit, name, g);
       const fav = favOf(g), dog = fav === g.home ? g.away : g.home;
-      return unlogit(score(bestFit, { line: Math.min(Math.abs(g.spread), 14), home: g.spread < 0 ? 1 : 0,
-                                      fav, dog, form: formDiff, player: slug(name) }));
+      const fit = ctx.reset && ctx.reset.size && bestUse.teams
+        ? { ...bestFit, t: Object.fromEntries(Object.entries(bestFit.t).map(([k, v]) => [k, ctx.reset.has(k) ? v / 2 : v])) } : bestFit;
+      return unlogit(score(fit, { line: Math.min(Math.abs(g.spread), 14), home: g.spread < 0 ? 1 : 0,
+                                  fav, dog, form: formDiff, player: slug(name) }) + (ctx.pubShift || 0));
     };
-    return { models: all, best, final, predict, form };
+    return { models: all, best, final, predict, form, lambda, pubTested };
   }
 
 
@@ -245,12 +291,29 @@
   /* games: this week's games (with spread); pHome: chance each home team wins;
      entrants: [{ name, chance }] who might play (not you); predict(name, g, formDiff) → P(favourite);
      formOf: team → +1/-1/0; tb: { mean, sd } of the tiebreaker game's total */
-  function simulate({ games, pHome, entrants, predict, formOf = {}, tb, sims = 5000, seed = 7 }) {
+  /* How the pool guesses tiebreakers: each guess measured against that week's middle guess
+     (so it doesn't matter whether a week's total was high or low). Players with three or more
+     weeks use their own spread of guesses; everyone else draws from the whole pool's. Favourite
+     numbers show up naturally, because real guesses are what get drawn. */
+  function tiebreakerHabits(weeks) {
+    const own = {}, all = [];
+    for (const w of weeks) {
+      const gs = w.entries.map(e => Number(e.tiebreaker)).filter(Number.isFinite).sort((a, b) => a - b);
+      if (gs.length < 3) continue;
+      const mid = gs[Math.floor(gs.length / 2)];
+      for (const e of w.entries) {
+        const t = Number(e.tiebreaker); if (!Number.isFinite(t)) continue;
+        const off = t - mid; all.push(off); (own[slug(e.name)] = own[slug(e.name)] || []).push(off);
+      }
+    }
+    return { all, own };
+  }
+  function simulate({ games, pHome, entrants, predict, formOf = {}, tb, sims = 5000, seed = 7, habits = null, ctxFor = () => ({}) }) {
     const r = rng(seed), n = games.length, ALL = n >= 32 ? 0xffffffff : (1 << n) - 1;
     const favP = games.map(g => entrants.map(e => {
       if (!usable(g)) return 0.5;
       const fav = favOf(g), dog = fav === g.home ? g.away : g.home;
-      return predict(e.name, g, (formOf[fav] || 0) - (formOf[dog] || 0));
+      return predict(e.name, g, (formOf[fav] || 0) - (formOf[dog] || 0), ctxFor(g));
     }));
     const favIsHome = games.map(g => usable(g) ? g.spread < 0 : true);
     const W = { n, ALL, sims, outcome: new Uint32Array(sims), total: new Int16Array(sims),
@@ -270,7 +333,10 @@
           if (takesFav === favIsHome[i]) pick |= 1 << i;          // bit set = took the home team
         }
         const sc = bitCount((~(mask ^ pick)) & ALL);
-        const guess = Math.max(0, Math.round(tb.mean + 7 * normal(r)));
+        const mine = habits && (habits.own[slug(entrants[k].name)] || []);
+        const pool = mine && mine.length >= 3 ? mine : habits && habits.all.length >= 20 ? habits.all : null;
+        const guess = pool ? Math.max(0, Math.round(tb.mean + pool[Math.floor(r() * pool.length)]))
+                           : Math.max(0, Math.round(tb.mean + 7 * normal(r)));
         if (sc > best) { best = sc; tied = [guess]; } else if (sc === best) tied.push(guess);
       }
       W.fieldMax[s] = best; W.tied.push(tied); W.players[s] = count;
@@ -305,7 +371,9 @@
   // A flip is kept only if it beats the current sheet clearly: at least half a point of win
   // chance, and more than twice the paired standard error across the same simulated weeks.
   // Smaller "gains" are mostly simulation noise, and every flip costs accuracy.
-  const MIN_GAIN = 0.005, MAX_FLIPS = 3;
+  // Each extra flip must clear a higher bar than the last (first ½ point of win chance, then 1,
+  // then 2), so three or four marginal flips can't pile up and decide the week by noon.
+  const MIN_GAINS = [0.005, 0.01, 0.02], MAX_FLIPS = MIN_GAINS.length;
   function pairedGain(a, b) {
     const n = a.length; let sum = 0, sq = 0;
     for (let s = 0; s < n; s++) { const d = b[s] - a[s]; sum += d; sq += d * d; }
@@ -326,7 +394,7 @@
       for (let i = 0; i < n; i++) {
         if (flips.some(f => f.i === i)) continue;
         const v = winVector(W, (pick ^ (1 << i)) >>> 0, tbBest), g = pairedGain(curV, v);
-        if (g.mean >= MIN_GAIN && g.mean > 2 * g.se && (!bestG || g.mean > bestG.mean)) { bestI = i; bestG = g; bestV = v; }
+        if (g.mean >= MIN_GAINS[round] && g.mean > 2 * g.se && (!bestG || g.mean > bestG.mean)) { bestI = i; bestG = g; bestV = v; }
       }
       if (bestI < 0) break;
       flips.push({ i: bestI, gain: bestG.mean, cost: pPick(pick, bestI) - pPick((pick ^ (1 << bestI)) >>> 0, bestI) });
@@ -364,7 +432,8 @@
       const pHome = pre.map(g => h.homeWinProb(g));
       const tbg = w.games.find(g => g.id === w.tbId) || w.games[w.games.length - 1];
       const proj = h.projected(pre.find(g => g.id === tbg?.id)) || { mean: 45, sd: 13 };
-      const W = simulate({ games: pre, pHome, entrants, predict, formOf: form[w.week] || {}, tb: { mean: proj.mean, sd: Math.max(proj.sd, 6) }, sims, seed: w.week * 101 });
+      const W = simulate({ games: pre, pHome, entrants, predict, formOf: form[w.week] || {}, tb: { mean: proj.mean, sd: Math.max(proj.sd, 6) },
+                           sims, seed: w.week * 101, habits: tiebreakerHabits(prior) });
       const R = optimizeSheet({ games: pre, pHome, W, tbMean: proj.mean });
       // what actually happened
       const decided = w.games.filter(g => g.winner);
@@ -523,6 +592,6 @@
 
   root.PickOpt = { BUCKETS, bucket, usable, learn, favChance, predictSplit, backtest, lineFor,
                    FEATURES, formTable, rowsOf, fitLogit, score, compare, slug, unlogit,
-                   simulate, winChance, optimizeSheet, walkForward,
+                   simulate, winChance, optimizeSheet, walkForward, tiebreakerHabits, publicFav, publicShift, MIN_GAINS, HALF_LIFE,
                    STATUS_CHANCE, STATUS_LABEL, VALUE_TIERS, ASSUMES, adjustGame, normInv, stadiumFor, fetchWeather, weatherLabel };
 })(typeof window !== "undefined" ? window : globalThis);

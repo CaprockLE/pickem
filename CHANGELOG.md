@@ -3,6 +3,19 @@
 Reconstructed from the build history. Newest first.
 Each entry is the build number shown at the bottom of the sidebar.
 
+## build-170 — optimizer: recency, public picks, tiebreaker habits, escalating flip bar
+- Recency: every past pick's weight halves every 3 weeks, so a team's early-season popularity
+  fades; a team whose starting QB is more likely out than in has its popularity halved
+- Public picks: the backtest tests blending the big free pick'em games' percentages into the
+  pool prediction (0, 25, 50, 75, 100%) on weeks with public numbers saved, and uses the best;
+  halfway until there are 10+ such games
+- Tiebreaker: opponents' guesses are drawn from the pool's real tiebreaker habits (each
+  player's own once they have 3 weeks), so the chosen number sits in a gap, not a crowd
+- Flips: each extra flip must clear a higher bar — at least ½, then 1, then 2 points of win
+  chance (plus the existing statistical check); at most three
+- Tested on a made-up league: public blend cut the prediction miss 2.83 → 1.36 players/game;
+  tiebreaker landed just above a crowded number; strong flips still taken
+
 ## build-169 — win chance breaks ties until Monday night is final
 - Standings rule (core.js), everywhere: most correct picks; then, while the tiebreaker game isn't
   final, the better chance to win the week (which already weighs everyone's remaining picks and
