@@ -192,7 +192,12 @@
   const nk = t => ALIAS2[String(t || "").toUpperCase()] || String(t || "").toUpperCase();
   function publicFav(pub, g) {             // public share on the favourite, or null
     if (!pub || !usable(g)) return null;
-    const v = pub[`${nk(g.away)}@${nk(g.home)}`];
+    // match keys whichever team codes they were typed with (WAS or WSH, LA or LAR, JAC or JAX)
+    const want = `${nk(g.away)}@${nk(g.home)}`;
+    let v = pub[want];
+    if (typeof v !== "number") for (const [k, x] of Object.entries(pub)) {
+      const [a, h] = k.split("@"); if (`${nk(a)}@${nk(h)}` === want) { v = x; break; }
+    }
     if (typeof v !== "number") return null;
     const homeShare = Math.min(0.99, Math.max(0.01, v / 100));
     return favOf(g) === g.home ? homeShare : 1 - homeShare;
@@ -373,7 +378,9 @@
   // Smaller "gains" are mostly simulation noise, and every flip costs accuracy.
   // Each extra flip must clear a higher bar than the last (first ½ point of win chance, then 1,
   // then 2), so three or four marginal flips can't pile up and decide the week by noon.
-  const MIN_GAINS = [0.005, 0.01, 0.02], MAX_FLIPS = MIN_GAINS.length;
+  // No long shots: a flip is only considered when the underdog has at least a 42% chance to win
+  // (market line adjusted for injury news). At most two flips a week.
+  const MIN_GAINS = [0.005, 0.01], MAX_FLIPS = MIN_GAINS.length, MIN_FLIP_WP = 0.42;
   function pairedGain(a, b) {
     const n = a.length; let sum = 0, sq = 0;
     for (let s = 0; s < n; s++) { const d = b[s] - a[s]; sum += d; sq += d * d; }
@@ -393,6 +400,7 @@
       let bestI = -1, bestG = null, bestV = null;
       for (let i = 0; i < n; i++) {
         if (flips.some(f => f.i === i)) continue;
+        if (pPick((pick ^ (1 << i)) >>> 0, i) < MIN_FLIP_WP) continue;
         const v = winVector(W, (pick ^ (1 << i)) >>> 0, tbBest), g = pairedGain(curV, v);
         if (g.mean >= MIN_GAINS[round] && g.mean > 2 * g.se && (!bestG || g.mean > bestG.mean)) { bestI = i; bestG = g; bestV = v; }
       }
@@ -592,6 +600,6 @@
 
   root.PickOpt = { BUCKETS, bucket, usable, learn, favChance, predictSplit, backtest, lineFor,
                    FEATURES, formTable, rowsOf, fitLogit, score, compare, slug, unlogit,
-                   simulate, winChance, optimizeSheet, walkForward, tiebreakerHabits, publicFav, publicShift, MIN_GAINS, HALF_LIFE,
+                   simulate, winChance, optimizeSheet, walkForward, tiebreakerHabits, publicFav, publicShift, MIN_GAINS, MIN_FLIP_WP, HALF_LIFE,
                    STATUS_CHANCE, STATUS_LABEL, VALUE_TIERS, ASSUMES, adjustGame, normInv, stadiumFor, fetchWeather, weatherLabel };
 })(typeof window !== "undefined" ? window : globalThis);

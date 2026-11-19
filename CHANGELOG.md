@@ -3,6 +3,10 @@
 Reconstructed from the build history. Newest first.
 Each entry is the build number shown at the bottom of the sidebar.
 
+## build-171 — no long shots
+- Pick Optimizer only flips to an underdog with at least a 42% chance to win (after injury news), and at most 2 flips a week (bars: +0.5, then +1 point of win chance).
+- Public pick % keys now match either team code (CIN@WAS or CIN@WSH), so a typed code can't silently drop the public blend.
+
 ## build-170 — optimizer: recency, public picks, tiebreaker habits, escalating flip bar
 - Recency: every past pick's weight halves every 3 weeks, so a team's early-season popularity
   fades; a team whose starting QB is more likely out than in has its popularity halved

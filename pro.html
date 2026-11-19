@@ -1877,7 +1877,7 @@ function drawOpt(){
     <p class="note2" style="display:block;line-height:1.6;margin-top:10px">For ${esc(me)} · about ${R.avgPlayers.toFixed(0)} opponents per simulated week, from how often each person enters.
       ${R.flips.length?`${R.flips.length} pick${R.flips.length>1?"s go":" goes"} against the crowd: each one gives up a little expected accuracy for a bigger chance of finishing alone on top.`
         :"No flip helped this week — the favourites are your best sheet."}
-      Each extra flip has to clear a higher bar: the first must add at least ${PickOpt.MIN_GAINS[0]*100} point of win chance, the second ${PickOpt.MIN_GAINS[1]*100}, the third ${PickOpt.MIN_GAINS[2]*100}.
+      No long shots: a team is only flipped to when it has at least a ${Math.round(PickOpt.MIN_FLIP_WP*100)}% chance to win, and never more than ${PickOpt.MIN_GAINS.length} flips a week. Each flip has to clear a bar: the first must add at least ${PickOpt.MIN_GAINS[0]*100} point of win chance, the second ${PickOpt.MIN_GAINS[1]*100}.
       The tiebreaker is chosen against how your pool actually guesses, steering clear of crowded numbers.
       Lines move during the week, so build it again Thursday morning before you hand in your sheet.</p>`;
 }
